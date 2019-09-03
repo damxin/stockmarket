@@ -6,7 +6,7 @@ if __name__ == "__main__":
     # df = ts.get_hist_data("000001", start='2019-08-22', end='2019-08-31')
     # print(df)
     df = ts.get_stock_basics()
-    engine = create_engine('mysql://root:root@127.0.0.1/stockmarket?charset=utf8')
+    engine = create_engine('mysql+pymysql://root:root@127.0.0.1/stockmarket?charset=utf8')
     df.to_sql('stock_basics', engine, if_exists="replace", index=False)
     print("finish")
     # print(df)
