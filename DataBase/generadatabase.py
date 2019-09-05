@@ -30,7 +30,7 @@ DELIMITER $$ \n\
             SELECT DATABASE() INTO database_name; \n\
             SELECT COUNT(1) INTO v_rowcount FROM information_schema.tables WHERE table_schema= database_name AND table_name='%s'; \n\
             IF v_rowcount = 0 THEN \n"
-CREATETABLETAIL="    );\n\
+CREATETABLETAIL="\n    );\n\
             END IF; \n\
     END$$ \n\
 DELIMITER; \n\
@@ -120,14 +120,12 @@ def generyCreateSql(vardict, outfile):
                         cel = tablesheet.cell(tblrow, starttablecol+1).value
                         varAddFlag = ""
                         if isinstance(cel, float) :
-                            varAddFlag = str(cel)                        
+                            varAddFlag = str(cel).split(".")[0]                        
                         varType = vardict[varEngName]
                         print(varAddFlag)
                         if varAddFlag in "0" :
-                            createvarsql = "    "+varEngName+" " + varType + ","
-                            tmpTableSql = createtablesql + createvarsql
-                            print(createvarsql)
-                            pirnt(tmpTableSql)                                  
+                            createvarsql = "      "+varEngName+" " + varType + ","
+                            tmpTableSql = createtablesql + createvarsql                                  
                             createtablesql = tmpTableSql
                         elif varAddFlag in "1" :
                             addvarsql = ADDVARHEAD % (gentablename,varEngName,gentablename,varEngName,varType)
