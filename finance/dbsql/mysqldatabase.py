@@ -2,7 +2,7 @@
 
 import pymysql as mysql
 
-from database import DataBase
+from finance.dbsql.database import DataBase
 
 class MysqlDatabase(DataBase):
 
@@ -21,7 +21,7 @@ class MysqlDatabase(DataBase):
             self.connection = msqlcon
         except Exception as e:
             ret = 1
-            print(e);
+            print(e)
         return ret
         
     '''

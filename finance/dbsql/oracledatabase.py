@@ -1,7 +1,7 @@
 # -*- coding:utf-8 -*-
 
 import cx_Oracle as oracle  # 这边显示红色是正常的
-from database import DataBase
+from finance.dbsql.database import DataBase
 
 class OracleDatabase(DataBase):
     

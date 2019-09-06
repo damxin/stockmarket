@@ -8,7 +8,7 @@ Created on 2019/09/04
 
 import tushare as ts
 from sqlalchemy import create_engine
-# from finance.dbsql import mysqldatabase as msqldatabase
+from finance.dbsql import mysqldatabase
 
 def getAllBaseData(filedata):
     df = ts.get_stock_basics()
@@ -24,11 +24,13 @@ def getAllBaseData(filedata):
     basicdf.to_sql('stock_basics', engine, if_exists="replace", index=False)
     print("finish")
 
-# def getProductBasicInfo():
-#     msqldatabase.MysqlDatabase mysqldatabase = msqldatabase.MysqlDatabase("127.0.0.1","3306","root","root","stockmarket")
-#     mysqldatabase.getConnection()
+def getProductBasicInfo():
+    mysqldbase = mysqldatabase.MysqlDatabase("127.0.0.1","3306","root","root","stockmarket")
+    mysqldbase.getConnection()
+    mysqldbase.closeDBConnect()
 
 if __name__ == "__main__":
     filedata = open(".\stock_basics.txt", 'w+')
-    getAllBaseData(filedata)
+    # getAllBaseData(filedata)
+    getProductBasicInfo()
     filedata.close()

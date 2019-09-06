@@ -115,7 +115,9 @@ def generyCreateSql(vardict, outfile):
                     createtablesql =CREATETABLEHEAD%gentablename + "    create table " + gentablename + "\n    (\n"
                     # print(createtablesql)
                     for tblrow in range(starttablerow+1, tablesheet.nrows):
-                        cel = tablesheet.cell(tblrow, starttablecol).value.strip()                        
+                        cel = tablesheet.cell(tblrow, starttablecol).value
+                        if len(cel) < 1:
+                            break 
                         varEngName = cel.lower().strip()
                         cel = tablesheet.cell(tblrow, starttablecol+1).value
                         varAddFlag = ""
@@ -124,22 +126,24 @@ def generyCreateSql(vardict, outfile):
                         varType = vardict[varEngName]
                         print(varAddFlag)
                         if varAddFlag in "0" :
-                            createvarsql = "      "+varEngName+" " + varType + ","
+                            createvarsql = "      "+varEngName+" " + varType + ",\n"
                             tmpTableSql = createtablesql + createvarsql                                  
                             createtablesql = tmpTableSql
                         elif varAddFlag in "1" :
                             addvarsql = ADDVARHEAD % (gentablename,varEngName,gentablename,varEngName,varType)
                             print(addvarsql, file=outfile)
-                    # 表字段结束                    
-                    finallyCreateTableSql = createtablesql[:-1] + CREATETABLETAIL
-                    print(finallyCreateTableSql, file=outfile)
-                    print("表字段结束")
-                    startflag = 0                    
+                    startflag = 0                   
                     break
+            # 表字段结束                    
+            finallyCreateTableSql = createtablesql[:-2] + CREATETABLETAIL
+            print(finallyCreateTableSql, file=outfile)
+            print("表字段结束")
+            
             col = starttablecol+3
                             
 if __name__ == '__main__':
     varDict = readvarxlsx()
+    print(varDict)
     sqlfile = open('out.txt','w')
     generyCreateSql(varDict,sqlfile)
     sqlfile.close()
