@@ -20,7 +20,7 @@ USERNAMEATTR="user_name"
 PASSWORDATTR="password"
 DATABASEATTR="database"
 
-class XMLCFG:
+class XmlCfg:
     def __init__(self,xmlfilepath):
         self.xmlfilepath = xmlfilepath
         self.dbcfgdict={}
@@ -46,6 +46,7 @@ class XMLCFG:
             if ds.hasAttribute(LOGICNAMEATTR):
                 logicnamecfg = ds.getAttribute(LOGICNAMEATTR)
                 self.dbcfgdict[logicnamecfg]=dsdict
+        return self.dbcfgdict
         # print(self.dbcfgdict)
 
 
