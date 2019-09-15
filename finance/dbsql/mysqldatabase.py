@@ -6,7 +6,7 @@ from finance.dbsql.database import DataBase
 
 class MysqlDatabase(DataBase):
 
-    def getConnection(self):
+    def createConnection(self):
         msqlcon = ""
         ret = 0
         try:
@@ -47,6 +47,7 @@ class MysqlDatabase(DataBase):
         strexecsql = "select column_name,data_type from information_schema.columns where table_schema= database() and upper(table_name) = upper('%s') order by column_name" % tablename
         print(strexecsql)
         return super().execSelectSmallSql(strexecsql)
+
         
 ##if __name__ == '__main__':
 ##    dbcnt = MysqlDatabase("192.168.137.131","3306","root","root","hs_tabase")

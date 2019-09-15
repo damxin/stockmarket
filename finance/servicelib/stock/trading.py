@@ -7,30 +7,31 @@ Created on 2019/09/04
 '''
 
 import tushare as ts
-from sqlalchemy import create_engine
-from finance.dbsql import mysqldatabase
 
-def getAllBaseData(filedata):
+from finance.dbsql import mysqldatabase
+from finance.servicelib.processinit import dbcnt
+
+def getStockBasics(dbCntInfo,filedata):
     df = ts.get_stock_basics()
     basicdf = df.reset_index(drop=False)
-    # print(df)
-    # print("df finish")
-    # print(df.reset_index(drop=False))
-    # print(df.reset_index(drop=False), file=filedata)
-    # for index, row in df.iterrows():
-    #     print(index, file=filedata, end="")
-    #     print(row,file=filedata)
-    engine = create_engine('mysql+pymysql://root:root@127.0.0.1/stocknotdealmarket?charset=utf8')
-    basicdf.to_sql('stock_basics', engine, if_exists="replace", index=False)
+    tablename = 'stock_basics'
+    engine = dbCntInfo.getEngineByTableName(tablename)
+    basicdf.to_sql(tablename, engine, if_exists="replace", index=False)
     print("finish")
+'''
+    数据插入到表product_basic_info中
+'''
+def getProductBasicInfo(dbCntInfo):
+    dbCntInfo.getDbCnt()
 
-def getProductBasicInfo():
     mysqldbase = mysqldatabase.MysqlDatabase("127.0.0.1","3306","root","root","stockmarket")
     mysqldbase.getConnection()
     mysqldbase.closeDBConnect()
 
 if __name__ == "__main__":
     filedata = open(".\stock_basics.txt", 'w+')
-    # getAllBaseData(filedata)
+    xmlfile = "F:\\nfx\\Python\\stockmarket\\finance\\resource\\finance.xml"
+    dbCntInfo = dbcnt.DbCnt(xmlfile)
+    getAllBaseData(dbCntInfo,filedata)
     getProductBasicInfo()
     filedata.close()

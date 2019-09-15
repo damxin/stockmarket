@@ -5,7 +5,7 @@ from finance.dbsql.database import DataBase
 
 class OracleDatabase(DataBase):
     
-    def getConnection(self):
+    def createConnection(self):
         ##db = oracle.connect('scott/redhat@192.168.223.138:1521/oracle.test')
         ## conn = cx_Oracle.connect("用户名/密码@服务器地址/服务器名") 
         ret = 0

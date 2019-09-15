@@ -24,8 +24,9 @@ class XmlCfg:
     def __init__(self,xmlfilepath):
         self.xmlfilepath = xmlfilepath
         self.dbcfgdict={}
+        self.initDbinfoFromXmlFile()
 
-    def getDbInfoFromXmlFile(self):
+    def initDbinfoFromXmlFile(self):
         DOMTree = xml.dom.minidom.parse(self.xmlfilepath)
         collection = DOMTree.documentElement
         dss = collection.getElementsByTagName(DBDSTAG)
@@ -45,7 +46,9 @@ class XmlCfg:
                 dsdict[gc.DATABASEKEY] = ds.getAttribute(DATABASEATTR)
             if ds.hasAttribute(LOGICNAMEATTR):
                 logicnamecfg = ds.getAttribute(LOGICNAMEATTR)
-                self.dbcfgdict[logicnamecfg]=dsdict
+                self.dbcfgdict[logicnamecfg] = dsdict
+
+    def getDbInfoFromXmlFile(self):
         return self.dbcfgdict
         # print(self.dbcfgdict)
 

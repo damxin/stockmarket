@@ -37,3 +37,8 @@ class DataBase:
         results=self.curcursor.fetchall()        
         return results
         
+    def getConnectInfo(self):
+        return self.connection
+
+    def getcurcursorInfo(self):
+        return self.curcursor
