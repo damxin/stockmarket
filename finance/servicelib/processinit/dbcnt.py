@@ -35,12 +35,13 @@ class DbCnt:
                 self.dbCntdicts[logicNameKey] = oracledbase
 
     def getLogicNameListByTableName(self, tablename):
-        logicnamelist = []
         if sc.TABLEDICT.has_key(tablename) :
             logicnamelist = sc.TABLEDICT[tablename]
+            return logicnamelist
         else:
             print(tablename+" is not in dict! error!!")
-        return logicnamelist
+            raise RuntimeError(tablename + " is not in dict! error!!")
+        return
 
     def getEngineByTableName(self, tablename):
         if sc.TABLEDICT.has_key(tablename) :
@@ -55,7 +56,17 @@ class DbCnt:
                 elif logicvalue[gc.DBTYPEKEY] in gc.ORACLEDB:
                     print("oracle is not support engine! error!")
         print(tablename+" is not in tabledict! error!")
+        raise RuntimeError(tablename + " is not in tabledict! error!")
         return
+
+    def getDbBaseByLogicName(self, logicName):
+        if self.dbCntdicts.has_key(logicName) :
+            dbSqlBase = self.dbCntdicts[logicName]
+            return dbSqlBase
+        print(logicName+" do not exist in finance.xml! error!")
+        raise RuntimeError(logicName+" do not exist in finance.xml! error!")
+        return
+
 
 # if __name__ == '__main__':
 #     dbCnt = DbCnt("F:\\nfx\\Python\\stockmarket\\finance\\resource\\finance.xml")

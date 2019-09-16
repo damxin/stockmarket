@@ -29,8 +29,8 @@ class MysqlDatabase(DataBase):
     '''
     def execSelectManySql(self,strsql):
         pagestrsql = strsql + " limit "+self.fetchmanystartrow+","+ DataBase.ROWNUM
-        self.curcursor.execute(strsql)
-        results=self.curcursor.fetchmany(DataBase.ROWNUM)
+        self.curcursor.execute(pagestrsql)
+        results = self.curcursor.fetchmany(DataBase.ROWNUM)
         retrown = len(results)
         if retrown == 0 :
             self.fetchmanystartrow = 0
@@ -38,15 +38,15 @@ class MysqlDatabase(DataBase):
             self.fetchmanystartrow = self.fetchmanystartrow + retrown
         return results
         
-    def gettablecol(self, tablename):    
-        strexecsql = "select column_name from information_schema.columns where table_schema= database() and upper(table_name) = upper('%s') order by column_name" % tablename
-        print(strexecsql)
-        return super().execSelectSmallSql(strexecsql)
-        
-    def gettablecolandtype(self, tablename):    
-        strexecsql = "select column_name,data_type from information_schema.columns where table_schema= database() and upper(table_name) = upper('%s') order by column_name" % tablename
-        print(strexecsql)
-        return super().execSelectSmallSql(strexecsql)
+    # def gettablecol(self, tablename):
+    #     strexecsql = "select column_name from information_schema.columns where table_schema= database() and upper(table_name) = upper('%s') order by column_name" % tablename
+    #     print(strexecsql)
+    #     return super().execSelectSmallSql(strexecsql)
+    #
+    # def gettablecolandtype(self, tablename):
+    #     strexecsql = "select column_name,data_type from information_schema.columns where table_schema= database() and upper(table_name) = upper('%s') order by column_name" % tablename
+    #     print(strexecsql)
+    #     return super().execSelectSmallSql(strexecsql)
 
         
 ##if __name__ == '__main__':

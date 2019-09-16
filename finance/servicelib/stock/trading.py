@@ -10,6 +10,7 @@ import tushare as ts
 
 from finance.dbsql import mysqldatabase
 from finance.servicelib.processinit import dbcnt
+from finance.util import SqlCons as sc
 
 def getStockBasics(dbCntInfo,filedata):
     df = ts.get_stock_basics()
@@ -19,19 +20,30 @@ def getStockBasics(dbCntInfo,filedata):
     basicdf.to_sql(tablename, engine, if_exists="replace", index=False)
     print("finish")
 '''
-    数据插入到表product_basic_info中
+    数据插入到表productbasicinfo中
 '''
 def getProductBasicInfo(dbCntInfo):
-    dbCntInfo.getDbCnt()
+    sourceTable = "stock_basics"
+    destTable = "productbasicinfo"
 
-    mysqldbase = mysqldatabase.MysqlDatabase("127.0.0.1","3306","root","root","stockmarket")
-    mysqldbase.getConnection()
-    mysqldbase.closeDBConnect()
+    dbCntInfo.getDbCnt()
+    sourceLogicName = dbCntInfo.getLogicNameListByTableName(sourceTable)
+    destLogicName = dbCntInfo.getLogicNameListByTableName(destTable)
+    souceDbBase = dbCntInfo.getDbBaseByLogicName(sourceLogicName)
+    destDbBase = dbCntInfo.getDbBaseByLogicName(destLogicName)
+
+
+    sourceRet = souceDbBase.execSelectManySql(sc.PRODUCTBASICINFO_SQL)
+
+
+
+    souceDbBase.closeDBConnect()
+    destDbBase.closeDBConnect()
 
 if __name__ == "__main__":
     filedata = open(".\stock_basics.txt", 'w+')
     xmlfile = "F:\\nfx\\Python\\stockmarket\\finance\\resource\\finance.xml"
     dbCntInfo = dbcnt.DbCnt(xmlfile)
-    getAllBaseData(dbCntInfo,filedata)
+    getStockBasics(dbCntInfo,filedata)
     getProductBasicInfo()
     filedata.close()
