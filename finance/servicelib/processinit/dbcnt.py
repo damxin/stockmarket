@@ -20,10 +20,12 @@ class DbCnt:
         self.dbCfgInfoDicts = dbCfgInfoDicts
         self.dbCntdicts={}
 
-    def getDbCnt(self):
+    def getDbCnt(self, logicCntNameList):
         for logicNameKey,dbCfgInfoValue in self.dbCfgInfoDicts.items():
             print(logicNameKey)
             print(dbCfgInfoValue)
+            if logicNameKey not in logicCntNameList:
+                continue
             dbType = dbCfgInfoValue[gc.DBTYPEKEY]
             if dbType == gc.MYSQLDB:
                 msqldbase = mysqldatabase.MysqlDatabase(dbCfgInfoValue[gc.SERVERKEY], dbCfgInfoValue[gc.PORTKEY], dbCfgInfoValue[gc.USERNAMEKEY], dbCfgInfoValue[gc.PASSWORDKEY], dbCfgInfoValue[gc.DATABASEKEY])

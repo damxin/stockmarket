@@ -38,6 +38,14 @@ class MysqlDatabase(DataBase):
             self.fetchmanystartrow = self.fetchmanystartrow + retrown
         return results
         
+    '''
+        作用:sql语句执行插入语句,实现一次插入多条
+    '''
+    def execInsertManySql(self, strinsertsql, insertlist):
+        self.curcursor.executemany(strinsertsql, insertlist)
+        self.connection.commit()
+       
+       
     # def gettablecol(self, tablename):
     #     strexecsql = "select column_name from information_schema.columns where table_schema= database() and upper(table_name) = upper('%s') order by column_name" % tablename
     #     print(strexecsql)

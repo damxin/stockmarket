@@ -25,17 +25,20 @@ def getStockBasics(dbCntInfo,filedata):
 def getProductBasicInfo(dbCntInfo):
     sourceTable = "stock_basics"
     destTable = "productbasicinfo"
-
-    dbCntInfo.getDbCnt()
+    
     sourceLogicName = dbCntInfo.getLogicNameListByTableName(sourceTable)
     destLogicName = dbCntInfo.getLogicNameListByTableName(destTable)
+    logicCntNameList = [sourceLogicName,destLogicName]
+    dbCntInfo.getDbCnt(logicCntNameList)    
     souceDbBase = dbCntInfo.getDbBaseByLogicName(sourceLogicName)
     destDbBase = dbCntInfo.getDbBaseByLogicName(destLogicName)
 
-
-    sourceRet = souceDbBase.execSelectManySql(sc.PRODUCTBASICINFO_SQL)
-
-
+    while(true):
+        sourceRetList = souceDbBase.execSelectManySql(sc.PRODUCTBASICINFO_SQL)
+        if len(sourceRet) == 0:
+            break
+        // 数据插入到另外一个库里面
+        destDbBase.execInsertManySql(sc.PRODUCTBASICINFO_INSERTSQL,sourceRetList)
 
     souceDbBase.closeDBConnect()
     destDbBase.closeDBConnect()

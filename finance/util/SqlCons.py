@@ -17,3 +17,9 @@ PRODUCTBASICINFO_SQL="SELECT DISTINCT a.code product_code, a.name product_name, 
        a.name product_fullname, LEFT(a.code,3) codeprethree, NULL exchange_code, \
        'L' ipo_status,a.timeToMarket listed_date, 0 delisted_date \
   FROM stock_basics a"
+
+PRODUCTBASICINFO_INSERTSQL="insert into productbasicinfo(product_code,product_name,product_type, \
+money_type, product_area, product_industry, \
+product_fullname, codeprethree, exchange_code, \
+ipo_status,listed_date,delisted_date) values ( %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %d, %d)"
+
