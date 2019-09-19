@@ -23,3 +23,6 @@ money_type, product_area, product_industry, \
 product_fullname, codeprethree, exchange_code, \
 ipo_status,listed_date,delisted_date) values ( %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %d, %d)"
 
+COMPANYBALANCESHEET_SQL=""
+COMPANYBALANCESHEET_INSERTSQL=""
+
