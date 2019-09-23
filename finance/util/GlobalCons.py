@@ -18,3 +18,5 @@ DATABASEKEY="database"
 # 数据库类型
 MYSQLDB = "mysql"
 ORACLEDB = "oracle"
+
+CONST_STR_STAR = "*"
