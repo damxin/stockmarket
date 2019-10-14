@@ -489,4 +489,30 @@ DELIMITER $$
 DELIMITER; 
 CALL sp_db_mysql(); 
 DROP PROCEDURE IF EXISTS sp_db_mysql;
+
+DROP PROCEDURE IF EXISTS sp_db_mysql; 
+DELIMITER $$ 
+    CREATE PROCEDURE sp_db_mysql() 
+        BEGIN 
+            DECLARE v_rowcount INT; 
+            DECLARE database_name VARCHAR(100); 
+            SELECT DATABASE() INTO database_name; 
+            SELECT COUNT(1) INTO v_rowcount FROM information_schema.tables WHERE table_schema= database_name AND table_name='producttradedata'; 
+            IF v_rowcount = 0 THEN 
+                create table producttradedata
+                (
+                  product_code varchar(10),
+                  trade_date int(8),
+                  open_price decimal(12,2),
+                  high_price decimal(12,2),
+                  close_price decimal(12,2),
+                  low_price decimal(12,2),
+                  product_volume decimal(12,2),
+                  product_amount decimal(12,2)
+                );
+            END IF; 
+    END$$ 
+DELIMITER; 
+CALL sp_db_mysql(); 
+DROP PROCEDURE IF EXISTS sp_db_mysql;
  

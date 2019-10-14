@@ -26,3 +26,12 @@ ipo_status,listed_date,delisted_date) values ( %s, %s, %s, %s, %s, %s, %s, %s, %
 COMPANYBALANCESHEET_SQL=""
 COMPANYBALANCESHEET_INSERTSQL=""
 
+PRODUCTMAXTRADEDATE_SQL=" select ifnull(max(trade_date),0) from %s "
+
+PRODUCTHISTTRADEDATA_SQL=" select %s product_code,date trade_date, open open_price,high high_price, close close_price,\
+low low_price, volume product_volume,amount product_amount from histtradedata "
+
+PRODUCTTRADEDATA_INSERTSQL="insert into producttradedata(product_code,trade_date,open_price, \
+high_price, close_price, low_price, \
+product_volume, product_amount) values ( %s, %d, %f, %f, %f, %f, %f, %f)"
+
