@@ -4,6 +4,7 @@ import pymysql as mysql
 
 from finance.dbsql.database import DataBase
 
+
 class MysqlDatabase(DataBase):
 
     def createConnection(self):
@@ -11,41 +12,42 @@ class MysqlDatabase(DataBase):
         ret = 0
         try:
             msqlcon = mysql.connect(host=self.ipaddr,
-                                 user=self.dbuser,
-                                 password=self.dbpasswd,
-                                 db=self.databasename,
-                                 port=int(self.dbport),
-                                 charset='gbk')
+                                    user=self.dbuser,
+                                    password=self.dbpasswd,
+                                    db=self.databasename,
+                                    port=int(self.dbport),
+                                    charset='gbk')
             self.curcursor = msqlcon.cursor(cursor=mysql.cursors.DictCursor)
-#            self.curcursor = msqlcon.cursor()
+            #            self.curcursor = msqlcon.cursor()
             self.connection = msqlcon
         except Exception as e:
             ret = 1
             print(e)
         return ret
-        
+
     '''
         作用:sql语句执行查询语句,实现分页查询
     '''
-    def execSelectManySql(self,strsql):
-        pagestrsql = strsql + " limit "+self.fetchmanystartrow+","+ DataBase.ROWNUM
+
+    def execSelectManySql(self, strsql):
+        pagestrsql = strsql + " limit " + str(self.fetchmanystartrow) + "," + str(DataBase.ROWNUM)
         self.curcursor.execute(pagestrsql)
         results = self.curcursor.fetchmany(DataBase.ROWNUM)
         retrown = len(results)
-        if retrown == 0 :
+        if retrown == 0:
             self.fetchmanystartrow = 0
-        else :
+        else:
             self.fetchmanystartrow = self.fetchmanystartrow + retrown
         return results
-        
+
     '''
         作用:sql语句执行插入语句,实现一次插入多条
     '''
+
     def execInsertManySql(self, strinsertsql, insertlist):
         self.curcursor.executemany(strinsertsql, insertlist)
         self.connection.commit()
-       
-       
+
     # def gettablecol(self, tablename):
     #     strexecsql = "select column_name from information_schema.columns where table_schema= database() and upper(table_name) = upper('%s') order by column_name" % tablename
     #     print(strexecsql)
@@ -56,7 +58,6 @@ class MysqlDatabase(DataBase):
     #     print(strexecsql)
     #     return super().execSelectSmallSql(strexecsql)
 
-        
 ##if __name__ == '__main__':
 ##    dbcnt = MysqlDatabase("192.168.137.131","3306","root","root","hs_tabase")
 ##    dbcnt.getConnection()

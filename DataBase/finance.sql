@@ -508,7 +508,8 @@ DELIMITER $$
                   close_price decimal(12,2),
                   low_price decimal(12,2),
                   product_volume decimal(12,2),
-                  product_amount decimal(12,2)
+                  product_amount decimal(12,2),
+                  primary key (product_code, trade_date)
                 );
             END IF; 
     END$$ 

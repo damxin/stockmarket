@@ -11,19 +11,20 @@ import xml.dom.minidom
 
 from finance.util import GlobalCons as gc
 
-DBDSTAG="ds"
-LOGICNAMEATTR="logic_name"
-DBTYPEATTR="db_type"
-SERVERATTR="server"
-PORTATTR="port"
-USERNAMEATTR="user_name"
-PASSWORDATTR="password"
-DATABASEATTR="database"
+DBDSTAG = "ds"
+LOGICNAMEATTR = "logic_name"
+DBTYPEATTR = "db_type"
+SERVERATTR = "server"
+PORTATTR = "port"
+USERNAMEATTR = "user_name"
+PASSWORDATTR = "password"
+DATABASEATTR = "database"
+
 
 class XmlCfg:
-    def __init__(self,xmlfilepath):
+    def __init__(self, xmlfilepath):
         self.xmlfilepath = xmlfilepath
-        self.dbcfgdict={}
+        self.dbcfgdict = {}
         self.initDbinfoFromXmlFile()
 
     def initDbinfoFromXmlFile(self):
@@ -51,8 +52,6 @@ class XmlCfg:
     def getDbInfoFromXmlFile(self):
         return self.dbcfgdict
         # print(self.dbcfgdict)
-
-
 
 # if __name__ == '__main__':
 #     dbcfg = XMLCFG("F:\\nfx\\Python\\stockmarket\\finance\\resource\\finance.xml")

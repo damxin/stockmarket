@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <dss>
   <ds logic_name="tmpbase"  db_type="mysql" server="127.0.0.1" port="3306" user_name="root" password="root" database="stocknotdealmarket"/>
-  <ds logic_name="dbbase"  db_type="mysql" server="127.0.0.1" port="3306" user_name="root" password="root" database="stockbase"/>
-  <ds logic_name="trade1"  db_type="mysql" server="127.0.0.1" port="3306" user_name="root" password="root" database="stockbase"/>
-  <ds logic_name="trade2"  db_type="mysql" server="127.0.0.1" port="3306" user_name="root" password="root" database="stocktrade1"/>
-  <ds logic_name="trade3"  db_type="mysql" server="127.0.0.1" port="3306" user_name="root" password="root" database="stocktrade2"/>
+  <ds logic_name="dbbase"  db_type="mysql" server="127.0.0.1" port="3306" user_name="root" password="root" database="stockmarket"/>
+  <ds logic_name="trade1"  db_type="mysql" server="127.0.0.1" port="3306" user_name="root" password="root" database="stockmarket"/>
+ <!-- <ds logic_name="trade2"  db_type="mysql" server="127.0.0.1" port="3306" user_name="root" password="root" database="stocktrade1"/>
+  <ds logic_name="trade3"  db_type="mysql" server="127.0.0.1" port="3306" user_name="root" password="root" database="stocktrade2"/> -->
 </dss>

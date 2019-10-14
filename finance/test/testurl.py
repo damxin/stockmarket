@@ -8,6 +8,7 @@ Created on 2019/09/13
 from selenium import webdriver  # 导入Selenium的webdriver
 from selenium.webdriver.common.keys import Keys  # 导入Keys
 
+
 def save_img(self, url, file_name):  ##保存图片
     print('开始请求图片地址，过程会有点长...')
     img = self.request(url)
@@ -17,9 +18,11 @@ def save_img(self, url, file_name):  ##保存图片
     print(file_name, '图片保存成功！')
     f.close()
 
+
 def request(self, url):  # 封装的requests 请求
     r = requests.get(url)  # 像目标url地址发送get请求，返回一个response对象。有没有headers参数都可以。
     return r
+
 
 def mkdir(self, path):  ##这个函数创建文件夹
     path = path.strip()
@@ -33,9 +36,11 @@ def mkdir(self, path):  ##这个函数创建文件夹
         print(path, '文件夹已经存在了，不再创建')
         return False
 
-def get_files(self, path): #获取文件夹中的文件名称列表
+
+def get_files(self, path):  # 获取文件夹中的文件名称列表
     pic_names = os.listdir(path)
     return pic_names
+
 
 if __name__ == "__main__":
     driver = webdriver.Chrome()

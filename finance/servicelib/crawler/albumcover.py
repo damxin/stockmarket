@@ -12,11 +12,12 @@ from bs4 import BeautifulSoup
 import requests
 import os
 
+
 class AlbumCover():
 
     def __init__(self):
-        self.init_url = "https://music.163.com/#/artist/album?id=101988&limit=120&offset=0" #请求网址
-        self.folder_path = "F:\\nfx\Python\\testcrawler\pic" #想要存放的文件目录
+        self.init_url = "https://music.163.com/#/artist/album?id=101988&limit=120&offset=0"  # 请求网址
+        self.folder_path = "F:\\nfx\Python\\testcrawler\pic"  # 想要存放的文件目录
 
     def save_img(self, url, file_name):  ##保存图片
         print('开始请求图片地址，过程会有点长...')
@@ -64,10 +65,10 @@ class AlbumCover():
         chrome_options = Options()
         chrome_options.add_argument('--headless')
         chrome_options.add_argument('--disable-gpu')
-        driver = webdriver.Chrome(chrome_options=chrome_options) # headless访问
+        driver = webdriver.Chrome(chrome_options=chrome_options)  # headless访问
         driver.implicitly_wait(10)  # 等待十秒加载不出来就会抛出异常，10秒内加载出来正常返回
         driver.get(self.init_url)
-        driver.switch_to.frame("g_iframe") # 切换到g_iframe框架
+        driver.switch_to.frame("g_iframe")  # 切换到g_iframe框架
         html = driver.page_source
         driver.close()
 
@@ -95,6 +96,7 @@ class AlbumCover():
             else:
                 self.save_img(album_img_url, photo_name)
         print("图片下载结束")
+
 
 if __name__ == "__main__":
     # https://www.cnblogs.com/Albert-Lee/p/6276847.html

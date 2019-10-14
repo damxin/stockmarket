@@ -2,27 +2,29 @@
 
 class DataBase:
     ROWNUM = 10
-    def __init__(self,serverip,serverport,username,passwd,databasename):
+
+    def __init__(self, serverip, serverport, username, passwd, databasename):
         self.ipaddr = serverip
         self.dbport = serverport
-        self.dbuser= username
+        self.dbuser = username
         self.dbpasswd = passwd
         self.databasename = databasename
         self.fetchmanystartrow = 0
-        
 
     '''
     作用:关闭数据库连接，与getMysqlConnect成对使用
     '''
+
     def closeDBConnect(self):
         self.curcursor.close()
         self.connection.close()
-        
+
     '''
         一次性插入较多数据量
     '''
+
     def execInsertMany(self, insert_sql, datalist):
-        try :
+        try:
             self.curcursor.executemany(insert_sql, datalist)  # 注意，第一个参数是None
             self.connection.commit()  # 提交
         except Exception as e:
@@ -32,11 +34,12 @@ class DataBase:
     '''
         作用:sql语句执行查询语句,查询小数据量
     '''
-    def execSelectSmallSql(self,strsql):
+
+    def execSelectSmallSql(self, strsql):
         self.curcursor.execute(strsql)
-        results=self.curcursor.fetchall()        
+        results = self.curcursor.fetchall()
         return results
-        
+
     def getConnectInfo(self):
         return self.connection
 

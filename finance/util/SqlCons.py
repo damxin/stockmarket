@@ -10,28 +10,30 @@ Created on 2019/09/04
 LOGICNAME_TMPBASE = "tmpbase"
 LOGICNAME_DBBASE = "dbbase"
 LOGICNAME_TRADE = "traden"
-TABLEDICT={"stock_basics":[LOGICNAME_TMPBASE],}
+TABLEDICT = {"stock_basics": LOGICNAME_TMPBASE,
+             "productbasicinfo": LOGICNAME_DBBASE,
+             "histtradedata": LOGICNAME_TMPBASE,
+             "producttradedata": LOGICNAME_TRADE}
 
-PRODUCTBASICINFO_SQL="SELECT DISTINCT a.code product_code, a.name product_name, '1' product_type, \
+PRODUCTBASICINFO_SQL = "SELECT DISTINCT a.code product_code, a.name product_name, '1' product_type, \
        '1' money_type, a.area product_area, a.industry product_industry, \
-       a.name product_fullname, LEFT(a.code,3) codeprethree, NULL exchange_code, \
+       a.name product_fullname, LEFT(a.code,3) codeprethree, '0' exchange_code, \
        'L' ipo_status,a.timeToMarket listed_date, 0 delisted_date \
   FROM stock_basics a"
 
-PRODUCTBASICINFO_INSERTSQL="insert into productbasicinfo(product_code,product_name,product_type, \
+PRODUCTBASICINFO_INSERTSQL = "insert into productbasicinfo(product_code,product_name,product_type, \
 money_type, product_area, product_industry, \
 product_fullname, codeprethree, exchange_code, \
 ipo_status,listed_date,delisted_date) values ( %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %d, %d)"
 
-COMPANYBALANCESHEET_SQL=""
-COMPANYBALANCESHEET_INSERTSQL=""
+COMPANYBALANCESHEET_SQL = ""
+COMPANYBALANCESHEET_INSERTSQL = ""
 
-PRODUCTMAXTRADEDATE_SQL=" select ifnull(max(trade_date),0) from %s "
+PRODUCTMAXTRADEDATE_SQL = " select ifnull(max(trade_date),0) from %s "
 
-PRODUCTHISTTRADEDATA_SQL=" select %s product_code,date trade_date, open open_price,high high_price, close close_price,\
+PRODUCTHISTTRADEDATA_SQL = " select %s product_code,date trade_date, open open_price,high high_price, close close_price,\
 low low_price, volume product_volume,amount product_amount from histtradedata "
 
-PRODUCTTRADEDATA_INSERTSQL="insert into producttradedata(product_code,trade_date,open_price, \
+PRODUCTTRADEDATA_INSERTSQL = "insert into producttradedata(product_code,trade_date,open_price, \
 high_price, close_price, low_price, \
 product_volume, product_amount) values ( %s, %d, %f, %f, %f, %f, %f, %f)"
-
