@@ -12,6 +12,7 @@ Created on 2019/09/04
 
 from finance.servicelib.processinit import dbcnt
 from finance.util import SqlCons as sc
+from finance.util import GlobalCons as gc
 import pandas as pd
 
 def getAllProductBasicInfo(dbCntInfo):
@@ -29,3 +30,29 @@ def getAllProductBasicInfo(dbCntInfo):
 
     tableDbBase.closeDBConnect()
     return pd.DataFrame(tableRetTuple)
+
+'''
+    20190102格式化为2019-01-02
+'''
+def dateSpecailFormat(intDateFormat):
+    if intDateFormat < 10000000:
+        print("date format is exception!", end="")
+        print(intDateFormat)
+        raise Exception("date format is exception!")
+    strDate = ""
+    strDate = strDate + intDateFormat/10000 + "-"
+    strDate = strDate + intDateFormat/100%100 + "-"
+    strDate = strDate + intDateFormat%100
+    return strDate
+
+'''
+    生成symbol代码标志
+'''
+def code_to_symbol(code):
+    if code in gc.INDEX_LABELS:
+        return gc.INDEX_LIST[code]
+    else:
+        if len(code) != 6 :
+            return code
+        else:
+            return '%s.sh'%code if code[:1] in ['5', '6', '9'] or code[:2] in ['11', '13'] else '%s.sz'%code
