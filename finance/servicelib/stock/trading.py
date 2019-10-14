@@ -7,6 +7,7 @@ Created on 2019/09/04
 '''
 
 import tushare as ts
+import time
 
 from finance.dbsql import mysqldatabase
 from finance.servicelib.processinit import dbcnt
@@ -30,7 +31,7 @@ def getProductBasicInfo(dbCntInfo):
     sourceLogicName = dbCntInfo.getLogicNameListByTableName(sourceTable)
     destLogicName = dbCntInfo.getLogicNameListByTableName(destTable)
     logicCntNameList = [sourceLogicName,destLogicName]
-    dbCntInfo.getDbCnt(logicCntNameList)    
+    dbCntInfo.getDbCnt(logicCntNameList)
     souceDbBase = dbCntInfo.getDbBaseByLogicName(sourceLogicName)
     destDbBase = dbCntInfo.getDbBaseByLogicName(destLogicName)
 
@@ -59,6 +60,49 @@ def getSpecialCompanyBalanceSheet(product_code):
 '''
 def getCompanyBalanceSheet(product_code):
     if product_code in gc.CONST_STR_STAR:
+    
+'''
+    获取产品的不复权每日交易数据 Product_trade_data
+    autoType=qfq-前复权 hfq-后复权 None-不复权
+'''
+def getAllNoneSubscriptionTradePrice(dbCntInfo, autoType=None):
+    # 获取作日日期
+    finanalWorkDate = 20191013
+    # 获取产品基础信息
+    productBasicInfodf = getAllProductBasicInfo(dbCntInfo)
+    
+    nrow = productBasicInfodf.nrow
+    for rowIndex in range(0,nrow):
+        oneProductTuple = productBasicInfodf.iloc[rowIndex]
+        productCode = oneProductTuple["product_code"] ## 产品代码
+        listedDate = oneProductTuple["listed_date"] ## 上市日期
+        # 获取产品的起始日期
+        
+        startDate = listedDate
+        endDate = startDate/10000*10000+1231
+        if listedDate/10000 == finanalWorkDate/10000:
+            endDate = finanalWorkDate
+        strStartDate = dateSpecailFormat(startDate)
+        strEndDate = dateSpecailFormat(endDate)
+        df = ts.get_h_data(productCode, start=strStartDate, end=strEndDate,autype=None)
+        basicdf = df.reset_index(drop=False)
+        tablename = "hdata_" + productCode
+        engine = dbCntInfo.getEngineByTableName(tablename)
+        basicdf.to_sql(tablename, engine, if_exists="replace", index=False)
+        if endDate != finanalWorkDate:
+            while endDate < finanalWorkDate:
+                startDate = (startDate/10000+1)*10000+101
+                endDate = (endDate/10000+1)*10000+1231
+                if startDate > finanalWorkDate:
+                    break
+                if endDate > finanalWorkDate:
+                    endDate = finanalWorkDate:
+                strStartDate = dateSpecailFormat(startDate)
+                strEndDate = dateSpecailFormat(endDate)
+                df = ts.get_h_data(productCode, start=strStartDate, end=strEndDate,autype=None)
+                basicdf = df.reset_index(drop=False)
+                basicdf.to_sql(tablename, engine, if_exists="append", index=False)
+
 
 
 
