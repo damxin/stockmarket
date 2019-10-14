@@ -66,10 +66,19 @@ def getCompanyBalanceSheet(product_code):
     autoType=qfq-前复权 hfq-后复权 None-不复权
 '''
 def getAllNoneSubscriptionTradePrice(dbCntInfo, autoType=None):
-    # 获取作日日期
+    # 获取当日日期
     finanalWorkDate = 20191013
+    sourceTable = "histtradedata"
+    destTable = "producttradedata"
+    sourceLogicName = dbCntInfo.getLogicNameListByTableName(sourceTable)
+    destLogicName = dbCntInfo.getLogicNameListByTableName(destTable)
+    logicCntNameList = [sourceLogicName,destLogicName]
+    dbCntInfo.getDbCnt(logicCntNameList)
+    sourceDbBase = dbCntInfo.getDbBaseByLogicName(destLogicName)
+    destDbBase = dbCntInfo.getDbBaseByLogicName(destLogicName)
+    
     # 获取产品基础信息
-    productBasicInfodf = getAllProductBasicInfo(dbCntInfo)
+    productBasicInfodf = getAllProductBasicInfo(dbCntInfo)   
     
     nrow = productBasicInfodf.nrow
     for rowIndex in range(0,nrow):
@@ -77,8 +86,12 @@ def getAllNoneSubscriptionTradePrice(dbCntInfo, autoType=None):
         productCode = oneProductTuple["product_code"] ## 产品代码
         listedDate = oneProductTuple["listed_date"] ## 上市日期
         # 获取产品的起始日期
-        
+        maxTradeDateSql = sc.PRODUCTMAXTRADEDATE_SQL % productCode
+        destRetList = destDbBase.execSelectManySql(maxTradeDateSql)
+        maxTradeDate = destRetList[0]
         startDate = listedDate
+        if maxTradeDate > listedDate:
+            startDate = maxTradeDate
         endDate = startDate/10000*10000+1231
         if listedDate/10000 == finanalWorkDate/10000:
             endDate = finanalWorkDate
@@ -86,23 +99,30 @@ def getAllNoneSubscriptionTradePrice(dbCntInfo, autoType=None):
         strEndDate = dateSpecailFormat(endDate)
         df = ts.get_h_data(productCode, start=strStartDate, end=strEndDate,autype=None)
         basicdf = df.reset_index(drop=False)
-        tablename = "hdata_" + productCode
-        engine = dbCntInfo.getEngineByTableName(tablename)
-        basicdf.to_sql(tablename, engine, if_exists="replace", index=False)
-        if endDate != finanalWorkDate:
-            while endDate < finanalWorkDate:
-                startDate = (startDate/10000+1)*10000+101
-                endDate = (endDate/10000+1)*10000+1231
-                if startDate > finanalWorkDate:
-                    break
-                if endDate > finanalWorkDate:
-                    endDate = finanalWorkDate:
-                strStartDate = dateSpecailFormat(startDate)
-                strEndDate = dateSpecailFormat(endDate)
-                df = ts.get_h_data(productCode, start=strStartDate, end=strEndDate,autype=None)
-                basicdf = df.reset_index(drop=False)
-                basicdf.to_sql(tablename, engine, if_exists="append", index=False)
-
+        
+        engine = dbCntInfo.getEngineByTableName(sourceTable)
+        basicdf.to_sql(sourceTable, engine, if_exists="replace", index=False)
+        while endDate < finanalWorkDate:
+            startDate = (startDate/10000+1)*10000+101
+            endDate = (endDate/10000+1)*10000+1231
+            if startDate > finanalWorkDate:
+                break
+            if endDate > finanalWorkDate:
+                endDate = finanalWorkDate:
+            strStartDate = dateSpecailFormat(startDate)
+            strEndDate = dateSpecailFormat(endDate)
+            df = ts.get_h_data(productCode, start=strStartDate, end=strEndDate,autype=None)
+            basicdf = df.reset_index(drop=False)
+            basicdf.to_sql(sourceTable, engine, if_exists="append", index=False)
+        while(True):
+            sourceRetList = souceDbBase.execSelectManySql(sc.PRODUCTHISTTRADEDATA_SQL)
+            if len(sourceRetList) == 0:
+                break
+            # 数据插入到另外一个库里面
+            destDbBase.execInsertManySql(sc.PRODUCTBASICINFO_INSERTSQL,sourceRetList)
+    
+    souceDbBase.closeDBConnect()
+    destDbBase.closeDBConnect()
 
 
 
