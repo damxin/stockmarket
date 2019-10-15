@@ -26,6 +26,12 @@ money_type, product_area, product_industry, \
 product_fullname, market_type, exchange_code, \
 ipo_status,listed_date,delisted_date) values ( %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
 
+PRODUCTBASICINFO_GETSQL = "SELECT product_code, product_name, product_type, \
+       money_type, product_area, product_industry, \
+       product_fullname, market_type, exchange_code, \
+       ipo_status,listed_date, delisted_date \
+  FROM productbasicinfo"
+
 COMPANYBALANCESHEET_SQL = ""
 COMPANYBALANCESHEET_INSERTSQL = ""
 

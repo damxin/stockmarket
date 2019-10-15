@@ -14,7 +14,7 @@ from finance.servicelib.processinit import dbcnt
 from finance.util import SqlCons as sc
 from finance.util import GlobalCons as gc
 from finance.util import DictCons as dc
-from finance.servicelib import public as pb
+from finance.servicelib.public import public as pb
 
 
 def getStockBasics(dbCntInfo, filedata):
@@ -88,6 +88,9 @@ def getCompanyBalanceSheet(product_code):
 
 
 def getAllNoneSubscriptionTradePriceFromTushare(dbCntInfo, autoType=None):
+    # 获取产品基础信息
+    productBasicInfodf = pb.getAllProductBasicInfo(dbCntInfo)
+
     # 获取当日日期
     finanalWorkDate = 20191013
     sourceTable = "histtradedata"
@@ -98,9 +101,6 @@ def getAllNoneSubscriptionTradePriceFromTushare(dbCntInfo, autoType=None):
     dbCntInfo.getDbCnt(logicCntNameList)
     sourceDbBase = dbCntInfo.getDbBaseByLogicName(destLogicName)
     destDbBase = dbCntInfo.getDbBaseByLogicName(destLogicName)
-
-    # 获取产品基础信息
-    productBasicInfodf = pb.getAllProductBasicInfo(dbCntInfo)
 
     nrow = productBasicInfodf.nrow
     for rowIndex in range(0, nrow):
@@ -156,6 +156,10 @@ def getAllNoneSubscriptionTradePriceFromTushare(dbCntInfo, autoType=None):
 
 
 def getAllNoneSubscriptionTradePriceFromTusharePro(dbCntInfo, autoType=None):
+
+    # 获取产品基础信息
+    productBasicInfodf = pb.getAllProductBasicInfo(dbCntInfo)
+
     # 获取当日日期
     finanalWorkDate = 20191013
     sourceTable = "histtradedata"
@@ -167,8 +171,7 @@ def getAllNoneSubscriptionTradePriceFromTusharePro(dbCntInfo, autoType=None):
     sourceDbBase = dbCntInfo.getDbBaseByLogicName(destLogicName)
     destDbBase = dbCntInfo.getDbBaseByLogicName(destLogicName)
 
-    # 获取产品基础信息
-    productBasicInfodf = pb.getAllProductBasicInfo(dbCntInfo)
+
 
     # 建立连接与tusharepro
     pro = ts.pro_api('00f0c017db5d284d992f78f0971c73c9ecba4aa03dee2f38e71e4d9c')
@@ -181,7 +184,7 @@ def getAllNoneSubscriptionTradePriceFromTusharePro(dbCntInfo, autoType=None):
         listedDate = oneProductTuple["listed_date"]  ## 上市日期
         # 获取产品的起始日期
         maxTradeDateSql = sc.PRODUCTMAXTRADEDATE_SQL % productCode
-        destRetList = destDbBase.execSelectManySql(maxTradeDateSql)
+        destRetList = destDbBase.execSelectSmallSql(maxTradeDateSql)
         maxTradeDate = destRetList[0]
         startDate = listedDate
         if maxTradeDate > listedDate:
@@ -208,12 +211,15 @@ def getAllNoneSubscriptionTradePriceFromTusharePro(dbCntInfo, autoType=None):
             df = ts.get_h_data(productCode, start=strStartDate, end=strEndDate, autype=None)
             basicdf = df.reset_index(drop=False)
             basicdf.to_sql(sourceTable, engine, if_exists="append", index=False)
+            break
         while (True):
             sourceRetList = sourceDbBase.execSelectManySql(sc.PRODUCTHISTTRADEDATA_SQL)
             if len(sourceRetList) == 0:
                 break
             # 数据插入到另外一个库里面
             destDbBase.execInsertManySql(sc.PRODUCTBASICINFO_INSERTSQL, sourceRetList)
+            break
+        break
 
     sourceDbBase.closeDBConnect()
     destDbBase.closeDBConnect()
@@ -221,8 +227,9 @@ def getAllNoneSubscriptionTradePriceFromTusharePro(dbCntInfo, autoType=None):
 
 if __name__ == "__main__":
     filedata = open(".\stock_basics.txt", 'w+')
-    xmlfile = "E:\\pydevproj\\stockmarket\\finance\\resource\\finance.xml"
+#    xmlfile = "E:\\pydevproj\\stockmarket\\finance\\resource\\finance.xml"
+    xmlfile = "F:\\nfx\\Python\\stockmarket\\finance\\resource\\finance.xml"
     dbCntInfo = dbcnt.DbCnt(xmlfile)
-    getProductBasicInfo(dbCntInfo)
-    # getAllNoneSubscriptionTradePriceFromTusharePro(dbCntInfo)
+    # getProductBasicInfo(dbCntInfo)
+    getAllNoneSubscriptionTradePriceFromTusharePro(dbCntInfo)
     filedata.close()
