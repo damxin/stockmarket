@@ -27,6 +27,7 @@ class MysqlDatabase(DataBase):
 
     '''
         作用:sql语句执行查询语句,实现分页查询
+        fetchmany返回的是list(dict)
     '''
 
     def execSelectManySql(self, strsql):
@@ -42,6 +43,7 @@ class MysqlDatabase(DataBase):
 
     '''
         作用:sql语句执行插入语句,实现一次插入多条
+        insertlist必须是list(list)或者list(tuple)
     '''
 
     def execInsertManySql(self, strinsertsql, insertlist):

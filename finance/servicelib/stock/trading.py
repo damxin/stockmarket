@@ -13,6 +13,7 @@ from finance.dbsql import mysqldatabase
 from finance.servicelib.processinit import dbcnt
 from finance.util import SqlCons as sc
 from finance.util import GlobalCons as gc
+from finance.util import DictCons as dc
 from finance.servicelib import public as pb
 
 
@@ -44,8 +45,15 @@ def getProductBasicInfo(dbCntInfo):
         if len(sourceRetList) == 0:
             break
         # 数据插入到另外一个库里面
-        print(sourceRetList)
-        destDbBase.execInsertManySql(sc.PRODUCTBASICINFO_INSERTSQL, sourceRetList)
+        sourceList = []
+        for oneList in sourceRetList:
+            print(oneList)
+            oneList['market_type'] = dc.DICTCONS_CODETOMARKETTYPE[oneList['market_type']]
+            sourceList.append(tuple(oneList.values()))
+        # print(type(sourceList))
+        # print(type(sourceList[0]))
+        # print(sourceList)
+        destDbBase.execInsertManySql(sc.PRODUCTBASICINFO_INSERTSQL, sourceList)
 
     souceDbBase.closeDBConnect()
     destDbBase.closeDBConnect()
@@ -133,6 +141,8 @@ def getAllNoneSubscriptionTradePriceFromTushare(dbCntInfo, autoType=None):
             if len(sourceRetList) == 0:
                 break
             # 数据插入到另外一个库里面
+            print(type(sourceRetList))
+            print(sourceRetList)
             destDbBase.execInsertManySql(sc.PRODUCTBASICINFO_INSERTSQL, sourceRetList)
 
     sourceDbBase.closeDBConnect()
@@ -211,7 +221,7 @@ def getAllNoneSubscriptionTradePriceFromTusharePro(dbCntInfo, autoType=None):
 
 if __name__ == "__main__":
     filedata = open(".\stock_basics.txt", 'w+')
-    xmlfile = "F:\\nfx\\Python\\stockmarket\\finance\\resource\\finance.xml"
+    xmlfile = "E:\\pydevproj\\stockmarket\\finance\\resource\\finance.xml"
     dbCntInfo = dbcnt.DbCnt(xmlfile)
     getProductBasicInfo(dbCntInfo)
     # getAllNoneSubscriptionTradePriceFromTusharePro(dbCntInfo)
