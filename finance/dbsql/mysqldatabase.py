@@ -47,6 +47,11 @@ class MysqlDatabase(DataBase):
     '''
 
     def execInsertManySql(self, strinsertsql, insertlist):
+        if isinstance(insertlist, list) is False or \
+                isinstance(insertlist[0], (tuple, list)) is False:
+            print(type(insertlist))
+            print(type(insertlist[0]))
+            raise RuntimeError("insertlist type is wrong!" )
         self.curcursor.executemany(strinsertsql, insertlist)
         self.connection.commit()
 
