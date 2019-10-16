@@ -17,6 +17,11 @@ import pandas as pd
 
 
 def getAllProductBasicInfo(dbCntInfo):
+    '''
+    返回所有的产品的基本信息，默认只返回依然上市的产品，退市的不返回
+    :param dbCntInfo:
+    :return:
+    '''
     tablename = "productbasicinfo"
     tableLogicName = dbCntInfo.getLogicNameListByTableName(tablename)
     logicCntNameList = [tableLogicName]

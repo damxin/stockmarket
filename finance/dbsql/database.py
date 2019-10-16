@@ -1,7 +1,7 @@
 # -*- coding:utf-8 -*-
 
 class DataBase:
-    ROWNUM = 10
+    ROWNUM = 100
 
     def __init__(self, serverip, serverport, username, passwd, databasename):
         self.ipaddr = serverip

@@ -33,12 +33,13 @@ PRODUCTBASICINFO_GETSQL = "SELECT product_code, product_name, product_type, \
        money_type, product_area, product_industry, \
        product_fullname, market_type, exchange_code, \
        ipo_status,listed_date, delisted_date \
-  FROM productbasicinfo"
+  FROM productbasicinfo \
+ where ipo_status = 'N' "
 
 COMPANYBALANCESHEET_SQL = ""
 COMPANYBALANCESHEET_INSERTSQL = ""
 
-PRODUCTMAXTRADEDATE_SQL = " select ifnull(max(trade_date),0) maxtradedate from %s "
+PRODUCTMAXTRADEDATE_SQL = " select ifnull(max(trade_date),0) maxtradedate from %s where product_code = '%s' "
 ## 从tusharep中获取数据
 PRODUCTHISTTRADEDATATUSHARE_SQL = " select %s product_code,a.date trade_date, a.open open_price,high high_price, close close_price,\
 low low_price, volume product_volume,amount product_amount from histtradedata a "
