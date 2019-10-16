@@ -44,8 +44,14 @@ class DbCnt:
 
     def getLogicNameListByTableName(self, tablename):
         if tablename in sc.TABLEDICT:
-            logicnamelist = sc.TABLEDICT[tablename]
-            return logicnamelist
+            logicname = sc.TABLEDICT[tablename]
+            ## 暂时默认都在trade1
+            if logicname[:-1] in "trade":
+                reallogicname = logicname[:-1]+"1"
+            else:
+                reallogicname = logicname
+
+            return reallogicname
         else:
             print(tablename + " is not in dict! error!!")
             raise RuntimeError(tablename + " is not in dict! error!!")

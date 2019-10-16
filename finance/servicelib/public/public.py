@@ -23,7 +23,7 @@ def getAllProductBasicInfo(dbCntInfo):
     dbCntInfo.getDbCnt(logicCntNameList)
     tableDbBase = dbCntInfo.getDbBaseByLogicName(tableLogicName)
 
-    tableRetTuple = tableDbBase.execSelectSmallSql(sc.PRODUCTBASICINFO_SQL)
+    tableRetTuple = tableDbBase.execSelectSmallSql(sc.PRODUCTBASICINFO_GETSQL)
     if len(tableRetTuple) == 0:
         return
     # 数据插入到另外一个库里面
