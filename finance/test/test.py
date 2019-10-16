@@ -2,6 +2,7 @@
 # from sqlalchemy import create_engine
 # from selenium import webdriver  # 导入Selenium的webdriver
 # from selenium.webdriver.common.keys import Keys  # 导入Keys
+import pymysql
 
 if __name__ == "__main__":
 # import sys;sys.argv = ['', 'Test.testName']
@@ -21,3 +22,28 @@ if __name__ == "__main__":
 # elem.send_keys(Keys.RETURN)  # 相当于回车键，提交
 # assert "No results found." not in driver.page_source  # 如果当前页面文本中有“No results found.”则程序跳出
 # driver.close()  # 关闭webdriver
+
+
+#1.创建与数据库连接对象
+db =pymysql.connect(host="127.0.0.1",user="root",
+                   password="root",database="db4",
+                   charset="utf8")
+
+#2.利用db方法创建游标对象
+cur = db.cursor()
+
+#3.利用游标对象execute()方法执行SQL命令
+#cur.execute(";") #这里填写正确的SQL语句  例如:
+cur.execute("insert into sheng values\
+            (16,300000,'台湾省');")
+#4.提交到数据库执行
+db.commit()
+print("OK")
+#5.关闭游标对象
+cur.close()
+
+#6.断开数据库连接
+db.close()
+————————————————
+版权声明：本文为CSDN博主「beBrave_」的原创文章，遵循 CC 4.0 BY-SA 版权协议，转载请附上原文出处链接及本声明。
+原文链接：https://blog.csdn.net/beBrave_/article/details/81408689

@@ -194,6 +194,8 @@ def getAllNoneSubscriptionTradePriceFromTusharePro(dbCntInfo, autoType=None):
     # nrow = 3
     ordercause = "order by trade_date"
     for rowIndex in productBasicInfodf.index:
+        if rowIndex < 317:
+            continue
         oneProductTuple = productBasicInfodf.iloc[rowIndex]
         productCode = oneProductTuple["product_code"]  ## 产品代码
         listedDate = oneProductTuple["listed_date"]  ## 上市日期
@@ -201,6 +203,7 @@ def getAllNoneSubscriptionTradePriceFromTusharePro(dbCntInfo, autoType=None):
         maxTradeDateSql = sc.PRODUCTMAXTRADEDATE_SQL % (destTable,productCode)
         destRetList = destDbBase.execSelectSmallSql(maxTradeDateSql)
         maxTradeDate = destRetList[0]['maxtradedate']
+        print(rowIndex)
         print(productCode+maxTradeDateSql)
         startDate = listedDate
         if maxTradeDate > listedDate:
@@ -212,10 +215,18 @@ def getAllNoneSubscriptionTradePriceFromTusharePro(dbCntInfo, autoType=None):
             continue
         print("%s begin to get data from %d to %d ..." % (productCode, startDate, endDate))
         symbolProcuctCode = pb.code_to_symbol(productCode)
-        df = pro.daily(ts_code=symbolProcuctCode, start_date=str(startDate), end_date=str(endDate))
-        basicdf = df.reset_index(drop=True)
-        realsourcetable = sourceTable+productCode
-        basicdf.to_sql(realsourcetable, engine, if_exists="replace", index=False)
+        try :
+            df = pro.daily(ts_code=symbolProcuctCode, start_date=str(startDate), end_date=str(endDate))
+            basicdf = df.reset_index(drop=True)
+            realsourcetable = sourceTable+productCode
+            basicdf.to_sql(realsourcetable, engine, if_exists="replace", index=False)
+        except Exception as e:
+            print(productCode+" connect time out!")
+            time.sleep(60)
+            df = pro.daily(ts_code=symbolProcuctCode, start_date=str(startDate), end_date=str(endDate))
+            basicdf = df.reset_index(drop=True)
+            realsourcetable = sourceTable + productCode
+            basicdf.to_sql(realsourcetable, engine, if_exists="replace", index=False)
         while endDate < finanalWorkDate:
             startDate = ((int(startDate / 10000)) + 1) * 10000 + 101
             endDate = ((int(endDate / 10000)) + 1) * 10000 + 1231
@@ -224,9 +235,18 @@ def getAllNoneSubscriptionTradePriceFromTusharePro(dbCntInfo, autoType=None):
             if endDate > finanalWorkDate:
                 endDate = finanalWorkDate
             print("%s is getting data from %d to %d ..." % (productCode, startDate, endDate))
-            df = pro.daily(ts_code=symbolProcuctCode, start_date=str(startDate), end_date=str(endDate))
-            basicdf = df.reset_index(drop=True)
-            basicdf.to_sql(realsourcetable, engine, if_exists="append", index=False)
+
+            try:
+                df = pro.daily(ts_code=symbolProcuctCode, start_date=str(startDate), end_date=str(endDate))
+                basicdf = df.reset_index(drop=True)
+                basicdf.to_sql(realsourcetable, engine, if_exists="append", index=False)
+            except Exception as e:
+                print(productCode + " connect time out!")
+                time.sleep(60)
+                df = pro.daily(ts_code=symbolProcuctCode, start_date=str(startDate), end_date=str(endDate))
+                basicdf = df.reset_index(drop=True)
+                basicdf.to_sql(realsourcetable, engine, if_exists="append", index=False)
+
             time.sleep(0.05)
         print(productCode + " begin to get data finish ...")
         # while (True):
