@@ -25,6 +25,20 @@ def getStockBasics(dbCntInfo, filedata):
     basicdf.to_sql(tablename, engine, if_exists="replace", index=False)
     print("finish")
 
+def getStockBasicsPro(dbCntInfo):
+    '''
+    获取上市产品的信息
+    :param dbCntInfo:
+    :return:
+    '''
+    pro = ts.pro_api('00f0c017db5d284d992f78f0971c73c9ecba4aa03dee2f38e71e4d9c')
+    df = pro.stock_basic()
+    basicdf = df.reset_index(drop=True)
+    tablename = 'stock_basics_tspro'
+    engine = dbCntInfo.getEngineByTableName(tablename)
+    basicdf.to_sql(tablename, engine, if_exists="replace", index=False)
+    print("finish")
+
 
 '''
     数据插入到表productbasicinfo中
@@ -225,12 +239,20 @@ def getAllNoneSubscriptionTradePriceFromTusharePro(dbCntInfo, autoType=None):
     sourceDbBase.closeDBConnect()
     destDbBase.closeDBConnect()
 
+def getprofitdata(dbCntInfo):
+    '''
+        数据来源：http://f10.eastmoney.com/BonusFinancing/Index?type=web&code=sh601199
+        分红产品分红数据获取
+    '''
+    return
+
 
 if __name__ == "__main__":
     filedata = open(".\stock_basics.txt", 'w+')
     xmlfile = "E:\\pydevproj\\stockmarket\\finance\\resource\\finance.xml"
     #     xmlfile = "F:\\nfx\\Python\\stockmarket\\finance\\resource\\finance.xml"
     dbCntInfo = dbcnt.DbCnt(xmlfile)
+    getStockBasicsPro(dbCntInfo)
     # getProductBasicInfo(dbCntInfo)
-    getAllNoneSubscriptionTradePriceFromTusharePro(dbCntInfo)
+    # getAllNoneSubscriptionTradePriceFromTusharePro(dbCntInfo)
     filedata.close()
