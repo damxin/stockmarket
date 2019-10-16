@@ -30,9 +30,14 @@ class MysqlDatabase(DataBase):
         fetchmany返回的是list(dict)
     '''
 
-    def execSelectManySql(self, strsql):
-        pagestrsql = strsql + " limit " + str(self.fetchmanystartrow) + "," + str(DataBase.ROWNUM)
-        self.curcursor.execute(pagestrsql)
+    def execSelectManySql(self, strsql, ordercause=None):
+        orderby = ordercause if ordercause is not None else ""
+        pagestrsql = strsql + orderby + " limit " + str(self.fetchmanystartrow) + "," + str(DataBase.ROWNUM)
+        try :
+            self.curcursor.execute(pagestrsql)
+        except Exception as e:
+            print(pagestrsql)
+            raise RuntimeError("execSelectManySql is error!")
         results = self.curcursor.fetchmany(DataBase.ROWNUM)
         retrown = len(results)
         if retrown == 0:
@@ -52,8 +57,13 @@ class MysqlDatabase(DataBase):
             print(type(insertlist))
             print(type(insertlist[0]))
             raise RuntimeError("insertlist type is wrong!" )
-        self.curcursor.executemany(strinsertsql, insertlist)
-        self.connection.commit()
+        try :
+            self.curcursor.executemany(strinsertsql, insertlist)
+            self.connection.commit()
+        except Exception as e:
+            self.connection.rollback()
+            print(strinsertsql)
+            raise RuntimeError("execInsertManySql is error!")
 
     # def gettablecol(self, tablename):
     #     strexecsql = "select column_name from information_schema.columns where table_schema= database() and upper(table_name) = upper('%s') order by column_name" % tablename

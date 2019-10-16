@@ -36,9 +36,14 @@ class DataBase:
     '''
 
     def execSelectSmallSql(self, strsql):
-        self.curcursor.execute(strsql)
-        results = self.curcursor.fetchall()
-        return results
+        try :
+            self.curcursor.execute(strsql)
+            results = self.curcursor.fetchall()
+            return results
+        except Exception as e:
+            print(strsql)
+            print(e)
+
 
     def getConnectInfo(self):
         return self.connection

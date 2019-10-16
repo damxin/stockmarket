@@ -58,9 +58,9 @@ class DbCnt:
         return
 
     def getEngineByTableName(self, tablename):
-        if sc.TABLEDICT.has_key(tablename):
+        if tablename in sc.TABLEDICT:
             logicname = sc.TABLEDICT[tablename]
-            if self.dbCfgInfoDicts.has_key(logicname):
+            if logicname in self.dbCfgInfoDicts:
                 logicvalue = self.dbCfgInfoDicts[logicname]
                 if logicvalue[gc.DBTYPEKEY] in gc.MYSQLDB:
                     enginesql = "mysql+pymysql://" + logicvalue[gc.USERNAMEKEY] + ":" + logicvalue[gc.PASSWORDKEY] + \
