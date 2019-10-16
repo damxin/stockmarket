@@ -242,9 +242,15 @@ def getAllNoneSubscriptionTradePriceFromTusharePro(dbCntInfo, autoType=None):
 def getprofitdata(dbCntInfo):
     '''
         数据来源：http://f10.eastmoney.com/BonusFinancing/Index?type=web&code=sh601199
+        中财网:http://data.cfi.cn/cfidata.aspx?sortfd=&sortway=&curpage=1&ndk=A0A1934A1939A1957A1966A1983&xztj=&mystock=
         分红产品分红数据获取
     '''
-    return
+    df = ts.profit_divis()
+    basicdf = df.reset_index(drop=False)
+    tablename = 'profit_divis'
+    engine = dbCntInfo.getEngineByTableName(tablename)
+    basicdf.to_sql(tablename, engine, if_exists="replace", index=False)
+    print("finish")
 
 
 if __name__ == "__main__":
@@ -252,7 +258,9 @@ if __name__ == "__main__":
     xmlfile = "E:\\pydevproj\\stockmarket\\finance\\resource\\finance.xml"
     #     xmlfile = "F:\\nfx\\Python\\stockmarket\\finance\\resource\\finance.xml"
     dbCntInfo = dbcnt.DbCnt(xmlfile)
-    getStockBasicsPro(dbCntInfo)
+    getprofitdata(dbCntInfo)
+    # getStockBasicsPro(dbCntInfo)
     # getProductBasicInfo(dbCntInfo)
     # getAllNoneSubscriptionTradePriceFromTusharePro(dbCntInfo)
     filedata.close()
+

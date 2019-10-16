@@ -15,7 +15,8 @@ TABLEDICT = {"stock_basics": LOGICNAME_TMPBASE,
              "histtradedata": LOGICNAME_TMPBASE,
              "producttradedata": LOGICNAME_TRADE,
              "trade_cal":LOGICNAME_TMPBASE,
-             "stock_basics_tspro":LOGICNAME_TMPBASE}
+             "stock_basics_tspro":LOGICNAME_TMPBASE,
+             "profit_divis":LOGICNAME_TMPBASE}
 
 PRODUCTBASICINFO_SQL = "SELECT DISTINCT a.code product_code, a.name product_name, '1' product_type, \
        '1' money_type, a.area product_area, a.industry product_industry, \
