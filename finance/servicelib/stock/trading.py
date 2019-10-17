@@ -197,7 +197,7 @@ def getAllNoneSubscriptionTradePriceFromTusharePro(dbCntInfo, autoType=None):
     # nrow = 3
     ordercause = "order by trade_date"
     for rowIndex in productBasicInfodf.index:
-        if rowIndex < 1190:
+        if rowIndex < 1410:
             continue
         oneProductTuple = productBasicInfodf.iloc[rowIndex]
         productCode = oneProductTuple["product_code"]  ## 产品代码
