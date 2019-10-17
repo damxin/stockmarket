@@ -175,9 +175,12 @@ def getAllNoneSubscriptionTradePriceFromTushare(dbCntInfo, autoType=None):
 def getAllNoneSubscriptionTradePriceFromTusharePro(dbCntInfo, autoType=None):
     # 获取产品基础信息
     productBasicInfodf = pb.getAllProductBasicInfo(dbCntInfo)
+    if productBasicInfodf.empty:
+        print("表中无正在上市的数据，提前正常结束!")
+        return
 
     # 获取当日日期
-    finanalWorkDate = 20191016
+    finanalWorkDate = 20191017
     sourceTable = "histtradedata"
     destTable = "producttradedata"
     sourceLogicName = dbCntInfo.getLogicNameListByTableName(sourceTable)
@@ -194,7 +197,7 @@ def getAllNoneSubscriptionTradePriceFromTusharePro(dbCntInfo, autoType=None):
     # nrow = 3
     ordercause = "order by trade_date"
     for rowIndex in productBasicInfodf.index:
-        if rowIndex < 317:
+        if rowIndex < 1190:
             continue
         oneProductTuple = productBasicInfodf.iloc[rowIndex]
         productCode = oneProductTuple["product_code"]  ## 产品代码
@@ -208,8 +211,10 @@ def getAllNoneSubscriptionTradePriceFromTusharePro(dbCntInfo, autoType=None):
         startDate = listedDate
         if maxTradeDate > listedDate:
             startDate = ((int(maxTradeDate / 10000)) + 1) * 10000 + 101
-        endDate = (int(startDate / 10000)) * 10000 + 1231
-        if listedDate / 10000 == finanalWorkDate / 10000:
+        endDate = ((int(startDate / 10000))+10) * 10000 + 1231
+        if int(listedDate / 10000) == int(finanalWorkDate / 10000):
+            endDate = finanalWorkDate
+        if endDate > finanalWorkDate:
             endDate = finanalWorkDate
         if startDate > finanalWorkDate:
             continue
@@ -228,8 +233,8 @@ def getAllNoneSubscriptionTradePriceFromTusharePro(dbCntInfo, autoType=None):
             realsourcetable = sourceTable + productCode
             basicdf.to_sql(realsourcetable, engine, if_exists="replace", index=False)
         while endDate < finanalWorkDate:
-            startDate = ((int(startDate / 10000)) + 1) * 10000 + 101
-            endDate = ((int(endDate / 10000)) + 1) * 10000 + 1231
+            startDate = ((int(endDate / 10000)) + 1) * 10000 + 101
+            endDate = ((int(startDate / 10000)) + 10) * 10000 + 1231
             if startDate > finanalWorkDate:
                 break
             if endDate > finanalWorkDate:
@@ -247,7 +252,7 @@ def getAllNoneSubscriptionTradePriceFromTusharePro(dbCntInfo, autoType=None):
                 basicdf = df.reset_index(drop=True)
                 basicdf.to_sql(realsourcetable, engine, if_exists="append", index=False)
 
-            time.sleep(0.05)
+            time.sleep(10)
         print(productCode + " begin to get data finish ...")
         # while (True):
         #     sourceRetList = sourceDbBase.execSelectManySql(sc.PRODUCTHISTTRADEDATATUSHAREPRO_SQL, ordercause)
@@ -258,7 +263,9 @@ def getAllNoneSubscriptionTradePriceFromTusharePro(dbCntInfo, autoType=None):
         #     for oneList in sourceRetList:
         #         sourceList.append(tuple(oneList.values()))
         #     destDbBase.execInsertManySql(sc.PRODUCTTRADEDATA_INSERTSQL, sourceList)
-        time.sleep(1.5)
+        if rowIndex%10 == 0:
+            time.sleep(90)
+
     print("all productcode finish download data!")
     sourceDbBase.closeDBConnect()
     destDbBase.closeDBConnect()
@@ -279,8 +286,8 @@ def getprofitdata(dbCntInfo):
 
 if __name__ == "__main__":
     filedata = open(".\stock_basics.txt", 'w+')
-    # xmlfile = "E:\\pydevproj\\stockmarket\\finance\\resource\\finance.xml"
-    xmlfile = "F:\\nfx\\Python\\stockmarket\\finance\\resource\\finance.xml"
+    xmlfile = "E:\\pydevproj\\stockmarket\\finance\\resource\\finance.xml"
+    # xmlfile = "F:\\nfx\\Python\\stockmarket\\finance\\resource\\finance.xml"
     dbCntInfo = dbcnt.DbCnt(xmlfile)
     # getprofitdata(dbCntInfo)
     # getStockBasicsPro(dbCntInfo)
