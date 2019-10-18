@@ -15,18 +15,25 @@ from finance.util import SqlCons as sc
 
 
 class DbCnt:
+
     def __init__(self, xmlfilepath):
+        '''
+        完成xml文件解析，同时创建所有的数据库连接池
+        :param xmlfilepath:
+        '''
         dbCfg = XmlCfg(xmlfilepath)
         dbCfgInfoDicts = dbCfg.getDbInfoFromXmlFile()
         self.dbCfgInfoDicts = dbCfgInfoDicts
         self.dbCntdicts = {}
+        self.getDbCnt()
+        dbcntinfo = self.getDbBaseByLogicName(gc.DBBASELOGICNAME)
+        self.dataBaseRule = dbcntinfo.execSelectManySql(sc.DATABASERULE_SQL)
+        print(self.dataBaseRule)
 
-    def getDbCnt(self, logicCntNameList):
+    def getDbCnt(self):
         for logicNameKey, dbCfgInfoValue in self.dbCfgInfoDicts.items():
             print(logicNameKey)
             print(dbCfgInfoValue)
-            if logicNameKey not in logicCntNameList:
-                continue
             dbType = dbCfgInfoValue[gc.DBTYPEKEY]
             if dbType == gc.MYSQLDB:
                 msqldbase = mysqldatabase.MysqlDatabase(dbCfgInfoValue[gc.SERVERKEY], dbCfgInfoValue[gc.PORTKEY],
@@ -42,16 +49,46 @@ class DbCnt:
                 oracledbase.createConnection()
                 self.dbCntdicts[logicNameKey] = oracledbase
 
-    def getLogicNameListByTableName(self, tablename):
+    def getTradeLogicNameByProductCodeAndTradeDate(self,productcode,tradedate):
+        '''
+        返回分库表的逻辑名称
+        :param productcode:
+        :return:
+        '''
+        if productcode is None:
+            raise RuntimeError("productcode is None! error!!")
+        realTradeDate = 0 if tradedate is None else tradedate
+        tradeLogicName = ""
+        for listIndex in range(len(self.dataBaseRule)):
+            oneBaseRuleTuple = self.dataBaseRule[listIndex]
+            minProductCode = oneBaseRuleTuple["minproductcode"]
+            maxProductCode = oneBaseRuleTuple["maxproductcode"]
+            minTradeDate = oneBaseRuleTuple["mintradedate"]
+            maxTradeDate = oneBaseRuleTuple["maxtradedate"]
+            if minProductCode <= productcode <= maxProductCode and minTradeDate <= realTradeDate <= maxTradeDate:
+                tradeLogicName = oneBaseRuleTuple["logicname"]
+                break
+        if len(tradeLogicName) < 1:
+            print("%d 's %s do not get trade logic name! error!"%(realTradeDate,productcode))
+            raise RuntimeError("trade logic name do not get! error!!")
+        return tradeLogicName
+
+    def getDBCntInfoByTableName(self, tablename, productcode=None, tradedate=None):
+        '''
+
+        :param tablename: 表名
+        :param productcode: 产品代码
+        :param tradedate: 交易日期
+        :return:
+        '''
         if tablename in sc.TABLEDICT:
             logicname = sc.TABLEDICT[tablename]
-            ## 暂时默认都在trade1
-            if logicname[:-1] in "trade":
-                reallogicname = logicname[:-1]+"1"
+            if logicname in "trade":
+                reallogicname = self.getTradeLogicNameByProductCodeAndTradeDate(productcode,tradedate)
             else:
                 reallogicname = logicname
-
-            return reallogicname
+            dbSqlBase = self.getDbBaseByLogicName(reallogicname)
+            return dbSqlBase
         else:
             print(tablename + " is not in dict! error!!")
             raise RuntimeError(tablename + " is not in dict! error!!")
@@ -80,6 +117,15 @@ class DbCnt:
         print(logicName + " do not exist in finance.xml! error!")
         raise RuntimeError(logicName + " do not exist in finance.xml! error!")
         return
+
+    def closeAllDBConnect(self):
+        '''
+        关闭所有的数据库连接
+        :return:
+        '''
+        for dbCntinfo in self.dbCntdicts.values():
+            dbCntinfo.closeDBConnect()
+
 
 # if __name__ == '__main__':
 #     dbCnt = DbCnt("F:\\nfx\\Python\\stockmarket\\finance\\resource\\finance.xml")

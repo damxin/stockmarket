@@ -9,7 +9,7 @@ Created on 2019/09/04
 # 表名:逻辑名 与finance.xml的逻辑名一致
 LOGICNAME_TMPBASE = "tmpbase"
 LOGICNAME_DBBASE = "dbbase"
-LOGICNAME_TRADE = "traden"
+LOGICNAME_TRADE = "trade"
 TABLEDICT = {"stock_basics": LOGICNAME_TMPBASE,
              "productbasicinfo": LOGICNAME_DBBASE,
              "histtradedata": LOGICNAME_TMPBASE,
@@ -17,6 +17,11 @@ TABLEDICT = {"stock_basics": LOGICNAME_TMPBASE,
              "trade_cal":LOGICNAME_TMPBASE,
              "stock_basics_tspro":LOGICNAME_TMPBASE,
              "profit_divis":LOGICNAME_TMPBASE}
+
+## 获取表productdatabaserule数据
+DATABASERULE_SQL="select min_product_code minproductcode, max_product_code maxproductcode, \
+min_trade_date mintradedate, max_trade_date maxtradedate, logic_name logicname from productdatabaserule \
+ where pooltype = '1' "
 
 PRODUCTBASICINFO_SQL = "SELECT DISTINCT a.code product_code, a.name product_name, '1' product_type, \
        '1' money_type, a.area product_area, a.industry product_industry, \
@@ -39,14 +44,14 @@ PRODUCTBASICINFO_GETSQL = "SELECT product_code, product_name, product_type, \
 COMPANYBALANCESHEET_SQL = ""
 COMPANYBALANCESHEET_INSERTSQL = ""
 
-PRODUCTMAXTRADEDATE_SQL = " select ifnull(max(trade_date),0) maxtradedate from %s where product_code = '%s' "
+PRODUCTMAXTRADEDATE_SQL = " select ifnull(max(trade_date),0) maxtradedate from producttradedata where product_code = '%s' "
 ## 从tusharep中获取数据
 PRODUCTHISTTRADEDATATUSHARE_SQL = " select %s product_code,a.date trade_date, a.open open_price,high high_price, close close_price,\
 low low_price, volume product_volume,amount product_amount from histtradedata a "
 
 ## 从tusharepro中获取数据
 PRODUCTHISTTRADEDATATUSHAREPRO_SQL = " select left(a.ts_code,6) product_code,a.trade_date trade_date, a.open open_price,a.high high_price, a.close close_price,\
-a.low low_price, a.vol product_volume,a.amount product_amount from histtradedata a "
+a.low low_price, a.vol product_volume,a.amount product_amount from %s a "
 
 PRODUCTTRADEDATA_INSERTSQL = "insert into producttradedata(product_code,trade_date,open_price, \
 high_price, close_price, low_price, \

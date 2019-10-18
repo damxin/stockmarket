@@ -14,6 +14,32 @@ DELIMITER $$
             DECLARE v_rowcount INT; 
             DECLARE database_name VARCHAR(100); 
             SELECT DATABASE() INTO database_name; 
+            SELECT COUNT(1) INTO v_rowcount FROM information_schema.tables WHERE table_schema= database_name AND table_name='productdatabaserule'; 
+            IF v_rowcount = 0 THEN
+                CREATE TABLE productdatabaserule
+                (
+                min_product_code VARCHAR(10),
+                max_product_code VARCHAR(10),
+                logic_name VARCHAR(20),
+                pooltype CHAR(1), -- 0:主库 1:分库
+                work_flag CHAR(1) -- 启用标志
+                );
+                END IF; 
+                ALTER TABLE productdatabaserule ADD min_trade_date INT(8) DEFAULT 0 NOT NULL;
+                ALTER TABLE productdatabaserule ADD max_trade_date INT(8) DEFAULT 0 NOT NULL;
+    END$$ 
+DELIMITER; 
+CALL sp_db_mysql(); 
+
+-- insert into productdatabaserule(min_product_code,max_product_code,logic_name,pooltype,work_flag) values("******","******","dbbase",0,1),("000000","299999","trade1",1,1),("300000","599999","trade2",0,1),("600000","999999","trade3",0,1)
+
+DROP PROCEDURE IF EXISTS sp_db_mysql; 
+DELIMITER $$ 
+    CREATE PROCEDURE sp_db_mysql() 
+        BEGIN 
+            DECLARE v_rowcount INT; 
+            DECLARE database_name VARCHAR(100); 
+            SELECT DATABASE() INTO database_name; 
             SELECT COUNT(1) INTO v_rowcount FROM information_schema.tables WHERE table_schema= database_name AND table_name='productbasicinfo'; 
             IF v_rowcount = 0 THEN 
             create table productbasicinfo

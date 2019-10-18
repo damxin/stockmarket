@@ -21,6 +21,9 @@ ORACLEDB = "oracle"
 
 CONST_STR_STAR = "*"
 
+# 主库的逻辑名
+DBBASELOGICNAME = "dbbase"
+
 INDEX_LABELS = ['sh', 'sz', 'hs300', 'sz50', 'cyb', 'zxb', 'zx300', 'zh500']
 INDEX_SYMBOL = {'399990': 'sz399990', '000006': 'sh000006', '399998': 'sz399998',
                 '399436': 'sz399436', '399678': 'sz399678', '399804': 'sz399804',

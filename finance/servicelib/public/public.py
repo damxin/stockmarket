@@ -14,6 +14,7 @@ from finance.servicelib.processinit import dbcnt
 from finance.util import SqlCons as sc
 from finance.util import GlobalCons as gc
 import pandas as pd
+from datetime import date, timedelta
 
 
 def getAllProductBasicInfo(dbCntInfo):
@@ -22,18 +23,10 @@ def getAllProductBasicInfo(dbCntInfo):
     :param dbCntInfo:
     :return:
     '''
-    tablename = "productbasicinfo"
-    tableLogicName = dbCntInfo.getLogicNameListByTableName(tablename)
-    logicCntNameList = [tableLogicName]
-    dbCntInfo.getDbCnt(logicCntNameList)
-    tableDbBase = dbCntInfo.getDbBaseByLogicName(tableLogicName)
-
+    tableDbBase = dbCntInfo.getDBCntInfoByTableName("productbasicinfo")
     tableRetTuple = tableDbBase.execSelectSmallSql(sc.PRODUCTBASICINFO_GETSQL)
     if len(tableRetTuple) == 0:
         return
-    # 数据插入到另外一个库里面
-
-    tableDbBase.closeDBConnect()
     return pd.DataFrame(tableRetTuple)
 
 
@@ -67,3 +60,19 @@ def code_to_symbol(code):
             return code
         else:
             return '%s.sh' % code if code[:1] in ['5', '6', '9'] or code[:2] in ['11', '13'] else '%s.sz' % code
+
+def getYesterday():
+    '''
+    返回昨日日期，比如20191010
+    int :return:
+    '''
+    yesterday=int((date.today()-timedelta(days=1)).strftime("%Y%m%d"))
+    return yesterday
+
+def getTodayDate():
+    '''
+    返回今日日期，比如20191010
+    int :return:
+    '''
+    todayday=int((date.today()).strftime("%Y%m%d"))
+    return todayday

@@ -9,6 +9,7 @@ Created on 2019/09/04
 import tushare as ts
 import time
 
+
 from finance.dbsql import mysqldatabase
 from finance.servicelib.processinit import dbcnt
 from finance.util import SqlCons as sc
@@ -98,72 +99,33 @@ def getCompanyBalanceSheet(product_code):
         return
 
 
-'''
-    获取产品的不复权每日交易数据 Product_trade_data
-    autoType=qfq-前复权 hfq-后复权 None-不复权
-'''
-
-
-def getAllNoneSubscriptionTradePriceFromTushare(dbCntInfo, autoType=None):
-    # 获取产品基础信息
-    productBasicInfodf = pb.getAllProductBasicInfo(dbCntInfo)
-
-    # 获取当日日期
-    finanalWorkDate = 20191013
+def insertIntoNormalDbFromNotDealDBData(dbCntInfo,pcodeDataUpdateDict):
+    '''
+    从临时库的交易数据插入到正式库中
+    :param dbCntInfo:
+    :param pcodeDataUpdateDict: 记录产品今日是否有数据更新
+    :return:
+    '''
+    print("all productcode data insert begin!")
     sourceTable = "histtradedata"
     destTable = "producttradedata"
-    sourceLogicName = dbCntInfo.getLogicNameListByTableName(sourceTable)
-    destLogicName = dbCntInfo.getLogicNameListByTableName(destTable)
-    logicCntNameList = [sourceLogicName, destLogicName]
-    dbCntInfo.getDbCnt(logicCntNameList)
-    sourceDbBase = dbCntInfo.getDbBaseByLogicName(sourceLogicName)
-    destDbBase = dbCntInfo.getDbBaseByLogicName(destLogicName)
-
-    nrow = productBasicInfodf.nrow
-    for rowIndex in range(0, nrow):
-        oneProductTuple = productBasicInfodf.iloc[rowIndex]
-        productCode = oneProductTuple["product_code"]  ## 产品代码
-        listedDate = oneProductTuple["listed_date"]  ## 上市日期
-        # 获取产品的起始日期
-        maxTradeDateSql = sc.PRODUCTMAXTRADEDATE_SQL % productCode
-        destRetList = destDbBase.execSelectManySql(maxTradeDateSql)
-        maxTradeDate = destRetList[0]
-        startDate = listedDate
-        if maxTradeDate > listedDate:
-            startDate = maxTradeDate
-        endDate = startDate / 10000 * 10000 + 1231
-        if listedDate / 10000 == finanalWorkDate / 10000:
-            endDate = finanalWorkDate
-        strStartDate = pb.dateSpecailFormat(startDate)
-        strEndDate = pb.dateSpecailFormat(endDate)
-        df = ts.get_h_data(productCode, start=strStartDate, end=strEndDate, autype=None)
-        basicdf = df.reset_index(drop=False)
-        # 这里要看下会不会有问题
-        engine = dbCntInfo.getEngineByTableName(sourceTable)
-        basicdf.to_sql(sourceTable, engine, if_exists="replace", index=False)
-        while endDate < finanalWorkDate:
-            startDate = (startDate / 10000 + 1) * 10000 + 101
-            endDate = (endDate / 10000 + 1) * 10000 + 1231
-            if startDate > finanalWorkDate:
-                break
-            if endDate > finanalWorkDate:
-                endDate = finanalWorkDate
-            strStartDate = pb.dateSpecailFormat(startDate)
-            strEndDate = pb.dateSpecailFormat(endDate)
-            df = ts.get_h_data(productCode, start=strStartDate, end=strEndDate, autype=None)
-            basicdf = df.reset_index(drop=False)
-            basicdf.to_sql(sourceTable, engine, if_exists="append", index=False)
+    sourceDbBase = dbCntInfo.getDBCntInfoByTableName(sourceTable)
+    ordercause = "order by trade_date"
+    for productCode, updateFlag in pcodeDataUpdateDict.items():
+        if updateFlag in "0":
+            continue
+        destDbBase = dbCntInfo.getDBCntInfoByTableName(tablename=destTable, productcode=productCode)
+        realDataSql = sc.PRODUCTHISTTRADEDATATUSHAREPRO_SQL % (sourceTable+productCode)
         while (True):
-            sourceRetList = sourceDbBase.execSelectManySql(sc.PRODUCTHISTTRADEDATA_SQL)
+            sourceRetList = sourceDbBase.execSelectManySql(realDataSql, ordercause)
             if len(sourceRetList) == 0:
                 break
             # 数据插入到另外一个库里面
-            print(type(sourceRetList))
-            print(sourceRetList)
-            destDbBase.execInsertManySql(sc.PRODUCTTRADEDATA_INSERTSQL, sourceRetList)
-
-    sourceDbBase.closeDBConnect()
-    destDbBase.closeDBConnect()
+            sourceList = []
+            for oneList in sourceRetList:
+                sourceList.append(tuple(oneList.values()))
+            destDbBase.execInsertManySql(sc.PRODUCTTRADEDATA_INSERTSQL, sourceList)
+    print("all productcode data insert success!")
 
 
 '''
@@ -178,32 +140,26 @@ def getAllNoneSubscriptionTradePriceFromTusharePro(dbCntInfo, autoType=None):
     if productBasicInfodf.empty:
         print("表中无正在上市的数据，提前正常结束!")
         return
-
     # 获取当日日期
-    finanalWorkDate = 20191017
+    finanalWorkDate = pb.getTodayDate()
+    curHour = time.localtime().tm_hour
+    if curHour < 17:
+        finanalWorkDate = pb.getYesterday()
+
     sourceTable = "histtradedata"
     destTable = "producttradedata"
-    sourceLogicName = dbCntInfo.getLogicNameListByTableName(sourceTable)
-    destLogicName = dbCntInfo.getLogicNameListByTableName(destTable)
-    logicCntNameList = [sourceLogicName, destLogicName]
-    dbCntInfo.getDbCnt(logicCntNameList)
-    sourceDbBase = dbCntInfo.getDbBaseByLogicName(sourceLogicName)
-    destDbBase = dbCntInfo.getDbBaseByLogicName(destLogicName)
 
     # 建立连接与tusharepro
     pro = ts.pro_api('00f0c017db5d284d992f78f0971c73c9ecba4aa03dee2f38e71e4d9c')
     engine = dbCntInfo.getEngineByTableName(sourceTable)
-    # nrow = productBasicInfodf.nrow
-    # nrow = 3
-    ordercause = "order by trade_date"
+    productUpdateDictFlag = {}
     for rowIndex in productBasicInfodf.index:
-        if rowIndex < 1410:
-            continue
         oneProductTuple = productBasicInfodf.iloc[rowIndex]
         productCode = oneProductTuple["product_code"]  ## 产品代码
         listedDate = oneProductTuple["listed_date"]  ## 上市日期
         # 获取产品的起始日期,产品可能已经存在部分行情
-        maxTradeDateSql = sc.PRODUCTMAXTRADEDATE_SQL % (destTable,productCode)
+        maxTradeDateSql = sc.PRODUCTMAXTRADEDATE_SQL % productCode
+        destDbBase = dbCntInfo.getDBCntInfoByTableName(tablename=destTable,productcode=productCode)
         destRetList = destDbBase.execSelectSmallSql(maxTradeDateSql)
         maxTradeDate = destRetList[0]['maxtradedate']
         print(rowIndex)
@@ -217,17 +173,19 @@ def getAllNoneSubscriptionTradePriceFromTusharePro(dbCntInfo, autoType=None):
         if endDate > finanalWorkDate:
             endDate = finanalWorkDate
         if startDate > finanalWorkDate:
+            productUpdateDictFlag[productCode] = "0"
             continue
         print("%s begin to get data from %d to %d ..." % (productCode, startDate, endDate))
         symbolProcuctCode = pb.code_to_symbol(productCode)
         try :
+            productUpdateDictFlag[productCode] = "1"
             df = pro.daily(ts_code=symbolProcuctCode, start_date=str(startDate), end_date=str(endDate))
             basicdf = df.reset_index(drop=True)
             realsourcetable = sourceTable+productCode
             basicdf.to_sql(realsourcetable, engine, if_exists="replace", index=False)
         except Exception as e:
             print(productCode+" connect time out!")
-            time.sleep(60)
+            time.sleep(30)
             df = pro.daily(ts_code=symbolProcuctCode, start_date=str(startDate), end_date=str(endDate))
             basicdf = df.reset_index(drop=True)
             realsourcetable = sourceTable + productCode
@@ -240,35 +198,28 @@ def getAllNoneSubscriptionTradePriceFromTusharePro(dbCntInfo, autoType=None):
             if endDate > finanalWorkDate:
                 endDate = finanalWorkDate
             print("%s is getting data from %d to %d ..." % (productCode, startDate, endDate))
-
+            time.sleep(0.5)
             try:
                 df = pro.daily(ts_code=symbolProcuctCode, start_date=str(startDate), end_date=str(endDate))
                 basicdf = df.reset_index(drop=True)
                 basicdf.to_sql(realsourcetable, engine, if_exists="append", index=False)
             except Exception as e:
                 print(productCode + " connect time out!")
-                time.sleep(60)
+                time.sleep(30)
                 df = pro.daily(ts_code=symbolProcuctCode, start_date=str(startDate), end_date=str(endDate))
                 basicdf = df.reset_index(drop=True)
                 basicdf.to_sql(realsourcetable, engine, if_exists="append", index=False)
-
-            time.sleep(10)
         print(productCode + " begin to get data finish ...")
-        # while (True):
-        #     sourceRetList = sourceDbBase.execSelectManySql(sc.PRODUCTHISTTRADEDATATUSHAREPRO_SQL, ordercause)
-        #     if len(sourceRetList) == 0:
-        #         break
-        #     # 数据插入到另外一个库里面
-        #     sourceList = []
-        #     for oneList in sourceRetList:
-        #         sourceList.append(tuple(oneList.values()))
-        #     destDbBase.execInsertManySql(sc.PRODUCTTRADEDATA_INSERTSQL, sourceList)
-        if rowIndex%10 == 0:
+
+        if rowIndex % 10 == 0:
+            time.sleep(3)
+        if rowIndex % 80 == 0:
             time.sleep(90)
 
     print("all productcode finish download data!")
-    sourceDbBase.closeDBConnect()
-    destDbBase.closeDBConnect()
+
+    insertIntoNormalDbFromNotDealDBData(dbCntInfo, productUpdateDictFlag)
+    dbCntInfo.closeAllDBConnect()
 
 def getprofitdata(dbCntInfo):
     '''
@@ -286,12 +237,20 @@ def getprofitdata(dbCntInfo):
 
 if __name__ == "__main__":
     filedata = open(".\stock_basics.txt", 'w+')
-    xmlfile = "E:\\pydevproj\\stockmarket\\finance\\resource\\finance.xml"
-    # xmlfile = "F:\\nfx\\Python\\stockmarket\\finance\\resource\\finance.xml"
+    # xmlfile = "E:\\pydevproj\\stockmarket\\finance\\resource\\finance.xml"
+    xmlfile = "F:\\nfx\\Python\\stockmarket\\finance\\resource\\finance.xml"
     dbCntInfo = dbcnt.DbCnt(xmlfile)
     # getprofitdata(dbCntInfo)
     # getStockBasicsPro(dbCntInfo)
     # getProductBasicInfo(dbCntInfo)
-    getAllNoneSubscriptionTradePriceFromTusharePro(dbCntInfo)
+    # getAllNoneSubscriptionTradePriceFromTusharePro(dbCntInfo)
+    pcodeDataUpdateDict = {}
+    pcodeDataUpdateDict["000008"] = "1"
+    pcodeDataUpdateDict["300100"] = "1"
+    print(pcodeDataUpdateDict)
+    try :
+        insertIntoNormalDbFromNotDealDBData(dbCntInfo,pcodeDataUpdateDict=pcodeDataUpdateDict)
+    finally:
+        dbCntInfo.closeAllDBConnect()
     filedata.close()
 
