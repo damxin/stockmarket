@@ -44,6 +44,20 @@ class DataBase:
             print(strsql)
             print(e)
 
+    def execSelectAllSql(self, strsql):
+        '''
+        一次性获取所有数据量
+        :param strsql:
+        :return:list[tuple]
+        '''
+        try :
+            self.curcursor.execute(strsql)
+            results = self.curcursor.fetchall()
+            return results
+        except Exception as e:
+            print(strsql)
+            print(e)
+
 
     def getConnectInfo(self):
         return self.connection

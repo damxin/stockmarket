@@ -79,7 +79,7 @@ class DbCnt:
         :param tablename: 表名
         :param productcode: 产品代码
         :param tradedate: 交易日期
-        :return:
+        :return:对应的数据库连接信息
         '''
         if tablename in sc.TABLEDICT:
             logicname = sc.TABLEDICT[tablename]

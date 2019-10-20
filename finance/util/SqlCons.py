@@ -16,7 +16,9 @@ TABLEDICT = {"stock_basics": LOGICNAME_TMPBASE,
              "producttradedata": LOGICNAME_TRADE,
              "trade_cal":LOGICNAME_TMPBASE,
              "stock_basics_tspro":LOGICNAME_TMPBASE,
-             "profit_divis":LOGICNAME_TMPBASE}
+             "profit_divis":LOGICNAME_TMPBASE,
+             "histprofitdata":LOGICNAME_TMPBASE,
+             "histadjfactor":LOGICNAME_TMPBASE}
 
 ## 获取表productdatabaserule数据
 DATABASERULE_SQL="select min_product_code minproductcode, max_product_code maxproductcode, \
@@ -44,6 +46,7 @@ PRODUCTBASICINFO_GETSQL = "SELECT product_code, product_name, product_type, \
 COMPANYBALANCESHEET_SQL = ""
 COMPANYBALANCESHEET_INSERTSQL = ""
 
+# 与每日交易数据相关 begin
 PRODUCTMAXTRADEDATE_SQL = " select ifnull(max(trade_date),0) maxtradedate from producttradedata where product_code = '%s' "
 ## 从tusharep中获取数据
 PRODUCTHISTTRADEDATATUSHARE_SQL = " select %s product_code,a.date trade_date, a.open open_price,high high_price, close close_price,\
@@ -56,3 +59,9 @@ a.low low_price, a.vol product_volume,a.amount product_amount from %s a "
 PRODUCTTRADEDATA_INSERTSQL = "insert into producttradedata(product_code,trade_date,open_price, \
 high_price, close_price, low_price, \
 product_volume, product_amount) values ( %s, %s, %s, %s, %s, %s, %s, %s)"
+
+PRODUCTTRADEDATA_GETALLDATA_SQL=" select trade_date, open_price open, close_price close,\
+ low_price low, high_price high \
+from producttradedata where product_code = '%s' order by trade_date"
+
+# 与每日交易数据相关 end

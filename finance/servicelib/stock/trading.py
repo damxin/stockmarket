@@ -8,6 +8,7 @@ Created on 2019/09/04
 
 import tushare as ts
 import time
+import pandas as pd
 
 
 from finance.dbsql import mysqldatabase
@@ -221,36 +222,134 @@ def getAllNoneSubscriptionTradePriceFromTusharePro(dbCntInfo, autoType=None):
     insertIntoNormalDbFromNotDealDBData(dbCntInfo, productUpdateDictFlag)
     dbCntInfo.closeAllDBConnect()
 
-def getprofitdata(dbCntInfo):
+def getProfitData(dbCntInfo):
     '''
+        在执行前需要首先用下列语句创建表
+        USE stocknotdealmarket;
+        DROP TABLE IF EXISTS histprofitdata;
+        CREATE TABLE histprofitdata (
+          ts_code text DEFAULT NULL,
+          end_date text DEFAULT NULL,
+          ann_date text DEFAULT NULL,
+          div_proc text DEFAULT NULL,
+          stk_div double DEFAULT NULL,
+          stk_bo_rate double DEFAULT NULL,
+          stk_co_rate double DEFAULT NULL,
+          cash_div double DEFAULT NULL,
+          cash_div_tax double DEFAULT NULL,
+          record_date text DEFAULT NULL,
+          ex_date text DEFAULT NULL,
+          pay_date text DEFAULT NULL,
+          div_listdate text DEFAULT NULL,
+          imp_ann_date text DEFAULT NULL
+        )
         数据来源：http://f10.eastmoney.com/BonusFinancing/Index?type=web&code=sh601199
         中财网:http://data.cfi.cn/cfidata.aspx?sortfd=&sortway=&curpage=1&ndk=A0A1934A1939A1957A1966A1983&xztj=&mystock=
         分红产品分红数据获取
     '''
-    df = ts.profit_divis()
-    basicdf = df.reset_index(drop=False)
-    tablename = 'profit_divis'
-    engine = dbCntInfo.getEngineByTableName(tablename)
-    basicdf.to_sql(tablename, engine, if_exists="replace", index=False)
-    print("finish")
+    # 获取产品基础信息
+    productBasicInfodf = pb.getAllProductBasicInfo(dbCntInfo)
+    if productBasicInfodf.empty:
+        print("表中无正在上市的数据，提前正常结束!")
+        return
+    # 获取当日日期
+    # finanalWorkDate = pb.getTodayDate()
 
+    sourceTable = "histprofitdata" # 分红数据
+    # destTable = "profitschema" # 产品分红方案
+
+    # 建立连接与tusharepro
+    pro = ts.pro_api('00f0c017db5d284d992f78f0971c73c9ecba4aa03dee2f38e71e4d9c')
+    engine = dbCntInfo.getEngineByTableName(sourceTable)
+    for rowIndex in productBasicInfodf.index:
+        oneProductTuple = productBasicInfodf.iloc[rowIndex]
+        productCode = oneProductTuple["product_code"]  ## 产品代码
+
+        print("%d %s begin to get prifit data ..." % (rowIndex,productCode))
+        symbolProcuctCode = pb.code_to_symbol(productCode)
+        try:
+            df = pro.dividend(ts_code=symbolProcuctCode)
+            basicdf = df.reset_index(drop=True)
+            basicdf.to_sql(sourceTable, engine, if_exists="append", index=False)
+        except Exception as e:
+            print(productCode + " connect time out!")
+            time.sleep(30)
+            df = pro.dividend(ts_code=symbolProcuctCode)
+            basicdf = df.reset_index(drop=True)
+            basicdf.to_sql(sourceTable, engine, if_exists="append", index=False)
+        print(productCode + " begin to get data finish ...")
+        time.sleep(1)
+
+        if rowIndex % 100 == 0:
+            time.sleep(10)
+        if rowIndex % 500 == 0:
+            time.sleep(30)
+
+    print("all productcode profitschema finish download!")
+    dbCntInfo.closeAllDBConnect()
+
+def getTradeDataFromDataBase(product_code, autotype=None):
+    '''
+    获取交易数据准备K线图显示
+    :param product_code:
+    :param autotype:None未复权 qfq前复权 hfq后复权
+    :return: dataframe {trade_date,open,close,low,high}
+    '''
+    dataType = autotype.lower() if autotype is not None else "nfq" # nfq 未复权
+    xmlfile = "F:\\nfx\\Python\\stockmarket\\finance\\resource\\finance.xml"
+    dbCntInfo = dbcnt.DbCnt(xmlfile)
+    sourceTable = "producttradedata"
+    dbSqlSession = dbCntInfo.getDBCntInfoByTableName(sourceTable,product_code)
+    allDataGetSql = sc.PRODUCTTRADEDATA_GETALLDATA_SQL%product_code
+    tradeDataTupleInList = dbSqlSession.execSelectAllSql(allDataGetSql)
+    dbCntInfo.closeAllDBConnect()
+    dfdata = pb.listdictTypeChangeToDataFrame(tradeDataTupleInList)
+    if dataType not in "nfq":
+        ts_code = pb.code_to_symbol(product_code)
+        pro = ts.pro_api('00f0c017db5d284d992f78f0971c73c9ecba4aa03dee2f38e71e4d9c')
+        fcts = pro.adj_factor(ts_code=ts_code, trade_date="")[['trade_date', 'adj_factor']]
+        fcts['trade_date'] = fcts['trade_date'].astype(int)
+        if fcts.shape[0] == 0:
+            return None
+        dfdata = dfdata.set_index('trade_date', drop=False).merge(fcts.set_index('trade_date'), left_index=True,
+                                                                    right_index=True, how='left')
+        dfdata['adj_factor'] = dfdata['adj_factor'].fillna(method='bfill')
+
+        for col in gc.PRICE_COLS:
+            if dataType == 'hfq':
+                dfdata[col] = dfdata[col] * dfdata['adj_factor']
+            if dataType == 'qfq':
+                dfdata[col] = dfdata[col] * dfdata['adj_factor'] / float(fcts['adj_factor'][0])
+            dfdata[col] = dfdata[col].map(gc.FORMAT)
+        for col in gc.PRICE_COLS:
+            dfdata[col] = dfdata[col].astype(float)
+        dfdata = dfdata.drop('adj_factor', axis=1)
+
+    return dfdata
 
 if __name__ == "__main__":
     filedata = open(".\stock_basics.txt", 'w+')
     # xmlfile = "E:\\pydevproj\\stockmarket\\finance\\resource\\finance.xml"
-    xmlfile = "F:\\nfx\\Python\\stockmarket\\finance\\resource\\finance.xml"
-    dbCntInfo = dbcnt.DbCnt(xmlfile)
+    # xmlfile = "F:\\nfx\\Python\\stockmarket\\finance\\resource\\finance.xml"
+    # dbCntInfo = dbcnt.DbCnt(xmlfile)
     # getprofitdata(dbCntInfo)
     # getStockBasicsPro(dbCntInfo)
     # getProductBasicInfo(dbCntInfo)
     # getAllNoneSubscriptionTradePriceFromTusharePro(dbCntInfo)
-    pcodeDataUpdateDict = {}
-    pcodeDataUpdateDict["000008"] = "1"
-    pcodeDataUpdateDict["300100"] = "1"
-    print(pcodeDataUpdateDict)
-    try :
-        insertIntoNormalDbFromNotDealDBData(dbCntInfo,pcodeDataUpdateDict=pcodeDataUpdateDict)
-    finally:
-        dbCntInfo.closeAllDBConnect()
+    # pcodeDataUpdateDict = {}
+    # pcodeDataUpdateDict["000008"] = "1"
+    # pcodeDataUpdateDict["300100"] = "1"
+    # print(pcodeDataUpdateDict)
+    # try :
+    #     insertIntoNormalDbFromNotDealDBData(dbCntInfo,pcodeDataUpdateDict=pcodeDataUpdateDict)
+    # finally:
+    #     dbCntInfo.closeAllDBConnect()
+    # getProfitData(dbCntInfo)
+    # getAllProductAdjFactorFromTusharePro(dbCntInfo)
+    dfData = getTradeDataFromDataBase("600763",autotype="qfq")
+    print(dfData._stat_axis.values.tolist())
+    print(dfData.columns.values.tolist())
+    tradeDate = list(dfData['trade_date'])
+    print(tradeDate)
     filedata.close()
 

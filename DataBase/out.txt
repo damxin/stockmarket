@@ -447,6 +447,39 @@ DELIMITER $$
             DECLARE v_rowcount INT; 
             DECLARE database_name VARCHAR(100); 
             SELECT DATABASE() INTO database_name; 
+            SELECT COUNT(1) INTO v_rowcount FROM information_schema.tables WHERE table_schema= database_name AND table_name='profitschema'; 
+            IF v_rowcount = 0 THEN 
+    create table profitschema
+    (
+      product_code varchar(10),
+      announce_date int(8),
+      div_proc varchar(20),
+      stk_div decimal(12,8),
+      stk_bo_rate decimal(12,8),
+      stk_co_rate decimal(12,8),
+      cash_div decimal(12,8),
+      cash_div_inc_tax decimal(12,8),
+      register_date int(8),
+      dividend_date int(8),
+      pay_interest_date int(8),
+      div_share_listdate int(8),
+      imp_ann_date int(8),
+      base_date int(8),
+      base_share decimal(12,2)
+    );
+            END IF; 
+    END$$ 
+DELIMITER; 
+CALL sp_db_mysql(); 
+DROP PROCEDURE IF EXISTS sp_db_mysql;
+ 
+DROP PROCEDURE IF EXISTS sp_db_mysql; 
+DELIMITER $$ 
+    CREATE PROCEDURE sp_db_mysql() 
+        BEGIN 
+            DECLARE v_rowcount INT; 
+            DECLARE database_name VARCHAR(100); 
+            SELECT DATABASE() INTO database_name; 
             SELECT COUNT(1) INTO v_rowcount FROM information_schema.tables WHERE table_schema= database_name AND table_name='productdailybasicinfo'; 
             IF v_rowcount = 0 THEN 
     create table productdailybasicinfo

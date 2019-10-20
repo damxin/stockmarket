@@ -76,3 +76,21 @@ def getTodayDate():
     '''
     todayday=int((date.today()).strftime("%Y%m%d"))
     return todayday
+
+def listdictTypeChangeToDataFrame(datalistdict):
+    '''
+    list[dict]数据转换为dataframe，同时类型要正确转换
+    :param datalistdict:
+    :return:
+    '''
+    import pandas as pd
+    import decimal
+    datadf = pd.DataFrame(datalistdict)
+    for keyname in datalistdict[0]:
+        dictvalue = datalistdict[0][keyname]
+        if isinstance(dictvalue,decimal.Decimal):
+            datadf[keyname] = datadf[keyname].astype(float)
+        elif isinstance(dictvalue,int):
+            datadf[keyname] = datadf[keyname].astype(int)
+
+    return datadf

@@ -20,6 +20,8 @@ MYSQLDB = "mysql"
 ORACLEDB = "oracle"
 
 CONST_STR_STAR = "*"
+PRICE_COLS = ['open', 'close', 'low', 'high']
+FORMAT = lambda x: '%.2f' % x
 
 # 主库的逻辑名
 DBBASELOGICNAME = "dbbase"
