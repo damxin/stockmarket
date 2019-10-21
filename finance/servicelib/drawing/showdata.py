@@ -32,7 +32,9 @@ def tradeDataShowKLine(product_code, autoType=None):
     tradeDataDf = sttradepb.getTradeDataFromDataBase(product_code,autotype=autoType)
     tradeDateList = list(tradeDataDf['trade_date'])
     new_data = tradeDataDf.loc[:, gc.PRICE_COLS]
+    print(new_data)
     tradeDataList = np.array(new_data)
+    print(tradeDataList)
     klinedata = (
         Kline()
             .add_xaxis(tradeDateList)

@@ -296,7 +296,7 @@ def getTradeDataFromDataBase(product_code, autotype=None):
     :return: dataframe {trade_date,open,close,low,high}
     '''
     dataType = autotype.lower() if autotype is not None else "nfq" # nfq 未复权
-    xmlfile = "F:\\nfx\\Python\\stockmarket\\finance\\resource\\finance.xml"
+    xmlfile = "E:\\pydevproj\\stockmarket\\finance\\resource\\finance.xml"
     dbCntInfo = dbcnt.DbCnt(xmlfile)
     sourceTable = "producttradedata"
     dbSqlSession = dbCntInfo.getDBCntInfoByTableName(sourceTable,product_code)
@@ -308,9 +308,13 @@ def getTradeDataFromDataBase(product_code, autotype=None):
         ts_code = pb.code_to_symbol(product_code)
         pro = ts.pro_api('00f0c017db5d284d992f78f0971c73c9ecba4aa03dee2f38e71e4d9c')
         fcts = pro.adj_factor(ts_code=ts_code, trade_date="")[['trade_date', 'adj_factor']]
+        adjfactortable = "histadjfactor"
+        engine = dbCntInfo.getEngineByTableName(adjfactortable)
+        fcts.to_sql(adjfactortable, engine, if_exists="replace", index=False)
         fcts['trade_date'] = fcts['trade_date'].astype(int)
         if fcts.shape[0] == 0:
             return None
+
         dfdata = dfdata.set_index('trade_date', drop=False).merge(fcts.set_index('trade_date'), left_index=True,
                                                                     right_index=True, how='left')
         dfdata['adj_factor'] = dfdata['adj_factor'].fillna(method='bfill')

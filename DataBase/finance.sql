@@ -20,13 +20,13 @@ DELIMITER $$
                 (
                 min_product_code VARCHAR(10),
                 max_product_code VARCHAR(10),
+                min_trade_date int(8),
+                max_trade_date int(8),
                 logic_name VARCHAR(20),
                 pooltype CHAR(1), -- 0:主库 1:分库
                 work_flag CHAR(1) -- 启用标志
                 );
                 END IF; 
-                ALTER TABLE productdatabaserule ADD min_trade_date INT(8) DEFAULT 0 NOT NULL;
-                ALTER TABLE productdatabaserule ADD max_trade_date INT(8) DEFAULT 0 NOT NULL;
     END$$ 
 DELIMITER; 
 CALL sp_db_mysql(); 
