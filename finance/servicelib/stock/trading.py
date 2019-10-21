@@ -296,7 +296,7 @@ def getTradeDataFromDataBase(product_code, autotype=None):
     :return: dataframe {trade_date,open,close,low,high}
     '''
     dataType = autotype.lower() if autotype is not None else "nfq" # nfq 未复权
-    xmlfile = "E:\\pydevproj\\stockmarket\\finance\\resource\\finance.xml"
+    xmlfile = "F:\\nfx\\Python\\stockmarket\\finance\\resource\\finance.xml"
     dbCntInfo = dbcnt.DbCnt(xmlfile)
     sourceTable = "producttradedata"
     dbSqlSession = dbCntInfo.getDBCntInfoByTableName(sourceTable,product_code)
