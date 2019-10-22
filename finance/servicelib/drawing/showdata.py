@@ -8,13 +8,29 @@ Created on 2019/10/19
 '''
 
 # #pandas类型转list类型
-# data = ts.get_hist_data('300348',start='2017-01-01')
-# new_data = data.ix[:,['open','close','high','low']]
-# train_data = np.array(new_data)
-# train_index = np.array(data.index)
+# tradeDataDf = pd.DataFrame([[20191011, 1.2, 1.3, 1.15, 1.35],
+#                             [20191012, 1.2, 1.3, 1.15, 1.35],
+#                             [20191013, 1.2, 1.3, 1.15, 1.35],
+#                             [20191014, 1.2, 1.3, 1.15, 1.35]],
+#                            columns=['trade_date', 'open', 'close', 'low', 'high'])
+# print(tradeDataDf)
+# tradeDateList = list(tradeDataDf['trade_date'])
+# print("tradeDateList:")
+# print(tradeDateList)
+# new_data = tradeDataDf.loc[:, gc.PRICE_COLS].values
+# print("new_data:")
+# print(new_data)
+# tradeDataList = new_data.tolist()
+# print("tradeDataList:")
+# print(tradeDataList)
+# print(tradeDataList[0])
+# print(type(tradeDataList[0]))
 
 from pyecharts import options as opts
 from pyecharts.charts import Kline
+
+import pandas as pd
+
 
 from finance.util import GlobalCons as gc
 from finance.servicelib.stock import trading as sttradepb
@@ -30,14 +46,12 @@ def tradeDataShowKLine(product_code, autoType=None):
     import numpy as np
 
     tradeDataDf = sttradepb.getTradeDataFromDataBase(product_code,autotype=autoType)
-    tradeDateList = list(tradeDataDf['trade_date'])
-    new_data = tradeDataDf.loc[:, gc.PRICE_COLS]
-    print(new_data)
-    tradeDataList = np.array(new_data)
-    print(tradeDataList)
+    workDateList = list(tradeDataDf['trade_date'])
+    new_data = tradeDataDf.loc[:, gc.PRICE_COLS].values
+    tradeDataList = new_data.tolist()
     klinedata = (
         Kline()
-            .add_xaxis(tradeDateList)
+            .add_xaxis(workDateList)
             .add_yaxis("kline", tradeDataList)
             .set_global_opts(
             xaxis_opts=opts.AxisOpts(is_scale=True),
