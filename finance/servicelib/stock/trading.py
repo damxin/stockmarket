@@ -17,6 +17,7 @@ from finance.util import SqlCons as sc
 from finance.util import GlobalCons as gc
 from finance.util import DictCons as dc
 from finance.servicelib.public import public as pb
+from finance.util.formula import MA
 
 
 def getStockBasics(dbCntInfo, filedata):
@@ -288,15 +289,16 @@ def getProfitData(dbCntInfo):
     print("all productcode profitschema finish download!")
     dbCntInfo.closeAllDBConnect()
 
-def getTradeDataFromDataBase(product_code, autotype=None):
+def getTradeDataFromDataBase(product_code, ma=None, autotype=None):
     '''
     获取交易数据准备K线图显示
     :param product_code:
     :param autotype:None未复权 qfq前复权 hfq后复权
     :return: dataframe {trade_date,open,close,low,high}
     '''
+    ma = [30,60,99,120,250] if ma is None else ma
     dataType = autotype.lower() if autotype is not None else "nfq" # nfq 未复权
-    xmlfile = "F:\\nfx\\Python\\stockmarket\\finance\\resource\\finance.xml"
+    xmlfile = "E:\\pydevproj\\stockmarket\\finance\\resource\\finance.xml"
     dbCntInfo = dbcnt.DbCnt(xmlfile)
     sourceTable = "producttradedata"
     dbSqlSession = dbCntInfo.getDBCntInfoByTableName(sourceTable,product_code)
@@ -328,6 +330,10 @@ def getTradeDataFromDataBase(product_code, autotype=None):
         for col in gc.PRICE_COLS:
             dfdata[col] = dfdata[col].astype(float)
         dfdata = dfdata.drop('adj_factor', axis=1)
+    for a in ma:
+        if isinstance(a, int):
+            data['ma%s'%a] = MA(data['close'], a).map(FORMAT).shift(-(a-1))
+            data['ma%s'%a] = data['ma%s'%a].astype(float)
 
     return dfdata
 
@@ -350,7 +356,7 @@ if __name__ == "__main__":
     #     dbCntInfo.closeAllDBConnect()
     # getProfitData(dbCntInfo)
     # getAllProductAdjFactorFromTusharePro(dbCntInfo)
-    dfData = getTradeDataFromDataBase("600763",autotype="qfq")
+    dfData = getTradeDataFromDataBase("600763",ma=[30,autotype="qfq")
     print(dfData._stat_axis.values.tolist())
     print(dfData.columns.values.tolist())
     tradeDate = list(dfData['trade_date'])

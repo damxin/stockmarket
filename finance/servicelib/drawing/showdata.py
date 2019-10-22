@@ -35,17 +35,17 @@ import pandas as pd
 from finance.util import GlobalCons as gc
 from finance.servicelib.stock import trading as sttradepb
 
-def tradeDataShowKLine(product_code, autoType=None):
+def tradeDataShowKLine(product_code, ma=None, autoType=None):
     '''
     展示该产品的K线图，默认前复权，等值等比例的展示
     :param product_code: 产品代码
+    :param ma=[30,60,99,120,250] 均线
     :param autoType: autoType=qfq-前复权 hfq-后复权 None-不复权
     :param *avg_line: 均线   暂时不做
     :return: 
     '''
-    import numpy as np
 
-    tradeDataDf = sttradepb.getTradeDataFromDataBase(product_code,autotype=autoType)
+    tradeDataDf = sttradepb.getTradeDataFromDataBase(product_code, ma, autotype=autoType)
     workDateList = list(tradeDataDf['trade_date'])
     new_data = tradeDataDf.loc[:, gc.PRICE_COLS].values
     tradeDataList = new_data.tolist()
