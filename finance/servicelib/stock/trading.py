@@ -294,7 +294,7 @@ def getTradeDataFromDataBase(product_code, ma=None, autotype=None):
     获取交易数据准备K线图显示
     :param product_code:
     :param autotype:None未复权 qfq前复权 hfq后复权
-    :return: dataframe {trade_date,open,close,low,high}
+    :return: dataframe {trade_date,open,close,low,high, ma均线}
     '''
     ma = [30,60,99,120,250] if ma is None else ma
     dataType = autotype.lower() if autotype is not None else "nfq" # nfq 未复权
@@ -330,11 +330,14 @@ def getTradeDataFromDataBase(product_code, ma=None, autotype=None):
         for col in gc.PRICE_COLS:
             dfdata[col] = dfdata[col].astype(float)
         dfdata = dfdata.drop('adj_factor', axis=1)
+    dfclose = dfdata['close'].sort_index(ascending=False)
     for a in ma:
         if isinstance(a, int):
-            data['ma%s'%a] = MA(data['close'], a).map(FORMAT).shift(-(a-1))
-            data['ma%s'%a] = data['ma%s'%a].astype(float)
+            dfdata['ma%s'%a] = MA(dfclose, a).map(gc.FORMAT).shift(-(a-1))
+            dfdata['ma%s'%a] = dfdata['ma%s'%a].astype(float)
 
+    # dfname._stat_axis.values.tolist() # 行名称
+    # dfname.columns.values.tolist()    # 列名称
     return dfdata
 
 if __name__ == "__main__":
@@ -356,10 +359,7 @@ if __name__ == "__main__":
     #     dbCntInfo.closeAllDBConnect()
     # getProfitData(dbCntInfo)
     # getAllProductAdjFactorFromTusharePro(dbCntInfo)
-    dfData = getTradeDataFromDataBase("600763",ma=[30,autotype="qfq")
-    print(dfData._stat_axis.values.tolist())
-    print(dfData.columns.values.tolist())
-    tradeDate = list(dfData['trade_date'])
-    print(tradeDate)
+    getTradeDataFromDataBase("600763",ma=None,autotype="qfq")
+
     filedata.close()
 
