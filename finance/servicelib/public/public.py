@@ -61,13 +61,27 @@ def code_to_symbol(code):
         else:
             return '%s.sh' % code if code[:1] in ['5', '6', '9'] or code[:2] in ['11', '13'] else '%s.sz' % code
 
-def getYesterday():
+def getYesterday() -> int:
     '''
     返回昨日日期，比如20191010
     int :return:
     '''
     yesterday=int((date.today()-timedelta(days=1)).strftime("%Y%m%d"))
     return yesterday
+
+def getnextnday(curdate,n) -> int:
+    '''
+    返回下一日日期，比如20191010
+    int :return:
+    '''
+    import datetime
+    y = int(curdate/10000)
+    m = int(curdate/100%100)
+    d = int(curdate%100)
+    the_date = datetime.datetime(y, m, d)
+    result_date = the_date + datetime.timedelta(days=n)
+    nextnday = int(result_date.strftime("%Y%m%d"))
+    return nextnday
 
 def getTodayDate():
     '''

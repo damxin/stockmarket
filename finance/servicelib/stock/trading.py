@@ -132,11 +132,10 @@ def insertIntoNormalDbFromNotDealDBData(dbCntInfo,pcodeDataUpdateDict):
 
 '''
     获取产品的不复权每日交易数据 Product_trade_data
-    autoType=qfq-前复权 hfq-后复权 None-不复权
 '''
 
 
-def getAllNoneSubscriptionTradePriceFromTusharePro(dbCntInfo, autoType=None):
+def getAllNoneSubscriptionTradePriceFromTusharePro(dbCntInfo):
     # 获取产品基础信息
     productBasicInfodf = pb.getAllProductBasicInfo(dbCntInfo)
     if productBasicInfodf.empty:
@@ -168,7 +167,7 @@ def getAllNoneSubscriptionTradePriceFromTusharePro(dbCntInfo, autoType=None):
         print(productCode+maxTradeDateSql)
         startDate = listedDate
         if maxTradeDate > listedDate:
-            startDate = ((int(maxTradeDate / 10000)) + 1) * 10000 + 101
+            startDate = pb.getnextnday(maxTradeDate,1)
         endDate = ((int(startDate / 10000))+10) * 10000 + 1231
         if int(listedDate / 10000) == int(finanalWorkDate / 10000):
             endDate = finanalWorkDate
@@ -220,7 +219,7 @@ def getAllNoneSubscriptionTradePriceFromTusharePro(dbCntInfo, autoType=None):
 
     print("all productcode finish download data!")
 
-    insertIntoNormalDbFromNotDealDBData(dbCntInfo, productUpdateDictFlag)
+    # insertIntoNormalDbFromNotDealDBData(dbCntInfo, productUpdateDictFlag)
     dbCntInfo.closeAllDBConnect()
 
 def getProfitData(dbCntInfo):
@@ -343,12 +342,12 @@ def getTradeDataFromDataBase(product_code, ma=None, autotype=None):
 if __name__ == "__main__":
     filedata = open(".\stock_basics.txt", 'w+')
     # xmlfile = "E:\\pydevproj\\stockmarket\\finance\\resource\\finance.xml"
-    # xmlfile = "F:\\nfx\\Python\\stockmarket\\finance\\resource\\finance.xml"
-    # dbCntInfo = dbcnt.DbCnt(xmlfile)
+    xmlfile = "F:\\nfx\\Python\\stockmarket\\finance\\resource\\finance.xml"
+    dbCntInfo = dbcnt.DbCnt(xmlfile)
     # getprofitdata(dbCntInfo)
     # getStockBasicsPro(dbCntInfo)
     # getProductBasicInfo(dbCntInfo)
-    # getAllNoneSubscriptionTradePriceFromTusharePro(dbCntInfo)
+    getAllNoneSubscriptionTradePriceFromTusharePro(dbCntInfo)
     # pcodeDataUpdateDict = {}
     # pcodeDataUpdateDict["000008"] = "1"
     # pcodeDataUpdateDict["300100"] = "1"
@@ -359,7 +358,7 @@ if __name__ == "__main__":
     #     dbCntInfo.closeAllDBConnect()
     # getProfitData(dbCntInfo)
     # getAllProductAdjFactorFromTusharePro(dbCntInfo)
-    getTradeDataFromDataBase("600763",ma=None,autotype="qfq")
+    # getTradeDataFromDataBase("600763",ma=None,autotype="qfq")
 
     filedata.close()
 

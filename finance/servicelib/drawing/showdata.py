@@ -130,7 +130,8 @@ if __name__ == "__main__":
     )
     line.render("line.html")
 
-    workDateList=['20100101','20100102','20100103','20100104','20100105','20100106','20100107']
+    # workDateList=['20100101','20100102','20100103','20100104','20100105','20100106','20100107']
+    workDateList = [0,1,2,3,4,5,6,7,8,20100101, 20100102, 20100103, 20100104, 20100105, 20100106, 20100107]
     print("workdatelist")
     print(workDateList)
     malist = [50.01,52.03,55.05,50.01,52.03,55.05,48.02]
@@ -138,8 +139,19 @@ if __name__ == "__main__":
     print(list(range(7)))
     line = (
         Line()
-            .add_xaxis(list(range(7)))
+            .add_xaxis(workDateList)
             # .add_xaxis(workDateList)
             .add_yaxis("kline", malist, is_smooth=True, is_connect_nones=True)
+            .set_global_opts(
+            xaxis_opts=opts.AxisOpts(is_scale=True),
+            yaxis_opts=opts.AxisOpts(
+                is_scale=True,
+                splitarea_opts=opts.SplitAreaOpts(
+                    is_show=True, areastyle_opts=opts.AreaStyleOpts(opacity=1)
+                ),
+            ),
+            datazoom_opts=[opts.DataZoomOpts(type_="inside")],
+            title_opts=opts.TitleOpts(title=title),
+        )
     )
     line.render("maline.html")
