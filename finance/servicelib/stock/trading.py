@@ -297,12 +297,15 @@ def getTradeDataFromDataBase(product_code, ma=None, autotype=None):
     '''
     ma = [30,60,99,120,250] if ma is None else ma
     dataType = autotype.lower() if autotype is not None else "nfq" # nfq 未复权
-    xmlfile = "E:\\pydevproj\\stockmarket\\finance\\resource\\finance.xml"
+    xmlfile = "F:\\nfx\\Python\\stockmarket\\finance\\resource\\finance.xml"
     dbCntInfo = dbcnt.DbCnt(xmlfile)
     sourceTable = "producttradedata"
     dbSqlSession = dbCntInfo.getDBCntInfoByTableName(sourceTable,product_code)
     allDataGetSql = sc.PRODUCTTRADEDATA_GETALLDATA_SQL%product_code
     tradeDataTupleInList = dbSqlSession.execSelectAllSql(allDataGetSql)
+
+    curBaseInfo = pb.getCurProductBasicInfoByProductCode(dbCntInfo,product_code)
+    productname = curBaseInfo["product_name"]
     dbCntInfo.closeAllDBConnect()
     dfdata = pb.listdictTypeChangeToDataFrame(tradeDataTupleInList)
     if dataType not in "nfq":
@@ -337,7 +340,7 @@ def getTradeDataFromDataBase(product_code, ma=None, autotype=None):
 
     # dfname._stat_axis.values.tolist() # 行名称
     # dfname.columns.values.tolist()    # 列名称
-    return dfdata
+    return productname,dfdata
 
 if __name__ == "__main__":
     filedata = open(".\stock_basics.txt", 'w+')

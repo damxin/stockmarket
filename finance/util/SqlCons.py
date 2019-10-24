@@ -43,6 +43,13 @@ PRODUCTBASICINFO_GETSQL = "SELECT product_code, product_name, product_type, \
   FROM productbasicinfo \
  where ipo_status = 'N' "
 
+CURPRODUCTBASICINFO_GETSQL = "SELECT product_code, product_name, product_type, \
+       money_type, product_area, product_industry, \
+       product_fullname, market_type, exchange_code, \
+       ipo_status,listed_date, delisted_date \
+  FROM productbasicinfo \
+ where product_code = '%s' "
+
 COMPANYBALANCESHEET_SQL = ""
 COMPANYBALANCESHEET_INSERTSQL = ""
 
@@ -61,7 +68,7 @@ high_price, close_price, low_price, \
 product_volume, product_amount) values ( %s, %s, %s, %s, %s, %s, %s, %s)"
 
 PRODUCTTRADEDATA_GETALLDATA_SQL=" select trade_date, open_price open, close_price close,\
- low_price low, high_price high \
+ low_price low, high_price high, product_volume volume \
 from producttradedata where product_code = '%s' order by trade_date"
 
 # 与每日交易数据相关 end

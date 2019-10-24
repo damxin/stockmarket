@@ -29,6 +29,19 @@ def getAllProductBasicInfo(dbCntInfo):
         return
     return pd.DataFrame(tableRetTuple)
 
+def getCurProductBasicInfoByProductCode(dbCntInfo, productcode):
+    '''
+    获取具体产品的基本信息
+    :param dbCntInfo:
+    :param productcode:
+    :return:
+    '''
+    tableDbBase = dbCntInfo.getDBCntInfoByTableName("productbasicinfo")
+    tableRetTuple = tableDbBase.execSelectSmallSql(sc.CURPRODUCTBASICINFO_GETSQL%productcode)
+    if len(tableRetTuple) == 0:
+        return
+    return pd.DataFrame(tableRetTuple).iloc[0]
+
 
 '''
     20190102格式化为2019-01-02
