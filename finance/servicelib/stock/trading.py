@@ -101,10 +101,11 @@ def getCompanyBalanceSheet(product_code):
         return
 
 
-def insertIntoNormalDbFromNotDealDBData(dbCntInfo,pcodeDataUpdateDict):
+def insertIntoNormalDbFromNotDealDBData(dbCntInfo,startdate,pcodeDataUpdateDict):
     '''
     从临时库的交易数据插入到正式库中
     :param dbCntInfo:
+    :param startdate 0：通过产品一只一只获取 非0:是通过日期一起获取
     :param pcodeDataUpdateDict: 记录产品今日是否有数据更新
     :return:
     '''
@@ -117,16 +118,21 @@ def insertIntoNormalDbFromNotDealDBData(dbCntInfo,pcodeDataUpdateDict):
         if updateFlag in "0":
             continue
         destDbBase = dbCntInfo.getDBCntInfoByTableName(tablename=destTable, productcode=productCode)
-        realDataSql = sc.PRODUCTHISTTRADEDATATUSHAREPRO_SQL % (sourceTable+productCode)
-        while (True):
-            sourceRetList = sourceDbBase.execSelectManySql(realDataSql, ordercause)
-            if len(sourceRetList) == 0:
-                break
-            # 数据插入到另外一个库里面
-            sourceList = []
-            for oneList in sourceRetList:
-                sourceList.append(tuple(oneList.values()))
-            destDbBase.execInsertManySql(sc.PRODUCTTRADEDATA_INSERTSQL, sourceList)
+        if startdate == 0:
+            realDataSql = sc.PRODUCTHISTTRADEDATATUSHAREPRO_SQL % (sourceTable+productCode)
+            while (True):
+                sourceRetList = sourceDbBase.execSelectManySql(realDataSql, ordercause)
+                if len(sourceRetList) == 0:
+                    break
+                # 数据插入到另外一个库里面
+                sourceList = []
+                for oneList in sourceRetList:
+                    sourceList.append(tuple(oneList.values()))
+                destDbBase.execInsertManySql(sc.PRODUCTTRADEDATA_INSERTSQL, sourceList)
+        else :
+
+            realDataSql = sc.PRODUCTHISTTRADEDATATUSHAREPRO_SQL % (sourceTable + str(startdate))
+
     print("all productcode data insert success!")
 
 
@@ -154,9 +160,14 @@ def getAllNoneSubscriptionTradePriceFromTusharePro(dbCntInfo):
     pro = ts.pro_api('00f0c017db5d284d992f78f0971c73c9ecba4aa03dee2f38e71e4d9c')
     engine = dbCntInfo.getEngineByTableName(sourceTable)
     productUpdateDictFlag = {}
+    # 是获取了某一天所有的数据
+    getcurdatealldata = False
     for rowIndex in productBasicInfodf.index:
         oneProductTuple = productBasicInfodf.iloc[rowIndex]
         productCode = oneProductTuple["product_code"]  ## 产品代码
+        if getcurdatealldata == True:
+            productUpdateDictFlag[productCode] = "1"
+            continue
         listedDate = oneProductTuple["listed_date"]  ## 上市日期
         # 获取产品的起始日期,产品可能已经存在部分行情
         maxTradeDateSql = sc.PRODUCTMAXTRADEDATE_SQL % productCode
@@ -176,50 +187,62 @@ def getAllNoneSubscriptionTradePriceFromTusharePro(dbCntInfo):
         if startDate > finanalWorkDate:
             productUpdateDictFlag[productCode] = "0"
             continue
-        print("%s begin to get data from %d to %d ..." % (productCode, startDate, endDate))
-        symbolProcuctCode = pb.code_to_symbol(productCode)
-        try :
-            productUpdateDictFlag[productCode] = "1"
-            df = pro.daily(ts_code=symbolProcuctCode, start_date=str(startDate), end_date=str(endDate))
-            basicdf = df.reset_index(drop=True)
-            realsourcetable = sourceTable+productCode
-            basicdf.to_sql(realsourcetable, engine, if_exists="replace", index=False)
-        except Exception as e:
-            print(productCode+" connect time out!")
-            time.sleep(30)
-            df = pro.daily(ts_code=symbolProcuctCode, start_date=str(startDate), end_date=str(endDate))
-            basicdf = df.reset_index(drop=True)
-            realsourcetable = sourceTable + productCode
-            basicdf.to_sql(realsourcetable, engine, if_exists="replace", index=False)
-        while endDate < finanalWorkDate:
-            startDate = ((int(endDate / 10000)) + 1) * 10000 + 101
-            endDate = ((int(startDate / 10000)) + 10) * 10000 + 1231
-            if startDate > finanalWorkDate:
-                break
-            if endDate > finanalWorkDate:
-                endDate = finanalWorkDate
-            print("%s is getting data from %d to %d ..." % (productCode, startDate, endDate))
-            time.sleep(0.5)
-            try:
+        realstartdate = 0
+        if startDate != listedDate :
+            getcurdatealldata = True
+            realstartdate = startDate
+            while startDate <= endDate:
+                print("begin to get all data on %d ..." %startDate)
+                df = pro.daily(trade_date=str(startDate))
+                basicdf = df.reset_index(drop=True)
+                realsourcetable = sourceTable + str(startDate)
+                basicdf.to_sql(realsourcetable, engine, if_exists="replace", index=False)
+                startDate = pb.getnextnday(startDate,1)
+        else :
+            print("%s begin to get data from %d to %d ..." % (productCode, startDate, endDate))
+            symbolProcuctCode = pb.code_to_symbol(productCode)
+            try :
+                productUpdateDictFlag[productCode] = "1"
                 df = pro.daily(ts_code=symbolProcuctCode, start_date=str(startDate), end_date=str(endDate))
                 basicdf = df.reset_index(drop=True)
-                basicdf.to_sql(realsourcetable, engine, if_exists="append", index=False)
+                realsourcetable = sourceTable+productCode
+                basicdf.to_sql(realsourcetable, engine, if_exists="replace", index=False)
             except Exception as e:
-                print(productCode + " connect time out!")
+                print(productCode+" connect time out!")
                 time.sleep(30)
                 df = pro.daily(ts_code=symbolProcuctCode, start_date=str(startDate), end_date=str(endDate))
                 basicdf = df.reset_index(drop=True)
-                basicdf.to_sql(realsourcetable, engine, if_exists="append", index=False)
-        print(productCode + " begin to get data finish ...")
+                realsourcetable = sourceTable + productCode
+                basicdf.to_sql(realsourcetable, engine, if_exists="replace", index=False)
+            while endDate < finanalWorkDate:
+                startDate = ((int(endDate / 10000)) + 1) * 10000 + 101
+                endDate = ((int(startDate / 10000)) + 10) * 10000 + 1231
+                if startDate > finanalWorkDate:
+                    break
+                if endDate > finanalWorkDate:
+                    endDate = finanalWorkDate
+                print("%s is getting data from %d to %d ..." % (productCode, startDate, endDate))
+                time.sleep(0.5)
+                try:
+                    df = pro.daily(ts_code=symbolProcuctCode, start_date=str(startDate), end_date=str(endDate))
+                    basicdf = df.reset_index(drop=True)
+                    basicdf.to_sql(realsourcetable, engine, if_exists="append", index=False)
+                except Exception as e:
+                    print(productCode + " connect time out!")
+                    time.sleep(30)
+                    df = pro.daily(ts_code=symbolProcuctCode, start_date=str(startDate), end_date=str(endDate))
+                    basicdf = df.reset_index(drop=True)
+                    basicdf.to_sql(realsourcetable, engine, if_exists="append", index=False)
+            print(productCode + " begin to get data finish ...")
 
-        if rowIndex % 10 == 0:
-            time.sleep(3)
-        if rowIndex % 80 == 0:
-            time.sleep(90)
+            if rowIndex % 10 == 0:
+                time.sleep(3)
+            if rowIndex % 80 == 0:
+                time.sleep(90)
 
     print("all productcode finish download data!")
 
-    # insertIntoNormalDbFromNotDealDBData(dbCntInfo, productUpdateDictFlag)
+    insertIntoNormalDbFromNotDealDBData(dbCntInfo, realstartdate, productUpdateDictFlag)
     dbCntInfo.closeAllDBConnect()
 
 def getProfitData(dbCntInfo):
