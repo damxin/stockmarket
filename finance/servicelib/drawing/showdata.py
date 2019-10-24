@@ -36,7 +36,7 @@ import pandas as pd
 from finance.util import GlobalCons as gc
 from finance.servicelib.stock import trading as sttradepb
 
-def tradeDataShowKLine(product_code, ma=None, autoType=None):
+def tradeDataShowKLine(product_code, ma=None, autoType=None) -> Grid:
     '''
     展示该产品的K线图，默认前复权，等值等比例的展示
     :param product_code: 产品代码
@@ -50,8 +50,7 @@ def tradeDataShowKLine(product_code, ma=None, autoType=None):
     tradeDataDf = tradeDataDf.where(tradeDataDf.notnull(), None)
     workDateList = tradeDataDf['trade_date'].tolist()
     workDateList = list(map(str,workDateList))
-    print(workDateList)
-    print(len(workDateList))
+
     # open,close,low,high数据获取
     new_data = tradeDataDf.loc[:, gc.PRICE_COLS].values
     tradeDataList = new_data.tolist()
@@ -62,41 +61,173 @@ def tradeDataShowKLine(product_code, ma=None, autoType=None):
     #     break
     new_data = tradeDataDf.loc[:, 'ma%s'%ma[0]].values
     malist = new_data.tolist()
-    print("malist:")
-    print(malist)
-    print(len(malist))
 
-    title = product_code+" 日K线图"
-    klinedata = (
+    kline = (
         Kline()
-            .add_xaxis(workDateList)
-            .add_yaxis("kline", tradeDataList)
+            .add_xaxis(xaxis_data=workDateList)
+            .add_yaxis(
+            series_name="Dow-Jones index",
+            y_axis=data,
+            itemstyle_opts=opts.ItemStyleOpts(color="#ec0000", color0="#00da3c"),
+        )
             .set_global_opts(
-            xaxis_opts=opts.AxisOpts(is_scale=True),
+            title_opts=opts.TitleOpts(
+                title=product_code,
+                subtitle="MA%s"%str(malist),
+            ),
+            xaxis_opts=opts.AxisOpts(type_="category"),
             yaxis_opts=opts.AxisOpts(
                 is_scale=True,
                 splitarea_opts=opts.SplitAreaOpts(
                     is_show=True, areastyle_opts=opts.AreaStyleOpts(opacity=1)
                 ),
             ),
-            datazoom_opts=[opts.DataZoomOpts(type_="inside")],
-            title_opts=opts.TitleOpts(title=title),
+            legend_opts=opts.LegendOpts(
+                is_show=False, pos_bottom=10, pos_left="center"
+            ),
+            datazoom_opts=[
+                opts.DataZoomOpts(
+                    is_show=False,
+                    type_="inside",
+                    xaxis_index=[0, 1],
+                    range_start=0,
+                    range_end=100,
+                ),
+                opts.DataZoomOpts(
+                    is_show=True,
+                    xaxis_index=[0, 1],
+                    type_="slider",
+                    pos_top="90%",
+                    range_start=0,
+                    range_end=100,
+                ),
+            ],
+            tooltip_opts=opts.TooltipOpts(
+                trigger="axis",
+                axis_pointer_type="cross",
+                background_color="rgba(245, 245, 245, 0.8)",
+                border_width=1,
+                border_color="#ccc",
+                textstyle_opts=opts.TextStyleOpts(color="#000"),
+            ),
+            visualmap_opts=opts.VisualMapOpts(
+                is_show=False,
+                dimension=2,
+                series_index=5,
+                is_piecewise=True,
+                pieces=[
+                    {"value": 1, "color": "#ec0000"},
+                    {"value": -1, "color": "#00da3c"},
+                ],
+            ),
+            axispointer_opts=opts.AxisPointerOpts(
+                is_show=True,
+                link=[{"xAxisIndex": "all"}],
+                label=opts.LabelOpts(background_color="#777"),
+            ),
+            brush_opts=opts.BrushOpts(
+                x_axis_index="all",
+                brush_link="all",
+                out_of_brush={"colorAlpha": 0.1},
+                brush_type="lineX",
+            ),
         )
     )
 
-    maline = (
+    line = (
         Line()
-            .add_xaxis(workDateList)
-            .add_yaxis("kline", malist, is_smooth=True, is_connect_nones=True)
+            .add_xaxis(xaxis_data=x_data)
+            .add_yaxis(
+            series_name="MA2",
+            y_axis=calculate_ma(day_count=2, d=data),
+            is_smooth=True,
+            is_hover_animation=False,
+            linestyle_opts=opts.LineStyleOpts(width=3, opacity=0.5),
+            label_opts=opts.LabelOpts(is_show=False),
+        )
+            .add_yaxis(
+            series_name="MA4",
+            y_axis=calculate_ma(day_count=4, d=data),
+            is_smooth=True,
+            is_hover_animation=False,
+            linestyle_opts=opts.LineStyleOpts(width=3, opacity=0.5),
+            label_opts=opts.LabelOpts(is_show=False),
+        )
+            .add_yaxis(
+            series_name="MA6",
+            y_axis=calculate_ma(day_count=6, d=data),
+            is_smooth=True,
+            is_hover_animation=False,
+            linestyle_opts=opts.LineStyleOpts(width=3, opacity=0.5),
+            label_opts=opts.LabelOpts(is_show=False),
+        )
+            .add_yaxis(
+            series_name="MA8",
+            y_axis=calculate_ma(day_count=8, d=data),
+            is_smooth=True,
+            is_hover_animation=False,
+            linestyle_opts=opts.LineStyleOpts(width=3, opacity=0.5),
+            label_opts=opts.LabelOpts(is_show=False),
+        )
+            .set_global_opts(xaxis_opts=opts.AxisOpts(type_="category"))
+    )
+
+    bar = (
+        Bar()
+            .add_xaxis(xaxis_data=x_data)
+            .add_yaxis(
+            series_name="Volume",
+            yaxis_data=[
+                [i, data[i][3], 1 if data[i][0] > data[i][1] else -1]
+                for i in range(len(data))
+            ],
+            xaxis_index=1,
+            yaxis_index=1,
+            label_opts=opts.LabelOpts(is_show=False),
+        )
             .set_global_opts(
-            xaxis_opts=opts.AxisOpts(is_scale=True),
-            yaxis_opts=opts.AxisOpts(is_scale=True),
+            xaxis_opts=opts.AxisOpts(
+                type_="category",
+                is_scale=True,
+                grid_index=1,
+                boundary_gap=False,
+                axisline_opts=opts.AxisLineOpts(is_on_zero=False),
+                axistick_opts=opts.AxisTickOpts(is_show=False),
+                splitline_opts=opts.SplitLineOpts(is_show=False),
+                axislabel_opts=opts.LabelOpts(is_show=False),
+                split_number=20,
+                min_="dataMin",
+                max_="dataMax",
+            ),
+            yaxis_opts=opts.AxisOpts(
+                grid_index=1,
+                is_scale=True,
+                split_number=2,
+                axislabel_opts=opts.LabelOpts(is_show=False),
+                axisline_opts=opts.AxisLineOpts(is_show=False),
+                axistick_opts=opts.AxisTickOpts(is_show=False),
+                splitline_opts=opts.SplitLineOpts(is_show=False),
+            ),
+            legend_opts=opts.LegendOpts(is_show=False),
         )
     )
-    maline.render("maline.html")
-    klinedata.overlap(maline)
 
-    return klinedata
+    # Kline And Line
+    overlap_kline_line = kline.overlap(line)
+
+    # Grid Overlap + Bar
+    grid_chart = Grid()
+    grid_chart.add(
+        overlap_kline_line,
+        grid_opts=opts.GridOpts(pos_left="10%", pos_right="8%", height="50%"),
+    )
+    grid_chart.add(
+        bar,
+        grid_opts=opts.GridOpts(
+            pos_left="10%", pos_right="8%", pos_top="70%", height="16%"
+        ),
+    )
+    return grid_chart
 
 def overlap_line_scatter() -> Bar:
     x = Faker.choose()
