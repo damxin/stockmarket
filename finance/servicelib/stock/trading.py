@@ -135,6 +135,21 @@ def insertIntoNormalDbFromNotDealDBData(dbCntInfo,startdate,pcodeDataUpdateDict)
 
     print("all productcode data insert success!")
 
+def getalltradeproductdate(dbCntInfo) -> pd.DataFrame :
+    # 获取产品基础信息
+    productBasicInfodf = pb.getAllProductBasicInfo(dbCntInfo)
+    if productBasicInfodf.empty:
+        print("表中无正在上市的数据，提前正常结束!")
+        return
+    # 获取当日日期
+    finanalWorkDate = pb.getTodayDate()
+    curHour = time.localtime().tm_hour
+    if curHour < 17:
+        finanalWorkDate = pb.getYesterday()
+
+    destTable = "producttradedata"
+    return
+
 
 '''
     获取产品的不复权每日交易数据 Product_trade_data
@@ -187,6 +202,7 @@ def getAllNoneSubscriptionTradePriceFromTusharePro(dbCntInfo):
         if startDate > finanalWorkDate:
             productUpdateDictFlag[productCode] = "0"
             continue
+
         realstartdate = 0
         if startDate != listedDate :
             getcurdatealldata = True

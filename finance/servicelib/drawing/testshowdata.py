@@ -13,6 +13,19 @@ from pyecharts import options as opts
 from pyecharts.charts import Kline,Line,Bar,Grid
 from pyecharts.faker import Faker
 
+
+def calculate_ma(day_count: int, d):
+    result: List[Union[float, str]] = []
+    for i in range(len(d)):
+        if i < day_count:
+            result.append("-")
+            continue
+        sum_total = 0.0
+        for j in range(day_count):
+            sum_total += float(d[i - j][1])
+        result.append(abs(float("%.3f" % (sum_total / day_count))))
+    return result
+
 def kline_profession_example() -> Grid:
 
     data = [
@@ -48,18 +61,6 @@ def kline_profession_example() -> Grid:
         [2282.17, 2263.97, 2253.25, 2286.33],
         [2255.77, 2270.28, 2253.31, 2276.22],
     ]
-
-    def calculate_ma(day_count: int, d):
-        result: List[Union[float, str]] = []
-        for i in range(len(d)):
-            if i < day_count:
-                result.append("-")
-                continue
-            sum_total = 0.0
-            for j in range(day_count):
-                sum_total += float(d[i - j][1])
-            result.append(abs(float("%.3f" % (sum_total / day_count))))
-        return result
 
     x_data = ["2017-7-{}".format(i + 1) for i in range(31)]
 
@@ -138,38 +139,16 @@ def kline_profession_example() -> Grid:
     line = (
         Line()
         .add_xaxis(xaxis_data=x_data)
-        .add_yaxis(
-            series_name="MA2",
-            y_axis=calculate_ma(day_count=2, d=data),
-            is_smooth=True,
-            is_hover_animation=False,
-            linestyle_opts=opts.LineStyleOpts(width=3, opacity=0.5),
-            label_opts=opts.LabelOpts(is_show=False),
-        )
-        .add_yaxis(
-            series_name="MA4",
-            y_axis=calculate_ma(day_count=4, d=data),
-            is_smooth=True,
-            is_hover_animation=False,
-            linestyle_opts=opts.LineStyleOpts(width=3, opacity=0.5),
-            label_opts=opts.LabelOpts(is_show=False),
-        )
-        .add_yaxis(
-            series_name="MA6",
-            y_axis=calculate_ma(day_count=6, d=data),
-            is_smooth=True,
-            is_hover_animation=False,
-            linestyle_opts=opts.LineStyleOpts(width=3, opacity=0.5),
-            label_opts=opts.LabelOpts(is_show=False),
-        )
-        .add_yaxis(
-            series_name="MA8",
-            y_axis=calculate_ma(day_count=8, d=data),
-            is_smooth=True,
-            is_hover_animation=False,
-            linestyle_opts=opts.LineStyleOpts(width=3, opacity=0.5),
-            label_opts=opts.LabelOpts(is_show=False),
-        )
+        for i in range(4)*2:
+            .add_yaxis(
+                series_name="MA%s"%i,
+                y_axis=calculate_ma(day_count=i, d=data),
+                is_smooth=True,
+                is_hover_animation=False,
+                linestyle_opts=opts.LineStyleOpts(width=3, opacity=0.5),
+                label_opts=opts.LabelOpts(is_show=False),
+            )
+
         .set_global_opts(xaxis_opts=opts.AxisOpts(type_="category"))
     )
 
