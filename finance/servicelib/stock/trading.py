@@ -100,6 +100,28 @@ def getCompanyBalanceSheet(product_code):
     if product_code in gc.CONST_STR_STAR:
         return
 
+def insertNormalDbByCurProductCode(productcode,dbCntInfo,sourcetable,desttable,selectsql,insertsql):
+    '''
+    产品对应的批量数据插入到正式库中
+    :param productcode:
+    :param dbCntInfo:
+    :param sourcetable:
+    :param desttable:
+    :param selectsql:
+    :param insertsql:
+    :return:
+    '''
+    sourceDbBase = dbCntInfo.getDBCntInfoByTableName(tablename=sourcetable, productcode=productcode)
+    destDbBase = dbCntInfo.getDBCntInfoByTableName(tablename=desttable, productcode=productcode)
+    while (True):
+        sourceRetList = sourceDbBase.execSelectManySql(selectsql)
+        if len(sourceRetList) == 0:
+            break
+        # 数据插入到另外一个库里面
+        sourceList = []
+        for oneList in sourceRetList:
+            sourceList.append(tuple(oneList.values()))
+        destDbBase.execInsertManySql(insertsql, sourceList)
 
 def insertIntoNormalDbFromNotDealDBData(dbCntInfo,startdate,pcodeDataUpdateDict):
     '''
@@ -136,6 +158,11 @@ def insertIntoNormalDbFromNotDealDBData(dbCntInfo,startdate,pcodeDataUpdateDict)
     print("all productcode data insert success!")
 
 def getalltradeproductdate(dbCntInfo) -> pd.DataFrame :
+    '''
+    获取需要获取交易数据的产品的数据
+    :param dbCntInfo:
+    :return:
+    '''
     # 获取产品基础信息
     productBasicInfodf = pb.getAllProductBasicInfo(dbCntInfo)
     if productBasicInfodf.empty:
@@ -148,41 +175,12 @@ def getalltradeproductdate(dbCntInfo) -> pd.DataFrame :
         finanalWorkDate = pb.getYesterday()
 
     destTable = "producttradedata"
-    return
-
-
-'''
-    获取产品的不复权每日交易数据 Product_trade_data
-'''
-
-
-def getAllNoneSubscriptionTradePriceFromTusharePro(dbCntInfo):
-    # 获取产品基础信息
-    productBasicInfodf = pb.getAllProductBasicInfo(dbCntInfo)
-    if productBasicInfodf.empty:
-        print("表中无正在上市的数据，提前正常结束!")
-        return
-    # 获取当日日期
-    finanalWorkDate = pb.getTodayDate()
-    curHour = time.localtime().tm_hour
-    if curHour < 17:
-        finanalWorkDate = pb.getYesterday()
-
-    sourceTable = "histtradedata"
-    destTable = "producttradedata"
-
-    # 建立连接与tusharepro
-    pro = ts.pro_api('00f0c017db5d284d992f78f0971c73c9ecba4aa03dee2f38e71e4d9c')
-    engine = dbCntInfo.getEngineByTableName(sourceTable)
-    productUpdateDictFlag = {}
-    # 是获取了某一天所有的数据
-    getcurdatealldata = False
+    productcodelist = []
+    startdatelist = []
+    enddatelist = []
     for rowIndex in productBasicInfodf.index:
         oneProductTuple = productBasicInfodf.iloc[rowIndex]
         productCode = oneProductTuple["product_code"]  ## 产品代码
-        if getcurdatealldata == True:
-            productUpdateDictFlag[productCode] = "1"
-            continue
         listedDate = oneProductTuple["listed_date"]  ## 上市日期
         # 获取产品的起始日期,产品可能已经存在部分行情
         maxTradeDateSql = sc.PRODUCTMAXTRADEDATE_SQL % productCode
@@ -200,65 +198,169 @@ def getAllNoneSubscriptionTradePriceFromTusharePro(dbCntInfo):
         if endDate > finanalWorkDate:
             endDate = finanalWorkDate
         if startDate > finanalWorkDate:
-            productUpdateDictFlag[productCode] = "0"
             continue
+        print("startdate(%d),enddate(%d)"%(startDate,endDate))
+        productcodelist.append(productCode)
+        startdatelist.append(startDate)
+        enddatelist.append(endDate)
+    if len(productcodelist) > 0:
+        dfdict = {"productcode":productcodelist,"startdate":startdatelist,"enddate":enddatelist}
+        df = pd.DataFrame(dfdict)
+        df = df.set_index("productcode")
+        return df
+    return
 
-        realstartdate = 0
-        if startDate != listedDate :
-            getcurdatealldata = True
-            realstartdate = startDate
-            while startDate <= endDate:
-                print("begin to get all data on %d ..." %startDate)
-                df = pro.daily(trade_date=str(startDate))
-                basicdf = df.reset_index(drop=True)
-                realsourcetable = sourceTable + str(startDate)
-                basicdf.to_sql(realsourcetable, engine, if_exists="replace", index=False)
-                startDate = pb.getnextnday(startDate,1)
-        else :
-            print("%s begin to get data from %d to %d ..." % (productCode, startDate, endDate))
-            symbolProcuctCode = pb.code_to_symbol(productCode)
-            try :
-                productUpdateDictFlag[productCode] = "1"
-                df = pro.daily(ts_code=symbolProcuctCode, start_date=str(startDate), end_date=str(endDate))
-                basicdf = df.reset_index(drop=True)
-                realsourcetable = sourceTable+productCode
-                basicdf.to_sql(realsourcetable, engine, if_exists="replace", index=False)
-            except Exception as e:
-                print(productCode+" connect time out!")
-                time.sleep(30)
-                df = pro.daily(ts_code=symbolProcuctCode, start_date=str(startDate), end_date=str(endDate))
-                basicdf = df.reset_index(drop=True)
-                realsourcetable = sourceTable + productCode
-                basicdf.to_sql(realsourcetable, engine, if_exists="replace", index=False)
-            while endDate < finanalWorkDate:
-                startDate = ((int(endDate / 10000)) + 1) * 10000 + 101
-                endDate = ((int(startDate / 10000)) + 10) * 10000 + 1231
-                if startDate > finanalWorkDate:
-                    break
-                if endDate > finanalWorkDate:
-                    endDate = finanalWorkDate
-                print("%s is getting data from %d to %d ..." % (productCode, startDate, endDate))
-                time.sleep(0.5)
-                try:
-                    df = pro.daily(ts_code=symbolProcuctCode, start_date=str(startDate), end_date=str(endDate))
-                    basicdf = df.reset_index(drop=True)
-                    basicdf.to_sql(realsourcetable, engine, if_exists="append", index=False)
-                except Exception as e:
-                    print(productCode + " connect time out!")
-                    time.sleep(30)
-                    df = pro.daily(ts_code=symbolProcuctCode, start_date=str(startDate), end_date=str(endDate))
-                    basicdf = df.reset_index(drop=True)
-                    basicdf.to_sql(realsourcetable, engine, if_exists="append", index=False)
-            print(productCode + " begin to get data finish ...")
+def getCurProductTradeData(productcode,dbCntInfo,engine):
+    '''
+    通过单一产品代码获取该产品的所有交易数据
+    :param dbCntInfo:
+    :param productcode:
+    :return:
+    '''
+    # 获取当日日期
+    finanalWorkDate = pb.getTodayDate()
+    curHour = time.localtime().tm_hour
+    if curHour < 17:
+        finanalWorkDate = pb.getYesterday()
 
-            if rowIndex % 10 == 0:
-                time.sleep(3)
-            if rowIndex % 80 == 0:
-                time.sleep(90)
+    sourceTable = "histtradedata"
+    destTable = "producttradedata"
 
-    print("all productcode finish download data!")
+    # 建立连接与tusharepro
+    pro = ts.pro_api('00f0c017db5d284d992f78f0971c73c9ecba4aa03dee2f38e71e4d9c')
 
-    insertIntoNormalDbFromNotDealDBData(dbCntInfo, realstartdate, productUpdateDictFlag)
+    oneProductTuple = pb.getCurProductBasicInfoByProductCode(dbCntInfo,productcode)
+    productCode = oneProductTuple["product_code"]  ## 产品代码
+    listedDate = oneProductTuple["listed_date"]  ## 上市日期
+    # 获取产品的起始日期,产品可能已经存在部分行情
+    maxTradeDateSql = sc.PRODUCTMAXTRADEDATE_SQL % productCode
+    destDbBase = dbCntInfo.getDBCntInfoByTableName(tablename=destTable, productcode=productCode)
+    destRetList = destDbBase.execSelectSmallSql(maxTradeDateSql)
+    maxTradeDate = destRetList[0]['maxtradedate']
+    print(productCode + maxTradeDateSql)
+    startDate = listedDate
+    if maxTradeDate > listedDate:
+        startDate = pb.getnextnday(maxTradeDate, 1)
+    endDate = ((int(startDate / 10000)) + 10) * 10000 + 1231
+    if int(listedDate / 10000) == int(finanalWorkDate / 10000):
+        endDate = finanalWorkDate
+    if endDate > finanalWorkDate:
+        endDate = finanalWorkDate
+    if startDate > finanalWorkDate:
+        return
+    print("%s begin to get data from %d to %d ..." % (productCode, startDate, endDate))
+    symbolProcuctCode = pb.code_to_symbol(productCode)
+    try:
+        df = pro.daily(ts_code=symbolProcuctCode, start_date=str(startDate), end_date=str(endDate))
+        basicdf = df.reset_index(drop=True)
+        realsourcetable = sourceTable + productCode
+        basicdf.to_sql(realsourcetable, engine, if_exists="replace", index=False)
+        engine.connect().commit()
+    except Exception as e:
+        print(productCode + " connect time out!")
+        time.sleep(30)
+        df = pro.daily(ts_code=symbolProcuctCode, start_date=str(startDate), end_date=str(endDate))
+        basicdf = df.reset_index(drop=True)
+        realsourcetable = sourceTable + productCode
+        basicdf.to_sql(realsourcetable, engine, if_exists="replace", index=False)
+    while endDate < finanalWorkDate:
+        startDate = ((int(endDate / 10000)) + 1) * 10000 + 101
+        endDate = ((int(startDate / 10000)) + 10) * 10000 + 1231
+        if startDate > finanalWorkDate:
+            break
+        if endDate > finanalWorkDate:
+            endDate = finanalWorkDate
+        print("%s is getting data from %d to %d ..." % (productCode, startDate, endDate))
+        time.sleep(0.5)
+        try:
+            df = pro.daily(ts_code=symbolProcuctCode, start_date=str(startDate), end_date=str(endDate))
+            basicdf = df.reset_index(drop=True)
+            basicdf.to_sql(realsourcetable, engine, if_exists="append", index=False)
+        except Exception as e:
+            print(productCode + " connect time out!")
+            time.sleep(30)
+            df = pro.daily(ts_code=symbolProcuctCode, start_date=str(startDate), end_date=str(endDate))
+            basicdf = df.reset_index(drop=True)
+            basicdf.to_sql(realsourcetable, engine, if_exists="append", index=False)
+    print(productCode + " get data finish ...")
+
+
+
+'''
+    获取产品的不复权每日交易数据 Product_trade_data
+'''
+
+
+def getAllNoneSubscriptionTradePriceFromTusharePro(dbCntInfo):
+    productdf = getalltradeproductdate(dbCntInfo)
+    if productdf is None:
+        print("Trade datas are not should be get, because of they are newest!")
+        return
+    ## 按照startdate进行group by进行数据统计
+    countstartdate = productdf["startdate"].groupby(productdf["startdate"]).count()
+    countenddate = productdf["enddate"].groupby(productdf["enddate"]).count()
+    engine = dbCntInfo.getEngineByTableName("histtradedata")
+    for productcode in productdf.index:
+        oneproductdate = productdf.loc[productcode]
+        startdate = oneproductdate["startdate"]
+        enddate = oneproductdate["enddate"]
+        onecntstartdate = countstartdate.loc[startdate]
+        if onecntstartdate < 100 and startdate < enddate:
+            getCurProductTradeData(productcode,dbCntInfo,engine)
+
+    sourceTable = "histtradedata"
+    destTable = "producttradedata"
+    for productcode in productdf.index:
+        oneproductdate = productdf.loc[productcode]
+        startdate = oneproductdate["startdate"]
+        enddate = oneproductdate["enddate"]
+        onecntstartdate = countstartdate.loc[startdate]
+        if onecntstartdate < 100 and startdate < enddate:
+            selectsql = sc.PRODUCTHISTTRADEDATATUSHAREPRO_SQL % (sourceTable + productcode)
+            insertsql = sc.PRODUCTTRADEDATA_INSERTSQL
+            print(productcode+" trade data insert begin")
+            insertNormalDbByCurProductCode(productcode, dbCntInfo, sourceTable, destTable, selectsql, insertsql)
+            print(productcode + " trade data insert finish")
+
+    minstartdate = 20991231
+    for indexstartdate in countstartdate.index:
+        cntstartdate = countstartdate.loc[indexstartdate]
+        if cntstartdate >= 100 and indexstartdate < minstartdate:
+            minstartdate = indexstartdate
+    maxenddate = 0
+    for indexenddate in countenddate.index:
+        cntenddate = countenddate.loc[indexenddate]
+        if cntenddate >= 100 and indexenddate > maxenddate:
+            maxenddate = indexenddate
+    tradedate = minstartdate
+    # 建立连接与tusharepro
+    pro = ts.pro_api('00f0c017db5d284d992f78f0971c73c9ecba4aa03dee2f38e71e4d9c')
+    while tradedate <= maxenddate:
+        print("begin to get all data on %d ..." %tradedate)
+        df = pro.daily(trade_date=str(tradedate))
+        time.sleep(1)
+        basicdf = df.reset_index(drop=True)
+        realsourcetable = sourceTable + str(tradedate)
+        basicdf.to_sql(realsourcetable, engine, if_exists="replace", index=False)
+        tradedate = pb.getnextnday(tradedate,1)
+
+
+    insertsql = sc.PRODUCTTRADEDATA_INSERTSQL
+    for productcode in productdf.index:
+        oneproductdate = productdf.loc[productcode]
+        startdate = oneproductdate["startdate"]
+        enddate = oneproductdate["enddate"]
+        cntstartdate = countstartdate.loc[startdate]
+        if cntstartdate < 100 :
+            continue
+        tradedate = minstartdate
+        print(productcode+" trade data insert begin from %d to %d"%(startdate,enddate))
+        while tradedate <= maxenddate and startdate <= tradedate and tradedate <= enddate:
+            selectsql = sc.PRODUCTHISTTRADEDATATUSHAREPRO_SQL % (sourceTable + str(tradedate)) + " where left(a.ts_code,6) = '%s'"%productcode
+            insertNormalDbByCurProductCode(productcode, dbCntInfo, sourceTable, destTable, selectsql, insertsql)
+            tradedate = pb.getnextnday(tradedate, 1)
+        print(productcode + " trade data insert finish")
+
     dbCntInfo.closeAllDBConnect()
 
 def getProfitData(dbCntInfo):
@@ -400,7 +502,27 @@ if __name__ == "__main__":
     #     dbCntInfo.closeAllDBConnect()
     # getProfitData(dbCntInfo)
     # getAllProductAdjFactorFromTusharePro(dbCntInfo)
-    # getTradeDataFromDataBase("600763",ma=None,autotype="qfq")
-
+    # # getTradeDataFromDataBase("600763",ma=None,autotype="qfq")
+    # df = getalltradeproductdate(dbCntInfo)
+    #
+    # if df is not None:
+    #     print(df)
+    #     print(df.max())
+    #     print(df.min())
+    #     print(df.index)
+    #     countstartdate = df["startdate"].groupby(df["startdate"]).count()
+    #
+    #     print(countstartdate)
+    #     print(type(countstartdate))
+    #     print(countstartdate.index)
+    #     alldatadf = pd.merge(df,countstartdate,how="inner",on="startdate")
+    #     print(alldatadf.iloc[:3])
+    # productCode = "002143"
+    # sourceTable = "histtradedata"
+    # destTable = "producttradedata"
+    # selectsql = sc.PRODUCTHISTTRADEDATATUSHAREPRO_SQL % (sourceTable + productCode)
+    # insertsql = sc.PRODUCTTRADEDATA_INSERTSQL
+    # insertNormalDbByCurProductCode(productCode, dbCntInfo, sourceTable, destTable, selectsql, insertsql)
+    # dbCntInfo.closeAllDBConnect()
     filedata.close()
 
