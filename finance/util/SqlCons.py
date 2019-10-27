@@ -35,6 +35,7 @@ DATABASERULE_SQL="select min_product_code minproductcode, max_product_code maxpr
 min_trade_date mintradedate, max_trade_date maxtradedate, logic_name logicname from productdatabaserule \
  where pooltype = '1' "
 
+# 产品相关表数据 begin
 PRODUCTBASICINFO_SQL = "SELECT DISTINCT a.code product_code, a.name product_name, '1' product_type, \
        '1' money_type, a.area product_area, a.industry product_industry, \
        a.name product_fullname, LEFT(a.code,3) market_type, '0' exchange_code, \
@@ -50,8 +51,7 @@ PRODUCTBASICINFO_GETSQL = "SELECT product_code, product_name, product_type, \
        money_type, product_area, product_industry, \
        product_fullname, market_type, exchange_code, \
        ipo_status,listed_date, delisted_date \
-  FROM productbasicinfo \
- where ipo_status = 'N' "
+  FROM productbasicinfo "
 
 CURPRODUCTBASICINFO_GETSQL = "SELECT product_code, product_name, product_type, \
        money_type, product_area, product_industry, \
@@ -59,7 +59,7 @@ CURPRODUCTBASICINFO_GETSQL = "SELECT product_code, product_name, product_type, \
        ipo_status,listed_date, delisted_date \
   FROM productbasicinfo \
  where product_code = '%s' "
-
+# 产品相关表信息 end
 COMPANYBALANCESHEET_SQL = ""
 COMPANYBALANCESHEET_INSERTSQL = ""
 

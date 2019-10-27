@@ -17,17 +17,24 @@ import pandas as pd
 from datetime import date, timedelta
 
 
-def getAllProductBasicInfo(dbCntInfo):
+def getAllProductBasicInfo(dbCntInfo, ipostatus=None):
     '''
     返回所有的产品的基本信息，默认只返回依然上市的产品，退市的不返回
     :param dbCntInfo:
+    :param ipostatus A:所有产品信息 N:正常上市
     :return:
     '''
+    ipostatus = ipostatus if ipostatus is not None else "N"
     tableDbBase = dbCntInfo.getDBCntInfoByTableName("productbasicinfo")
-    tableRetTuple = tableDbBase.execSelectSmallSql(sc.PRODUCTBASICINFO_GETSQL)
-    if len(tableRetTuple) == 0:
+    selectsql = ""
+    if ipostatus in "A":
+        selectsql = selectsql + sc.PRODUCTBASICINFO_GETSQL
+    else:
+        selectsql = selectsql + sc.PRODUCTBASICINFO_GETSQL + " where ipo_status = '%s' "%ipostatus
+    tableRetListDict = tableDbBase.execSelectSmallSql(selectsql)
+    if len(tableRetListDict) == 0:
         return
-    return pd.DataFrame(tableRetTuple)
+    return pd.DataFrame(tableRetListDict)
 
 def getCurProductBasicInfoByProductCode(dbCntInfo, productcode):
     '''

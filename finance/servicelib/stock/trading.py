@@ -20,53 +20,40 @@ from finance.servicelib.public import public as pb
 from finance.util.formula import MA
 
 
-def getStockBasics(dbCntInfo, filedata):
+def getStockBasics(dbCntInfo):
     df = ts.get_stock_basics()
     basicdf = df.reset_index(drop=False)
     tablename = 'stock_basics'
     engine = dbCntInfo.getEngineByTableName(tablename)
     basicdf.to_sql(tablename, engine, if_exists="replace", index=False)
-    print("finish")
+    print("basic finish")
 
-def getStockBasicsPro(dbCntInfo):
+def getProductBasicInfo(dbCntInfo):
     '''
-    获取上市产品的信息
+    productbasicinfo表信息更新
     :param dbCntInfo:
     :return:
     '''
-    pro = ts.pro_api('00f0c017db5d284d992f78f0971c73c9ecba4aa03dee2f38e71e4d9c')
-    df = pro.stock_basic()
-    basicdf = df.reset_index(drop=True)
-    tablename = 'stock_basics_tspro'
-    engine = dbCntInfo.getEngineByTableName(tablename)
-    basicdf.to_sql(tablename, engine, if_exists="replace", index=False)
-    print("finish")
-
-
-'''
-    数据插入到表productbasicinfo中
-'''
-
-
-def getProductBasicInfo(dbCntInfo):
     sourceTable = "stock_basics"
+    getStockBasics(dbCntInfo)
     destTable = "productbasicinfo"
-
-
     souceDbBase = dbCntInfo.getDBCntInfoByTableName(sourceTable)
     destDbBase = dbCntInfo.getDBCntInfoByTableName(destTable)
-
+    proctBaseInfoDf = pb.getAllProductBasicInfo(dbCntInfo, ipostatus="A")
+    proctBaseInfoDf.set_index("product_code")
     while (True):
         sourceRetList = souceDbBase.execSelectManySql(sc.PRODUCTBASICINFO_SQL)
         if len(sourceRetList) == 0:
             break
         # 数据插入到另外一个库里面
-        sourceList = []
+        newsourceListTuple = []
         for oneList in sourceRetList:
-            print(oneList)
-            oneList['market_type'] = dc.DICTCONS_CODETOMARKETTYPE[oneList['market_type']]
-            sourceList.append(tuple(oneList.values()))
-        destDbBase.execInsertManySql(sc.PRODUCTBASICINFO_INSERTSQL, sourceList)
+            productcode = oneList["product_code"]
+            if productcode not in proctBaseInfoDf.index:
+                print(oneList)
+                oneList['market_type'] = dc.DICTCONS_CODETOMARKETTYPE[oneList['market_type']]
+                newsourceListTuple.append(tuple(oneList.values()))
+        destDbBase.execInsertManySql(sc.PRODUCTBASICINFO_INSERTSQL, newsourceListTuple)
 
     souceDbBase.closeDBConnect()
     destDbBase.closeDBConnect()
