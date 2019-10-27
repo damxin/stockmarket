@@ -52,12 +52,9 @@ def getProductBasicInfo(dbCntInfo):
     sourceTable = "stock_basics"
     destTable = "productbasicinfo"
 
-    sourceLogicName = dbCntInfo.getLogicNameListByTableName(sourceTable)
-    destLogicName = dbCntInfo.getLogicNameListByTableName(destTable)
-    logicCntNameList = [sourceLogicName, destLogicName]
-    dbCntInfo.getDbCnt(logicCntNameList)
-    souceDbBase = dbCntInfo.getDbBaseByLogicName(sourceLogicName)
-    destDbBase = dbCntInfo.getDbBaseByLogicName(destLogicName)
+
+    souceDbBase = dbCntInfo.getDBCntInfoByTableName(sourceTable)
+    destDbBase = dbCntInfo.getDBCntInfoByTableName(destTable)
 
     while (True):
         sourceRetList = souceDbBase.execSelectManySql(sc.PRODUCTBASICINFO_SQL)
@@ -69,9 +66,6 @@ def getProductBasicInfo(dbCntInfo):
             print(oneList)
             oneList['market_type'] = dc.DICTCONS_CODETOMARKETTYPE[oneList['market_type']]
             sourceList.append(tuple(oneList.values()))
-        # print(type(sourceList))
-        # print(type(sourceList[0]))
-        # print(sourceList)
         destDbBase.execInsertManySql(sc.PRODUCTBASICINFO_INSERTSQL, sourceList)
 
     souceDbBase.closeDBConnect()
@@ -99,29 +93,6 @@ def getSpecialCompanyBalanceSheet(product_code):
 def getCompanyBalanceSheet(product_code):
     if product_code in gc.CONST_STR_STAR:
         return
-
-def insertNormalDbByCurProductCode(productcode,dbCntInfo,sourcetable,desttable,selectsql,insertsql):
-    '''
-    产品对应的批量数据插入到正式库中
-    :param productcode:
-    :param dbCntInfo:
-    :param sourcetable:
-    :param desttable:
-    :param selectsql:
-    :param insertsql:
-    :return:
-    '''
-    sourceDbBase = dbCntInfo.getDBCntInfoByTableName(tablename=sourcetable, productcode=productcode)
-    destDbBase = dbCntInfo.getDBCntInfoByTableName(tablename=desttable, productcode=productcode)
-    while (True):
-        sourceRetList = sourceDbBase.execSelectManySql(selectsql)
-        if len(sourceRetList) == 0:
-            break
-        # 数据插入到另外一个库里面
-        sourceList = []
-        for oneList in sourceRetList:
-            sourceList.append(tuple(oneList.values()))
-        destDbBase.execInsertManySql(insertsql, sourceList)
 
 def insertIntoNormalDbFromNotDealDBData(dbCntInfo,startdate,pcodeDataUpdateDict):
     '''

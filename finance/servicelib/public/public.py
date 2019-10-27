@@ -121,3 +121,26 @@ def listdictTypeChangeToDataFrame(datalistdict):
             datadf[keyname] = datadf[keyname].astype(int)
 
     return datadf
+
+def insertNormalDbByCurProductCode(dbCntInfo,sourcetable,desttable,selectsql,insertsql,productcode=None):
+    '''
+    source表中数据批量插入到正式库中
+    :param productcode:可为None
+    :param dbCntInfo:
+    :param sourcetable:
+    :param desttable:
+    :param selectsql:
+    :param insertsql:
+    :return:
+    '''
+    sourceDbBase = dbCntInfo.getDBCntInfoByTableName(tablename=sourcetable, productcode=productcode)
+    destDbBase = dbCntInfo.getDBCntInfoByTableName(tablename=desttable, productcode=productcode)
+    while (True):
+        sourceRetList = sourceDbBase.execSelectManySql(selectsql)
+        if len(sourceRetList) == 0:
+            break
+        # 数据插入到另外一个库里面
+        sourceList = []
+        for oneList in sourceRetList:
+            sourceList.append(tuple(oneList.values()))
+        destDbBase.execInsertManySql(insertsql, sourceList)

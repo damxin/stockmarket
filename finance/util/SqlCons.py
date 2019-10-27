@@ -15,10 +15,20 @@ TABLEDICT = {"stock_basics": LOGICNAME_TMPBASE,
              "histtradedata": LOGICNAME_TMPBASE,
              "producttradedata": LOGICNAME_TRADE,
              "trade_cal":LOGICNAME_TMPBASE,
+             "openday":LOGICNAME_DBBASE,
              "stock_basics_tspro":LOGICNAME_TMPBASE,
              "profit_divis":LOGICNAME_TMPBASE,
              "histprofitdata":LOGICNAME_TMPBASE,
              "histadjfactor":LOGICNAME_TMPBASE}
+
+## 工作日begin
+WORKDAY_MAXDATESQL = "select max(trade_date) maxtradedate, exchange_code exchangecode from openday group by exchange_code"
+WORKDAY_SQL="select exchange exchange_code, cal_date trade_date, \
+ is_open trade_flag from trade_cal where cal_date > %d and exchange = '%s' "
+
+WORKDAY_INSERTSQL = "insert into openday(exchange_code, trade_date, trade_flag) values (%s, %s, %s)"
+## 工作日end
+
 
 ## 获取表productdatabaserule数据
 DATABASERULE_SQL="select min_product_code minproductcode, max_product_code maxproductcode, \
