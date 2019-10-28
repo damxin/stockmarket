@@ -276,7 +276,7 @@ def getAllNoneSubscriptionTradePriceFromTusharePro(dbCntInfo):
             selectsql = sc.PRODUCTHISTTRADEDATATUSHAREPRO_SQL % (sourceTable + productcode)
             insertsql = sc.PRODUCTTRADEDATA_INSERTSQL
             print(productcode+" trade data insert begin")
-            insertNormalDbByCurProductCode(productcode, dbCntInfo, sourceTable, destTable, selectsql, insertsql)
+            pb.insertNormalDbByCurProductCode(dbCntInfo, sourceTable, destTable, selectsql, insertsql,productcode)
             print(productcode + " trade data insert finish")
 
     minstartdate = 20991231
@@ -314,7 +314,7 @@ def getAllNoneSubscriptionTradePriceFromTusharePro(dbCntInfo):
         print(productcode+" trade data insert begin from %d to %d"%(startdate,enddate))
         while tradedate <= maxenddate and startdate <= tradedate and tradedate <= enddate:
             selectsql = sc.PRODUCTHISTTRADEDATATUSHAREPRO_SQL % (sourceTable + str(tradedate)) + " where left(a.ts_code,6) = '%s'"%productcode
-            insertNormalDbByCurProductCode(productcode, dbCntInfo, sourceTable, destTable, selectsql, insertsql)
+            pb.insertNormalDbByCurProductCode(dbCntInfo, sourceTable, destTable, selectsql, insertsql, productcode)
             tradedate = pb.getnextnday(tradedate, 1)
         print(productcode + " trade data insert finish")
 
@@ -451,23 +451,81 @@ def getSuspendProduct(dbCntInfo):
     df = pro.suspend(ts_code='600848.SH', suspend_date='', resume_date='', fields='')
     return
 
-def getProductIncome(dbCntInfo):
+
+def getmaxreportdate(dbCntInfo, destTable) -> pd.DataFrame :
     '''
-    获取产品的income数据
+    获取每个产品最大的reportdate
     :param dbCntInfo:
     :return:
     '''
-    pro = ts.pro_api('00f0c017db5d284d992f78f0971c73c9ecba4aa03dee2f38e71e4d9c')
-    sourceTable = "histincome"
+    # 获取产品基础信息
+    productBasicInfodf = pb.getAllProductBasicInfo(dbCntInfo)
+    if productBasicInfodf.empty:
+        print("表中无正在上市的数据，提前正常结束!")
+        return
 
-    productInfoDf = pb.getAllProductBasicInfo(dbCntInfo,ipostatus='N')
-    symbolProcuctCode = pb.code_to_symbol(productCode)
-    df = pro.income(ts_code=symbolProcuctCode)
-    sourceTable = "histincome"
+    productcodelist = []
+    maxreportdatelist = []
+    for rowIndex in productBasicInfodf.index:
+        oneProductTuple = productBasicInfodf.iloc[rowIndex]
+        productCode = oneProductTuple["product_code"]  ## 产品代码
+
+        maxReportDateSql = sc.COMPANYMAXREPORTDATE_SQL%(destTable, productCode)
+        destDbBase = dbCntInfo.getDBCntInfoByTableName(tablename=destTable,productcode=productCode)
+        destRetList = destDbBase.execSelectSmallSql(maxReportDateSql)
+        maxReportDate = destRetList[0]['maxreportdate']
+        print(rowIndex)
+        print(productCode+maxReportDateSql)
+
+        productcodelist.append(productCode)
+        maxreportdatelist.append(maxReportDate)
+    if len(productcodelist) > 0:
+        dfdict = {"productcode":productcodelist,"reportdate":maxreportdatelist}
+        df = pd.DataFrame(dfdict)
+        df = df.set_index("productcode")
+        return df
+    return
+
+def getProductFinanceInfo(dbCntInfo,sourcetable,desctable):
+    '''
+    获取产品的公司财务基础数据
+    :param dbCntInfo:
+    :param sourcetable: tusharepro数据填写到该表
+    :param desctable: 移植到该正式表
+    :return:
+    '''
+    productInfoDf = pb.getAllProductBasicInfo(dbCntInfo)
+    if productInfoDf.empty:
+        print("表中无正在上市的数据，提前正常结束!")
+        return
+
+    pro = ts.pro_api('00f0c017db5d284d992f78f0971c73c9ecba4aa03dee2f38e71e4d9c')
+    sourceTable = sourcetable # "histincome"
+    destTable = desctable #"company_income"
+
     engine = dbCntInfo.getEngineByTableName(sourceTable)
-    realSourTable = sourceTable + productCode
-    basicdf = df.reset_index(drop=True)
-    basicdf.to_sql(realSourTable, engine, if_exists="replace", index=False)
+    # 获取tusharepro中的数据
+    for rowIndex in productInfoDf.index:
+        oneProductInfo = productInfoDf.iloc[rowIndex]
+        productCode = oneProductInfo["product_code"]
+        symbolProcuctCode = pb.code_to_symbol(productCode)
+        df = pro.income(ts_code=symbolProcuctCode)
+        realSourTable = sourceTable + productCode
+        basicdf = df.reset_index(drop=True)
+        basicdf.to_sql(realSourTable, engine, if_exists="replace", index=False)
+
+    # 获取每个产品已经获取到的最大reportdate
+    productReportDateDf = getmaxreportdate(dbCntInfo, destTable)
+    # 获取表中存在的数据。
+    for rowIndex in productInfoDf.index:
+        oneProductInfo = productInfoDf.iloc[rowIndex]
+        productCode = oneProductInfo["product_code"]
+        maxreportdate = productReportDateDf.iloc[productCode]
+        realSourTable = sourceTable + productCode
+        selectsql = sc.COMPANYFINANCE_SELECTSQL[destTable]%(realSourTable,maxreportdate)
+        insertsql = sc.COMPANYFINANCE_INSERTSQL[destTable]
+        pb.insertNormalDbByCurProductCode(dbCntInfo, sourceTable, destTable, selectsql, insertsql)
+
     return
 
 if __name__ == "__main__":
@@ -478,7 +536,8 @@ if __name__ == "__main__":
     # getprofitdata(dbCntInfo)
     # getStockBasicsPro(dbCntInfo)
     # getProductBasicInfo(dbCntInfo)
-    getAllNoneSubscriptionTradePriceFromTusharePro(dbCntInfo)
+    # getAllNoneSubscriptionTradePriceFromTusharePro(dbCntInfo)
+    getProductIncome(dbCntInfo)
     # pcodeDataUpdateDict = {}
     # pcodeDataUpdateDict["000008"] = "1"
     # pcodeDataUpdateDict["300100"] = "1"

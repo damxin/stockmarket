@@ -20,7 +20,8 @@ TABLEDICT = {"stock_basics": LOGICNAME_TMPBASE,
              "profit_divis":LOGICNAME_TMPBASE,
              "histprofitdata":LOGICNAME_TMPBASE,
              "histadjfactor":LOGICNAME_TMPBASE,
-             "histincome":LOGICNAME_TMPBASE}
+             "histincome":LOGICNAME_TMPBASE,
+             "company_income":LOGICNAME_TRADE}
 
 ## 工作日begin
 WORKDAY_MAXDATESQL = "select max(trade_date) maxtradedate, exchange_code exchangecode from openday group by exchange_code"
@@ -83,3 +84,19 @@ PRODUCTTRADEDATA_GETALLDATA_SQL=" select trade_date, open_price open, close_pric
 from producttradedata where product_code = '%s' order by trade_date"
 
 # 与每日交易数据相关 end
+
+# 公司相关的会计数据  being
+COMPANYMAXREPORTDATE_SQL = "select ifnull(max(report_date),0) maxreportdate from %s where product_code = '%s' "
+INCOMEHIST_SELECTSQL = ""
+CASHFLOWHIST_SELECTSQL = ""
+BALANCEHIST_SELECTSQL = ""
+COMPANYFINANCE_SELECTSQL = {"company_income":INCOMEHIST_SELECTSQL,
+                            "company_cashflow":CASHFLOWHIST_SELECTSQL,
+                            "company_balance_sheet":BALANCEHIST_SELECTSQL}
+INCOME_INSERTSQL = ""
+CASHFLOW_INSERTSQL = ""
+BALANCE_INSERTQL = ""
+COMPANYFINANCE_INSERTSQL = {"company_income":INCOME_INSERTSQL,
+                            "company_cashflow":CASHFLOW_INSERTSQL,
+                            "company_balance_sheet":BALANCE_INSERTQL}
+# 公司相关的会计数据 end

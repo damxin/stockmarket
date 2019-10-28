@@ -146,7 +146,7 @@ DELIMITER $$
                   product_code varchar(10),
                   announce_date int(8),
                   f_announce_date int(8),
-                  report_date int(6),
+                  report_date int(8),
                   company_type char(1),
                   total_share decimal(12,2),
                   cap_rese decimal(12,2),
@@ -302,7 +302,7 @@ DELIMITER $$
                   product_code varchar(10),
                   announce_date int(8),
                   f_announce_date int(8),
-                  report_date int(6),
+                  report_date int(8),
                   company_type char(1),
                   net_profit decimal(12,2),
                   finan_exp decimal(12,2),
@@ -410,7 +410,8 @@ DELIMITER $$
                   product_code varchar(10),
                   announce_date int(8),
                   f_announce_date int(8),
-                  report_date int(6),
+                  report_type varchar(20),
+                  report_date int(8),
                   company_type char(1),
                   basic_eps decimal(12,2),
                   diluted_eps decimal(12,2),
@@ -472,7 +473,7 @@ DELIMITER $$
                   undist_profit decimal(12,2),
                   distable_profit decimal(12,2),
                   update_flag char(1),
-                  primary key (product_code, report_date)
+                  primary key (product_code, report_date, report_type)
                 );
             END IF; 
     END$$ 
