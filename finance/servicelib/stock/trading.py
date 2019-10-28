@@ -243,13 +243,12 @@ def getCurProductTradeData(productcode,dbCntInfo,engine):
     print(productCode + " get data finish ...")
 
 
-
-'''
-    获取产品的不复权每日交易数据 Product_trade_data
-'''
-
-
 def getAllNoneSubscriptionTradePriceFromTusharePro(dbCntInfo):
+    '''
+    获取产品的不复权每日交易数据 Product_trade_data
+    :param dbCntInfo:
+    :return:
+    '''
     productdf = getalltradeproductdate(dbCntInfo)
     if productdf is None:
         print("Trade datas are not should be get, because of they are newest!")
@@ -440,6 +439,36 @@ def getTradeDataFromDataBase(product_code, ma=None, autotype=None):
     # dfname._stat_axis.values.tolist() # 行名称
     # dfname.columns.values.tolist()    # 列名称
     return productname,dfdata
+
+def getSuspendProduct(dbCntInfo):
+    '''
+    获取股票每日停复牌信息
+    :param dbCntInfo:
+    :return:
+    '''
+
+    pro = ts.pro_api('00f0c017db5d284d992f78f0971c73c9ecba4aa03dee2f38e71e4d9c')
+    df = pro.suspend(ts_code='600848.SH', suspend_date='', resume_date='', fields='')
+    return
+
+def getProductIncome(dbCntInfo):
+    '''
+    获取产品的income数据
+    :param dbCntInfo:
+    :return:
+    '''
+    pro = ts.pro_api('00f0c017db5d284d992f78f0971c73c9ecba4aa03dee2f38e71e4d9c')
+    sourceTable = "histincome"
+
+    productInfoDf = pb.getAllProductBasicInfo(dbCntInfo,ipostatus='N')
+    symbolProcuctCode = pb.code_to_symbol(productCode)
+    df = pro.income(ts_code=symbolProcuctCode)
+    sourceTable = "histincome"
+    engine = dbCntInfo.getEngineByTableName(sourceTable)
+    realSourTable = sourceTable + productCode
+    basicdf = df.reset_index(drop=True)
+    basicdf.to_sql(realSourTable, engine, if_exists="replace", index=False)
+    return
 
 if __name__ == "__main__":
     filedata = open(".\stock_basics.txt", 'w+')

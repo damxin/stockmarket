@@ -19,7 +19,8 @@ TABLEDICT = {"stock_basics": LOGICNAME_TMPBASE,
              "stock_basics_tspro":LOGICNAME_TMPBASE,
              "profit_divis":LOGICNAME_TMPBASE,
              "histprofitdata":LOGICNAME_TMPBASE,
-             "histadjfactor":LOGICNAME_TMPBASE}
+             "histadjfactor":LOGICNAME_TMPBASE,
+             "histincome":LOGICNAME_TMPBASE}
 
 ## 工作日begin
 WORKDAY_MAXDATESQL = "select max(trade_date) maxtradedate, exchange_code exchangecode from openday group by exchange_code"
