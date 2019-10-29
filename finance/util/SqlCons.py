@@ -89,19 +89,19 @@ from producttradedata where product_code = '%s' order by trade_date"
 COMPANYMAXREPORTDATE_SQL = "select ifnull(max(report_date),0) maxreportdate from %s where product_code = '%s' "
 INCOMEHIST_SELECTSQL = " SELECT LEFT(ts_code,6) product_code, ann_date announce_date, f_ann_date f_announce_date,\
 end_date report_date, \
-CASE WHEN report_type = '1' THEN '合并报表' \
-WHEN report_type = '2' THEN '单季合并' \
-WHEN report_type = '3' THEN '调整单季合并表' \
-WHEN report_type = '4' THEN '调整合并报表' \
-WHEN report_type = '5' THEN '调整前合并报表' \
-WHEN report_type = '6' THEN '母公司报表' \
-WHEN report_type = '7' THEN '母公司单季表' \
-WHEN report_type = '8' THEN '母公司调整单季表' \
-WHEN report_type = '9' THEN '母公司调整表' \
-WHEN report_type = '10' THEN '母公司调整前报表' \
-WHEN report_type = '11' THEN '调整前合并报表' \
-WHEN report_type = '12' THEN '母公司调整前报表' \
-ELSE '报表不明' END  report_type, \
+CASE WHEN report_type = '1' THEN '1:合并报表' \
+WHEN report_type = '2' THEN '2:单季合并' \
+WHEN report_type = '3' THEN '3:调整单季合并表' \
+WHEN report_type = '4' THEN '4:调整合并报表' \
+WHEN report_type = '5' THEN '5:调整前合并报表' \
+WHEN report_type = '6' THEN '6:母公司报表' \
+WHEN report_type = '7' THEN '7:母公司单季表' \
+WHEN report_type = '8' THEN '8:母公司调整单季表' \
+WHEN report_type = '9' THEN '9:母公司调整表' \
+WHEN report_type = '10' THEN '10:母公司调整前报表' \
+WHEN report_type = '11' THEN '11:调整前合并报表' \
+WHEN report_type = '12' THEN '12:母公司调整前报表' \
+ELSE '99:报表不明' END  report_type, \
 CASE WHEN comp_type = '1' THEN '一般工商业' \
 WHEN comp_type = '2' THEN '银行' \
 WHEN comp_type = '3' THEN '保险' \
@@ -120,8 +120,59 @@ income_tax,n_income,n_income_attr_p,minority_gain,oth_compr_income,\
 t_compr_income,compr_inc_attr_p,compr_inc_attr_m_s,ebit,ebitda,\
 insurance_exp,undist_profit,distable_profit,'1' update_flag \
 FROM %s "
+
+BALANCEHIST_SELECTSQL = "SELECT LEFT(ts_code,6) product_code, ann_date announce_date,f_ann_date f_announce_date,\
+end_date report_date, \
+CASE WHEN report_type = '1' THEN '1:合并报表' \
+WHEN report_type = '2' THEN '2:单季合并' \
+WHEN report_type = '3' THEN '3:调整单季合并表' \
+WHEN report_type = '4' THEN '4:调整合并报表' \
+WHEN report_type = '5' THEN '5:调整前合并报表' \
+WHEN report_type = '6' THEN '6:母公司报表' \
+WHEN report_type = '7' THEN '7:母公司单季表' \
+WHEN report_type = '8' THEN '8:母公司调整单季表' \
+WHEN report_type = '9' THEN '9:母公司调整表' \
+WHEN report_type = '10' THEN '10:母公司调整前报表' \
+WHEN report_type = '11' THEN '11:调整前合并报表' \
+WHEN report_type = '12' THEN '12:母公司调整前报表' \
+ELSE '99:报表不明' END  report_type, \
+CASE WHEN comp_type = '1' THEN '一般工商业' \
+WHEN comp_type = '2' THEN '银行' \
+WHEN comp_type = '3' THEN '保险' \
+WHEN comp_type = '4' THEN '证券' \
+ELSE '一般工商业' END company_type, \
+total_share, cap_rese,undistr_porfit undistr_profit,surplus_rese,special_rese,money_cap,\
+trad_asset trade_asset,notes_receiv notes_willreceiv,accounts_receiv accounts_willreceiv,\
+oth_receiv other_willreceiv,prepayment,div_receiv dividend_willreceiv,int_receiv interest_willreceiv,\
+inventories,amor_exp,nca_within_1y notcash_within_1y,sett_rsrv,loanto_oth_bank_fi,\
+premium_receiv,reinsur_receiv,reinsur_res_receiv,pur_resale_fa,oth_cur_assets,\
+total_cur_assets,fa_avail_for_sale,htm_invest,lt_eqt_invest long_stock_invest,\
+invest_real_estate,time_deposits,oth_assets,lt_rec long_term_rec,fix_assets,\
+cip constr_in_process,const_materials,fixed_assets_disp,produc_bio_assets,\
+oil_and_gas_assets,intan_assets,r_and_d study_spending,goodwill,\
+lt_amor_exp long_term_amor_exp,defer_tax_assets,decr_in_disbur,oth_nca other_not_cash,\
+total_nca total_not_cash,cash_reser_cb,depos_in_oth_bfi,prec_metals,deriv_assets,\
+rr_reins_une_prem,rr_reins_outstd_cla,rr_reins_lins_liab,rr_reins_lthins_liab,\
+refund_depos,ph_pledge_loans,refund_cap_depos,indep_acct_assets,client_depos,\
+client_prov,transac_seat_fee,invest_as_receiv,total_assets,lt_borr long_borrow,\
+st_borr short_borrow,cb_borr central_bank_borrow,depos_ib_deposits,loan_oth_bank,\
+trading_fl trading_finance_load,notes_payable,acct_payable,adv_receipts,\
+sold_for_repur_fa,comm_payable,payroll_payable,taxes_payable,int_payable interst_payable,\
+div_payable dividend_payable,oth_payable,acc_exp,deferred_inc,st_bonds_payable,\
+payable_to_reinsurer,rsrv_insur_cont,acting_trading_sec,acting_uw_sec,\
+non_cur_liab_due_1y,oth_cur_liab,total_cur_liab,bond_payable,lt_payable long_money_payable,\
+specific_payables,estimated_liab,defer_tax_liab,defer_inc_non_cur_liab,\
+oth_ncl other_not_cur_load,total_ncl total_not_cur_load,depos_oth_bfi,\
+deriv_liab,depos,agency_bus_liab,oth_liab,prem_receiv_adva,depos_received,\
+ph_invest,reser_une_prem,reser_outstd_claims,reser_lins_liab,reser_lthins_liab,\
+indept_acc_liab,pledge_borr,indem_payable,policy_div_payable,total_liab,\
+treasury_share,ordin_risk_reser,forex_differ,invest_loss_unconf,minority_int,\
+total_hldr_eqy_exc_min_int,total_hldr_eqy_inc_min_int,total_liab_hldr_eqy,\
+lt_payroll_payable,oth_comp_income,oth_eqt_tools,oth_eqt_tools_p_shr,lending_funds,\
+acc_receivable,st_fin_payable,payables,hfs_assets,hfs_sales,update_flag \
+FROM %s"
+
 CASHFLOWHIST_SELECTSQL = ""
-BALANCEHIST_SELECTSQL = ""
 COMPANYFINANCE_SELECTSQL = {"company_income":INCOMEHIST_SELECTSQL,
                             "company_cashflow":CASHFLOWHIST_SELECTSQL,
                             "company_balance_sheet":BALANCEHIST_SELECTSQL}
@@ -147,8 +198,67 @@ INCOME_INSERTSQL = "INSERT INTO company_income \
 %s,%s,%s,%s,%s,\
 %s,%s,%s,%s,%s,\
 %s,%s,%s,%s,%s,%s)"
+
+BALANCE_INSERTQL = "insert into company_balance_sheet\
+(product_code,announce_date,f_announce_date,report_date,report_type,\
+company_type,total_share,cap_rese,undistr_profit,surplus_rese,\
+special_rese,money_cap,trade_asset,notes_willreceiv,accounts_willreceiv,\
+other_willreceiv,prepayment,dividend_willreceiv,interest_willreceiv,inventories,\
+amor_exp,notcash_within_1y,sett_rsrv,loanto_oth_bank_fi,premium_receiv,\
+reinsur_receiv,reinsur_res_receiv,pur_resale_fa,oth_cur_assets,total_cur_assets,\
+fa_avail_for_sale,htm_invest,long_stock_invest,invest_real_estate,time_deposits,\
+oth_assets,long_term_rec,fix_assets,constr_in_process,const_materials,\
+fixed_assets_disp,produc_bio_assets,oil_and_gas_assets,intan_assets,study_spending,\
+goodwill,long_term_amor_exp,defer_tax_assets,decr_in_disbur,other_not_cash,\
+total_not_cash,cash_reser_cb,depos_in_oth_bfi,prec_metals,deriv_assets,\
+rr_reins_une_prem,rr_reins_outstd_cla,rr_reins_lins_liab,rr_reins_lthins_liab,refund_depos,\
+ph_pledge_loans,refund_cap_depos,indep_acct_assets,client_depos,client_prov,\
+transac_seat_fee,invest_as_receiv,total_assets,long_borrow,short_borrow,\
+central_bank_borrow,depos_ib_deposits,loan_oth_bank,trading_finance_load,notes_payable,\
+acct_payable,adv_receipts,sold_for_repur_fa,comm_payable,payroll_payable,\
+taxes_payable,interst_payable,dividend_payable,oth_payable,acc_exp,\
+deferred_inc,st_bonds_payable,payable_to_reinsurer,rsrv_insur_cont,acting_trading_sec,\
+acting_uw_sec,non_cur_liab_due_1y,oth_cur_liab,total_cur_liab,bond_payable,\
+long_money_payable,specific_payables,estimated_liab,defer_tax_liab,defer_inc_non_cur_liab,\
+other_not_cur_load,total_not_cur_load,depos_oth_bfi,deriv_liab,depos,\
+agency_bus_liab,oth_liab,prem_receiv_adva,depos_received,ph_invest,\
+reser_une_prem,reser_outstd_claims,reser_lins_liab,reser_lthins_liab,indept_acc_liab,\
+pledge_borr,indem_payable,policy_div_payable,total_liab,treasury_share,\
+ordin_risk_reser,forex_differ,invest_loss_unconf,minority_int,total_hldr_eqy_exc_min_int,\
+total_hldr_eqy_inc_min_int,total_liab_hldr_eqy,lt_payroll_payable,oth_comp_income,oth_eqt_tools,\
+oth_eqt_tools_p_shr,lending_funds,acc_receivable,st_fin_payable,payables,\
+hfs_assets,hfs_sales,update_flag) \
+value (%s,%s,%s,%s,%s,\
+%s,%s,%s,%s,%s,\
+%s,%s,%s,%s,%s,\
+%s,%s,%s,%s,%s,\
+%s,%s,%s,%s,%s,\
+%s,%s,%s,%s,%s,\
+%s,%s,%s,%s,%s,\
+%s,%s,%s,%s,%s,\
+%s,%s,%s,%s,%s,\
+%s,%s,%s,%s,%s,\
+%s,%s,%s,%s,%s,\
+%s,%s,%s,%s,%s,\
+%s,%s,%s,%s,%s,\
+%s,%s,%s,%s,%s,\
+%s,%s,%s,%s,%s,\
+%s,%s,%s,%s,%s,\
+%s,%s,%s,%s,%s,\
+%s,%s,%s,%s,%s,\
+%s,%s,%s,%s,%s,\
+%s,%s,%s,%s,%s,\
+%s,%s,%s,%s,%s,\
+%s,%s,%s,%s,%s,\
+%s,%s,%s,%s,%s,\
+%s,%s,%s,%s,%s,\
+%s,%s,%s,%s,%s,\
+%s,%s,%s,%s,%s,\
+%s,%s,%s,%s,%s,\
+%s,%s,%s,%s,%s,\
+%s,%s,%s)"
+
 CASHFLOW_INSERTSQL = ""
-BALANCE_INSERTQL = ""
 COMPANYFINANCE_INSERTSQL = {"company_income":INCOME_INSERTSQL,
                             "company_cashflow":CASHFLOW_INSERTSQL,
                             "company_balance_sheet":BALANCE_INSERTQL}

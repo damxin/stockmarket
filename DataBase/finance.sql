@@ -147,10 +147,11 @@ DELIMITER $$
                   announce_date int(8),
                   f_announce_date int(8),
                   report_date int(8),
-                  company_type char(1),
+                  report_type varchar(20),
+                  company_type varchar(16),
                   total_share decimal(12,2),
                   cap_rese decimal(12,2),
-                  nudistr_profit decimal(12,2),
+                  undistr_profit decimal(12,2),
                   surplus_rese decimal(12,2),
                   special_rese decimal(12,2),
                   money_cap decimal(12,2),
@@ -280,7 +281,7 @@ DELIMITER $$
                   hfs_assets decimal(12,2),
                   hfs_sales decimal(12,2),
                   update_flag char(1),
-                  primary key (product_code, report_date)
+                  primary key (product_code, report_date, report_type)
                 );
             END IF; 
     END$$ 
@@ -303,7 +304,8 @@ DELIMITER $$
                   announce_date int(8),
                   f_announce_date int(8),
                   report_date int(8),
-                  company_type char(1),
+                  report_type varchar(20),
+                  company_type varchar(16),
                   net_profit decimal(12,2),
                   finan_exp decimal(12,2),
                   c_fr_sale_sg decimal(12,2),
@@ -388,7 +390,7 @@ DELIMITER $$
                   beg_bal_cash_equ decimal(12,2),
                   im_n_incr_cash_equ decimal(12,2),
                   update_flag char(1),
-                  primary key (product_code, report_date)
+                  primary key (product_code, report_date, report_type)
                 );
             END IF; 
     END$$ 
@@ -412,7 +414,7 @@ DELIMITER $$
                   f_announce_date int(8),
                   report_type varchar(20),
                   report_date int(8),
-                  company_type char(1),
+                  company_type varchar(16),
                   basic_eps decimal(12,2),
                   diluted_eps decimal(12,2),
                   total_revenue decimal(12,2),
