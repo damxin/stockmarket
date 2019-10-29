@@ -87,13 +87,66 @@ from producttradedata where product_code = '%s' order by trade_date"
 
 # 公司相关的会计数据  being
 COMPANYMAXREPORTDATE_SQL = "select ifnull(max(report_date),0) maxreportdate from %s where product_code = '%s' "
-INCOMEHIST_SELECTSQL = ""
+INCOMEHIST_SELECTSQL = " SELECT LEFT(ts_code,6) product_code, ann_date announce_date, f_ann_date f_announce_date,\
+end_date report_date, \
+CASE WHEN report_type = '1' THEN '合并报表' \
+WHEN report_type = '2' THEN '单季合并' \
+WHEN report_type = '3' THEN '调整单季合并表' \
+WHEN report_type = '4' THEN '调整合并报表' \
+WHEN report_type = '5' THEN '调整前合并报表' \
+WHEN report_type = '6' THEN '母公司报表' \
+WHEN report_type = '7' THEN '母公司单季表' \
+WHEN report_type = '8' THEN '母公司调整单季表' \
+WHEN report_type = '9' THEN '母公司调整表' \
+WHEN report_type = '10' THEN '母公司调整前报表' \
+WHEN report_type = '11' THEN '调整前合并报表' \
+WHEN report_type = '12' THEN '母公司调整前报表' \
+ELSE '报表不明' END  report_type, \
+CASE WHEN comp_type = '1' THEN '一般工商业' \
+WHEN comp_type = '2' THEN '银行' \
+WHEN comp_type = '3' THEN '保险' \
+WHEN comp_type = '4' THEN '证券' \
+ELSE '一般工商业' END company_type, \
+basic_eps, diluted_eps, total_revenue, revenue, int_income,\
+prem_earned,comm_income,n_commis_income,n_oth_income,n_oth_b_income,\
+prem_income,out_prem,une_prem_reser,reins_income,n_sec_tb_income,n_sec_uw_income,\
+n_asset_mg_income,oth_b_income,fv_value_chg_gain,invest_income,ass_invest_income,\
+forex_gain,total_cogs,oper_cost,int_exp,comm_exp,\
+biz_tax_surchg,sell_exp,admin_exp,fin_exp,assets_impair_loss,\
+prem_refund,compens_payout,reser_insur_liab,div_payt,reins_exp,\
+oper_exp,compens_payout_refu,insur_reser_refu,reins_cost_refund,other_bus_cost,\
+operate_profit,non_oper_income,non_oper_exp,nca_disploss,total_profit,\
+income_tax,n_income,n_income_attr_p,minority_gain,oth_compr_income,\
+t_compr_income,compr_inc_attr_p,compr_inc_attr_m_s,ebit,ebitda,\
+insurance_exp,undist_profit,distable_profit,'1' update_flag \
+FROM %s "
 CASHFLOWHIST_SELECTSQL = ""
 BALANCEHIST_SELECTSQL = ""
 COMPANYFINANCE_SELECTSQL = {"company_income":INCOMEHIST_SELECTSQL,
                             "company_cashflow":CASHFLOWHIST_SELECTSQL,
                             "company_balance_sheet":BALANCEHIST_SELECTSQL}
-INCOME_INSERTSQL = ""
+INCOME_INSERTSQL = "INSERT INTO company_income \
+(product_code, announce_date, f_announce_date, report_date, report_type,\
+ company_type, basic_eps, diluted_eps, total_revenue, revenue,\
+ int_income, prem_earned, comm_income, n_commis_income, n_oth_income,\
+ n_oth_b_income, prem_income, out_prem, une_prem_reser, reins_income,\
+ n_sec_tb_income, n_sec_uw_income, n_asset_mg_income, oth_b_income, fv_value_chg_gain,\
+ invest_income, ass_invest_income, forex_gain, total_cogs, oper_cost,\
+ int_exp, comm_exp, biz_tax_surchg, sell_exp, admin_exp,\
+ fin_exp, assets_impair_loss, prem_refund, compens_payout, reser_insur_liab,\
+ div_payt, reins_exp, oper_exp, compens_payout_refu, insur_reser_refu,\
+ reins_cost_refund, other_bus_cost, operate_profit, non_oper_income, non_oper_exp,\
+ nca_disploss, total_profit, income_tax, n_income, n_income_attr_p,\
+ minority_gain, oth_compr_income, t_compr_income, compr_inc_attr_p, compr_inc_attr_m_s,\
+ ebit, ebitda, insurance_exp, undist_profit, distable_profit, update_flag)\
+ VALUES (%s,%s,%s,%s,%s,\
+%s,%s,%s,%s,%s,\
+%s,%s,%s,%s,%s,\
+%s,%s,%s,%s,%s,\
+%s,%s,%s,%s,%s,\
+%s,%s,%s,%s,%s,\
+%s,%s,%s,%s,%s,\
+%s,%s,%s,%s,%s,%s)"
 CASHFLOW_INSERTSQL = ""
 BALANCE_INSERTQL = ""
 COMPANYFINANCE_INSERTSQL = {"company_income":INCOME_INSERTSQL,
