@@ -380,7 +380,7 @@ DELIMITER $$
                   decr_inventories decimal(12,2),
                   decr_oper_payable decimal(12,2),
                   incr_oper_payable decimal(12,2),
-                  others decimal(12,2),
+                  others_payable decimal(12,2),
                   conv_debt_into_cap decimal(12,2),
                   conv_copbonds_due_within_1y decimal(12,2),
                   fa_fnc_leases decimal(12,2),
