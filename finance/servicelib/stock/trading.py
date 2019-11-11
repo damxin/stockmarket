@@ -509,7 +509,16 @@ def getProductFinanceInfo(dbCntInfo,sourcetable,desctable):
         oneProductInfo = productInfoDf.iloc[rowIndex]
         productCode = oneProductInfo["product_code"]
         symbolProcuctCode = pb.code_to_symbol(productCode)
-        df = pro.income(ts_code=symbolProcuctCode)
+        df = pd.DataFrame()
+        if destTable in "company_income":
+            df = pro.income(ts_code=symbolProcuctCode)
+        elif destTable in "company_balance_sheet":
+            df = pro.balancesheet(ts_code=symbolProcuctCode)
+        elif destTable in "company_cashflow":
+            df = pro.cashflow(ts_code=symbolProcuctCode)
+        else:
+            raise Exception("destTable is exception!")
+
         realSourTable = sourceTable + productCode
         basicdf = df.reset_index(drop=True)
         basicdf.to_sql(realSourTable, engine, if_exists="replace", index=False)
