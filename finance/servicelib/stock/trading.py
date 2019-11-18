@@ -490,8 +490,8 @@ def getProductFinanceInfo(dbCntInfo,sourcetable,desctable):
     '''
     获取产品的公司财务基础数据
     :param dbCntInfo:
-    :param sourcetable: tusharepro数据填写到该表
-    :param desctable: 移植到该正式表
+    :param sourcetable: tusharepro数据填写到该表 histincome      histcastflow      histbalance
+    :param desctable: 移植到该正式表             company_income  company_cashflow  company_balance_sheet
     :return:
     '''
     productInfoDf = pb.getAllProductBasicInfo(dbCntInfo)
@@ -537,7 +537,7 @@ if __name__ == "__main__":
     # getStockBasicsPro(dbCntInfo)
     # getProductBasicInfo(dbCntInfo)
     # getAllNoneSubscriptionTradePriceFromTusharePro(dbCntInfo)
-    getProductIncome(dbCntInfo)
+    getProductFinanceInfo(dbCntInfo,"histincome","company_income")
     # pcodeDataUpdateDict = {}
     # pcodeDataUpdateDict["000008"] = "1"
     # pcodeDataUpdateDict["300100"] = "1"

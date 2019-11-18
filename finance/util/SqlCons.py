@@ -21,7 +21,11 @@ TABLEDICT = {"stock_basics": LOGICNAME_TMPBASE,
              "histprofitdata":LOGICNAME_TMPBASE,
              "histadjfactor":LOGICNAME_TMPBASE,
              "histincome":LOGICNAME_TMPBASE,
-             "company_income":LOGICNAME_TRADE}
+             "company_income":LOGICNAME_TRADE,
+             "histcastflow":LOGICNAME_TMPBASE,
+             "company_cashflow":LOGICNAME_TRADE,
+             "histbalance":LOGICNAME_TMPBASE,
+             "company_balance_sheet":LOGICNAME_TRADE}
 
 ## 工作日begin
 WORKDAY_MAXDATESQL = "select max(trade_date) maxtradedate, exchange_code exchangecode from openday group by exchange_code"
@@ -86,6 +90,7 @@ from producttradedata where product_code = '%s' order by trade_date"
 # 与每日交易数据相关 end
 
 # 公司相关的会计数据  being
+
 COMPANYMAXREPORTDATE_SQL = "select ifnull(max(report_date),0) maxreportdate from %s where product_code = '%s' "
 INCOMEHIST_SELECTSQL = " SELECT LEFT(ts_code,6) product_code, ann_date announce_date, f_ann_date f_announce_date,\
 end_date report_date, \
