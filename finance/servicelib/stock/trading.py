@@ -452,7 +452,7 @@ def getSuspendProduct(dbCntInfo):
     return
 
 
-def getmaxreportdate(dbCntInfo, destTable) -> pd.DataFrame :
+def getmaxreportdate(dbCntInfo, destTable) -> dict :
     '''
     获取每个产品最大的reportdate
     :param dbCntInfo:
@@ -464,8 +464,7 @@ def getmaxreportdate(dbCntInfo, destTable) -> pd.DataFrame :
         print("表中无正在上市的数据，提前正常结束!")
         return
 
-    productcodelist = []
-    maxreportdatelist = []
+    maxreportdatedict = {}
     for rowIndex in productBasicInfodf.index:
         oneProductTuple = productBasicInfodf.iloc[rowIndex]
         productCode = oneProductTuple["product_code"]  ## 产品代码
@@ -476,15 +475,10 @@ def getmaxreportdate(dbCntInfo, destTable) -> pd.DataFrame :
         maxReportDate = destRetList[0]['maxreportdate']
         print(rowIndex)
         print(productCode+maxReportDateSql)
-
-        productcodelist.append(productCode)
-        maxreportdatelist.append(maxReportDate)
-    if len(productcodelist) > 0:
-        dfdict = {"productcode":productcodelist,"reportdate":maxreportdatelist}
-        df = pd.DataFrame(dfdict)
-        df = df.set_index("productcode")
-        return df
-    return
+        maxreportdatedict[productCode] = maxReportDate
+    if len(maxreportdatedict) == 0:
+        raise Exception("getmaxreportdate return value is empty!")
+    return maxreportdatedict
 
 def getProductFinanceInfo(dbCntInfo,sourcetable,desctable):
     '''
@@ -508,6 +502,7 @@ def getProductFinanceInfo(dbCntInfo,sourcetable,desctable):
     for rowIndex in productInfoDf.index:
         oneProductInfo = productInfoDf.iloc[rowIndex]
         productCode = oneProductInfo["product_code"]
+        print("%s begin to get %s data from intenert..."%(productCode,destTable))
         symbolProcuctCode = pb.code_to_symbol(productCode)
         df = pd.DataFrame()
         if destTable in "company_income":
@@ -522,18 +517,24 @@ def getProductFinanceInfo(dbCntInfo,sourcetable,desctable):
         realSourTable = sourceTable + productCode
         basicdf = df.reset_index(drop=True)
         basicdf.to_sql(realSourTable, engine, if_exists="replace", index=False)
+        print("%s get data finish!" % (productCode))
+        time.sleep(1.5)
+        break
 
     # 获取每个产品已经获取到的最大reportdate
-    productReportDateDf = getmaxreportdate(dbCntInfo, destTable)
+    productReportDateDict = getmaxreportdate(dbCntInfo, destTable)
     # 获取表中存在的数据。
     for rowIndex in productInfoDf.index:
         oneProductInfo = productInfoDf.iloc[rowIndex]
         productCode = oneProductInfo["product_code"]
-        maxreportdate = productReportDateDf.iloc[productCode]
+        maxreportdate = productReportDateDict[productCode]
         realSourTable = sourceTable + productCode
+        print("%s begin to insert  table %s data..." % (realSourTable, destTable))
         selectsql = sc.COMPANYFINANCE_SELECTSQL[destTable]%(realSourTable,maxreportdate)
         insertsql = sc.COMPANYFINANCE_INSERTSQL[destTable]
-        pb.insertNormalDbByCurProductCode(dbCntInfo, sourceTable, destTable, selectsql, insertsql)
+        pb.insertNormalDbByCurProductCode(dbCntInfo, sourceTable, destTable, selectsql, insertsql,productCode)
+        print("%s insert table %s finish!" % (realSourTable, destTable))
+        break
 
     return
 
@@ -547,6 +548,7 @@ if __name__ == "__main__":
     # getProductBasicInfo(dbCntInfo)
     # getAllNoneSubscriptionTradePriceFromTusharePro(dbCntInfo)
     getProductFinanceInfo(dbCntInfo,"histincome","company_income")
+    ## 执行时存在错误 pymysql.err.DataError: (1264, "Out of range value for column 'total_revenue' at row 1")
     # pcodeDataUpdateDict = {}
     # pcodeDataUpdateDict["000008"] = "1"
     # pcodeDataUpdateDict["300100"] = "1"
