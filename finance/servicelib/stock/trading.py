@@ -500,9 +500,13 @@ def getProductFinanceInfo(dbCntInfo,sourcetable,desctable):
     engine = dbCntInfo.getEngineByTableName(sourceTable)
     # 获取tusharepro中的数据
     for rowIndex in productInfoDf.index:
+        if rowIndex < 820:
+            continue
+        if rowIndex % 200 == 0:
+            time.sleep(60)
         oneProductInfo = productInfoDf.iloc[rowIndex]
         productCode = oneProductInfo["product_code"]
-        print("%s begin to get %s data from intenert..."%(productCode,destTable))
+        print("%d %s begin to get %s data from intenert..."%(rowIndex, productCode,destTable))
         symbolProcuctCode = pb.code_to_symbol(productCode)
         df = pd.DataFrame()
         if destTable in "company_income":
@@ -519,7 +523,6 @@ def getProductFinanceInfo(dbCntInfo,sourcetable,desctable):
         basicdf.to_sql(realSourTable, engine, if_exists="replace", index=False)
         print("%s get data finish!" % (productCode))
         time.sleep(1.5)
-        break
 
     # 获取每个产品已经获取到的最大reportdate
     productReportDateDict = getmaxreportdate(dbCntInfo, destTable)
@@ -529,12 +532,12 @@ def getProductFinanceInfo(dbCntInfo,sourcetable,desctable):
         productCode = oneProductInfo["product_code"]
         maxreportdate = productReportDateDict[productCode]
         realSourTable = sourceTable + productCode
-        print("%s begin to insert  table %s data..." % (realSourTable, destTable))
+        print("%d %s begin to insert  table %s data..." % (rowIndex, realSourTable, destTable))
         selectsql = sc.COMPANYFINANCE_SELECTSQL[destTable]%(realSourTable,maxreportdate)
+        print(selectsql)
         insertsql = sc.COMPANYFINANCE_INSERTSQL[destTable]
         pb.insertNormalDbByCurProductCode(dbCntInfo, sourceTable, destTable, selectsql, insertsql,productCode)
         print("%s insert table %s finish!" % (realSourTable, destTable))
-        break
 
     return
 
