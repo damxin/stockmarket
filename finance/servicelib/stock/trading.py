@@ -539,8 +539,8 @@ def getProductFinanceInfo(dbCntInfo,sourcetable,desctable):
 
 if __name__ == "__main__":
     filedata = open(".\stock_basics.txt", 'w+')
-    # xmlfile = "E:\\pydevproj\\stockmarket\\finance\\resource\\finance.xml"
-    xmlfile = "F:\\nfx\\Python\\stockmarket\\finance\\resource\\finance.xml"
+    xmlfile = "E:\\pydevproj\\stockmarket\\finance\\resource\\finance.xml"
+    # xmlfile = "F:\\nfx\\Python\\stockmarket\\finance\\resource\\finance.xml"
     dbCntInfo = dbcnt.DbCnt(xmlfile)
     # getprofitdata(dbCntInfo)
     # getStockBasicsPro(dbCntInfo)
