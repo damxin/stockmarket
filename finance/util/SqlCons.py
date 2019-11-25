@@ -21,7 +21,11 @@ TABLEDICT = {"stock_basics": LOGICNAME_TMPBASE,
              "histprofitdata":LOGICNAME_TMPBASE,
              "histadjfactor":LOGICNAME_TMPBASE,
              "histincome":LOGICNAME_TMPBASE,
-             "company_income":LOGICNAME_TRADE}
+             "company_income":LOGICNAME_TRADE,
+             "histcastflow":LOGICNAME_TMPBASE,
+             "company_cashflow":LOGICNAME_TRADE,
+             "histbalance":LOGICNAME_TMPBASE,
+             "company_balance_sheet":LOGICNAME_TRADE}
 
 ## 工作日begin
 WORKDAY_MAXDATESQL = "select max(trade_date) maxtradedate, exchange_code exchangecode from openday group by exchange_code"
@@ -86,6 +90,7 @@ from producttradedata where product_code = '%s' order by trade_date"
 # 与每日交易数据相关 end
 
 # 公司相关的会计数据  being
+
 COMPANYMAXREPORTDATE_SQL = "select ifnull(max(report_date),0) maxreportdate from %s where product_code = '%s' "
 INCOMEHIST_SELECTSQL = " SELECT LEFT(ts_code,6) product_code, ann_date announce_date, f_ann_date f_announce_date,\
 end_date report_date, \
@@ -119,7 +124,7 @@ operate_profit,non_oper_income,non_oper_exp,nca_disploss,total_profit,\
 income_tax,n_income,n_income_attr_p,minority_gain,oth_compr_income,\
 t_compr_income,compr_inc_attr_p,compr_inc_attr_m_s,ebit,ebitda,\
 insurance_exp,undist_profit,distable_profit,'1' update_flag \
-FROM %s "
+FROM %s where end_date > %d order by end_date asc "
 
 BALANCEHIST_SELECTSQL = "SELECT LEFT(ts_code,6) product_code, ann_date announce_date,f_ann_date f_announce_date,\
 end_date report_date, \
@@ -170,7 +175,7 @@ treasury_share,ordin_risk_reser,forex_differ,invest_loss_unconf,minority_int,\
 total_hldr_eqy_exc_min_int,total_hldr_eqy_inc_min_int,total_liab_hldr_eqy,\
 lt_payroll_payable,oth_comp_income,oth_eqt_tools,oth_eqt_tools_p_shr,lending_funds,\
 acc_receivable,st_fin_payable,payables,hfs_assets,hfs_sales,update_flag \
-FROM %s"
+FROM %s where end_date > %d order by end_date asc "
 
 CASHFLOWHIST_SELECTSQL = "SELECT LEFT(ts_code,6) product_code, ann_date announce_date,f_ann_date f_announce_date,\
 end_date report_date, \
@@ -209,7 +214,7 @@ loss_disp_fiolta, loss_scr_fa, loss_fv_chg, invest_loss, decr_def_inc_tax_assets
 incr_def_inc_tax_liab, decr_inventories, decr_oper_payable, incr_oper_payable, others_payable, \
 conv_debt_into_cap, conv_copbonds_due_within_1y, fa_fnc_leases, end_bal_cash, beg_bal_cash, \
 end_bal_cash_equ, beg_bal_cash_equ, im_n_incr_cash_equ, update_flag \
-FROM %s"
+FROM %s where end_date > %d order by end_date asc "
 COMPANYFINANCE_SELECTSQL = {"company_income":INCOMEHIST_SELECTSQL,
                             "company_cashflow":CASHFLOWHIST_SELECTSQL,
                             "company_balance_sheet":BALANCEHIST_SELECTSQL}
@@ -228,6 +233,11 @@ INCOME_INSERTSQL = "INSERT INTO company_income \
  minority_gain, oth_compr_income, t_compr_income, compr_inc_attr_p, compr_inc_attr_m_s,\
  ebit, ebitda, insurance_exp, undist_profit, distable_profit, update_flag)\
  VALUES (%s,%s,%s,%s,%s,\
+%s,%s,%s,%s,%s,\
+%s,%s,%s,%s,%s,\
+%s,%s,%s,%s,%s,\
+%s,%s,%s,%s,%s,\
+%s,%s,%s,%s,%s,\
 %s,%s,%s,%s,%s,\
 %s,%s,%s,%s,%s,\
 %s,%s,%s,%s,%s,\

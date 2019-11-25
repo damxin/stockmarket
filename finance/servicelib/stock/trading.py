@@ -452,7 +452,7 @@ def getSuspendProduct(dbCntInfo):
     return
 
 
-def getmaxreportdate(dbCntInfo, destTable) -> pd.DataFrame :
+def getmaxreportdate(dbCntInfo, destTable) -> dict :
     '''
     获取每个产品最大的reportdate
     :param dbCntInfo:
@@ -464,8 +464,7 @@ def getmaxreportdate(dbCntInfo, destTable) -> pd.DataFrame :
         print("表中无正在上市的数据，提前正常结束!")
         return
 
-    productcodelist = []
-    maxreportdatelist = []
+    maxreportdatedict = {}
     for rowIndex in productBasicInfodf.index:
         oneProductTuple = productBasicInfodf.iloc[rowIndex]
         productCode = oneProductTuple["product_code"]  ## 产品代码
@@ -476,22 +475,17 @@ def getmaxreportdate(dbCntInfo, destTable) -> pd.DataFrame :
         maxReportDate = destRetList[0]['maxreportdate']
         print(rowIndex)
         print(productCode+maxReportDateSql)
-
-        productcodelist.append(productCode)
-        maxreportdatelist.append(maxReportDate)
-    if len(productcodelist) > 0:
-        dfdict = {"productcode":productcodelist,"reportdate":maxreportdatelist}
-        df = pd.DataFrame(dfdict)
-        df = df.set_index("productcode")
-        return df
-    return
+        maxreportdatedict[productCode] = maxReportDate
+    if len(maxreportdatedict) == 0:
+        raise Exception("getmaxreportdate return value is empty!")
+    return maxreportdatedict
 
 def getProductFinanceInfo(dbCntInfo,sourcetable,desctable):
     '''
     获取产品的公司财务基础数据
     :param dbCntInfo:
-    :param sourcetable: tusharepro数据填写到该表
-    :param desctable: 移植到该正式表
+    :param sourcetable: tusharepro数据填写到该表 histincome      histcastflow      histbalance
+    :param desctable: 移植到该正式表             company_income  company_cashflow  company_balance_sheet
     :return:
     '''
     productInfoDf = pb.getAllProductBasicInfo(dbCntInfo)
@@ -506,8 +500,13 @@ def getProductFinanceInfo(dbCntInfo,sourcetable,desctable):
     engine = dbCntInfo.getEngineByTableName(sourceTable)
     # 获取tusharepro中的数据
     for rowIndex in productInfoDf.index:
+        if rowIndex < 820:
+            continue
+        if rowIndex % 200 == 0:
+            time.sleep(60)
         oneProductInfo = productInfoDf.iloc[rowIndex]
         productCode = oneProductInfo["product_code"]
+        print("%d %s begin to get %s data from intenert..."%(rowIndex, productCode,destTable))
         symbolProcuctCode = pb.code_to_symbol(productCode)
         df = pd.DataFrame()
         if destTable in "company_income":
@@ -522,18 +521,23 @@ def getProductFinanceInfo(dbCntInfo,sourcetable,desctable):
         realSourTable = sourceTable + productCode
         basicdf = df.reset_index(drop=True)
         basicdf.to_sql(realSourTable, engine, if_exists="replace", index=False)
+        print("%s get data finish!" % (productCode))
+        time.sleep(1.5)
 
     # 获取每个产品已经获取到的最大reportdate
-    productReportDateDf = getmaxreportdate(dbCntInfo, destTable)
+    productReportDateDict = getmaxreportdate(dbCntInfo, destTable)
     # 获取表中存在的数据。
     for rowIndex in productInfoDf.index:
         oneProductInfo = productInfoDf.iloc[rowIndex]
         productCode = oneProductInfo["product_code"]
-        maxreportdate = productReportDateDf.iloc[productCode]
+        maxreportdate = productReportDateDict[productCode]
         realSourTable = sourceTable + productCode
+        print("%d %s begin to insert  table %s data..." % (rowIndex, realSourTable, destTable))
         selectsql = sc.COMPANYFINANCE_SELECTSQL[destTable]%(realSourTable,maxreportdate)
+        print(selectsql)
         insertsql = sc.COMPANYFINANCE_INSERTSQL[destTable]
-        pb.insertNormalDbByCurProductCode(dbCntInfo, sourceTable, destTable, selectsql, insertsql)
+        pb.insertNormalDbByCurProductCode(dbCntInfo, sourceTable, destTable, selectsql, insertsql,productCode)
+        print("%s insert table %s finish!" % (realSourTable, destTable))
 
     return
 
@@ -546,7 +550,8 @@ if __name__ == "__main__":
     # getStockBasicsPro(dbCntInfo)
     # getProductBasicInfo(dbCntInfo)
     # getAllNoneSubscriptionTradePriceFromTusharePro(dbCntInfo)
-    getProductIncome(dbCntInfo)
+    getProductFinanceInfo(dbCntInfo,"histincome","company_income")
+    ## 执行时存在错误 pymysql.err.DataError: (1264, "Out of range value for column 'total_revenue' at row 1")
     # pcodeDataUpdateDict = {}
     # pcodeDataUpdateDict["000008"] = "1"
     # pcodeDataUpdateDict["300100"] = "1"
