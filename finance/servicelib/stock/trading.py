@@ -500,23 +500,35 @@ def getProductFinanceInfo(dbCntInfo,sourcetable,desctable):
     engine = dbCntInfo.getEngineByTableName(sourceTable)
     # 获取tusharepro中的数据
     for rowIndex in productInfoDf.index:
-        if rowIndex < 820:
-            continue
-        if rowIndex % 200 == 0:
+        # if rowIndex < 2:
+        #     continue
+        if rowIndex % 200 == 0 and rowIndex != 0:
             time.sleep(60)
         oneProductInfo = productInfoDf.iloc[rowIndex]
         productCode = oneProductInfo["product_code"]
         print("%d %s begin to get %s data from intenert..."%(rowIndex, productCode,destTable))
         symbolProcuctCode = pb.code_to_symbol(productCode)
         df = pd.DataFrame()
-        if destTable in "company_income":
-            df = pro.income(ts_code=symbolProcuctCode)
-        elif destTable in "company_balance_sheet":
-            df = pro.balancesheet(ts_code=symbolProcuctCode)
-        elif destTable in "company_cashflow":
-            df = pro.cashflow(ts_code=symbolProcuctCode)
-        else:
-            raise Exception("destTable is exception!")
+        try :
+            if destTable in "company_income":
+                df = pro.income(ts_code=symbolProcuctCode)
+            elif destTable in "company_balance_sheet":
+                df = pro.balancesheet(ts_code=symbolProcuctCode)
+            elif destTable in "company_cashflow":
+                df = pro.cashflow(ts_code=symbolProcuctCode)
+            else:
+                raise Exception("destTable is exception!")
+        except Exception as e:
+            print(symbolProcuctCode + " connect time out!")
+            time.sleep(120)
+            if destTable in "company_income":
+                df = pro.income(ts_code=symbolProcuctCode)
+            elif destTable in "company_balance_sheet":
+                df = pro.balancesheet(ts_code=symbolProcuctCode)
+            elif destTable in "company_cashflow":
+                df = pro.cashflow(ts_code=symbolProcuctCode)
+            else:
+                raise Exception("destTable is exception!")
 
         realSourTable = sourceTable + productCode
         basicdf = df.reset_index(drop=True)
@@ -539,6 +551,7 @@ def getProductFinanceInfo(dbCntInfo,sourcetable,desctable):
         pb.insertNormalDbByCurProductCode(dbCntInfo, sourceTable, destTable, selectsql, insertsql,productCode)
         print("%s insert table %s finish!" % (realSourTable, destTable))
 
+
     return
 
 if __name__ == "__main__":
@@ -550,8 +563,9 @@ if __name__ == "__main__":
     # getStockBasicsPro(dbCntInfo)
     # getProductBasicInfo(dbCntInfo)
     # getAllNoneSubscriptionTradePriceFromTusharePro(dbCntInfo)
-    getProductFinanceInfo(dbCntInfo,"histincome","company_income")
-    ## 执行时存在错误 pymysql.err.DataError: (1264, "Out of range value for column 'total_revenue' at row 1")
+    # getProductFinanceInfo(dbCntInfo, "histincome", "company_income")
+    getProductFinanceInfo(dbCntInfo, "histcastflow", "company_cashflow")
+    getProductFinanceInfo(dbCntInfo, "histbalance", "company_balance_sheet")
     # pcodeDataUpdateDict = {}
     # pcodeDataUpdateDict["000008"] = "1"
     # pcodeDataUpdateDict["300100"] = "1"

@@ -174,7 +174,7 @@ indept_acc_liab,pledge_borr,indem_payable,policy_div_payable,total_liab,\
 treasury_share,ordin_risk_reser,forex_differ,invest_loss_unconf,minority_int,\
 total_hldr_eqy_exc_min_int,total_hldr_eqy_inc_min_int,total_liab_hldr_eqy,\
 lt_payroll_payable,oth_comp_income,oth_eqt_tools,oth_eqt_tools_p_shr,lending_funds,\
-acc_receivable,st_fin_payable,payables,hfs_assets,hfs_sales,update_flag \
+acc_receivable,st_fin_payable,payables,hfs_assets,hfs_sales,'1' update_flag \
 FROM %s where end_date > %d order by end_date asc "
 
 CASHFLOWHIST_SELECTSQL = "SELECT LEFT(ts_code,6) product_code, ann_date announce_date,f_ann_date f_announce_date,\
@@ -211,9 +211,9 @@ stot_cashout_fnc_act, n_cash_flows_fnc_act, eff_fx_flu_cash, n_incr_cash_cash_eq
 c_cash_equ_end_period, c_recp_cap_contrib, incl_cash_rec_saims, uncon_invest_loss, prov_depr_assets, \
 depr_fa_coga_dpba, amort_intang_assets, lt_amort_deferred_exp, decr_deferred_exp, incr_acc_exp, \
 loss_disp_fiolta, loss_scr_fa, loss_fv_chg, invest_loss, decr_def_inc_tax_assets, \
-incr_def_inc_tax_liab, decr_inventories, decr_oper_payable, incr_oper_payable, others_payable, \
+incr_def_inc_tax_liab, decr_inventories, decr_oper_payable, incr_oper_payable, others others_payable, \
 conv_debt_into_cap, conv_copbonds_due_within_1y, fa_fnc_leases, end_bal_cash, beg_bal_cash, \
-end_bal_cash_equ, beg_bal_cash_equ, im_n_incr_cash_equ, update_flag \
+end_bal_cash_equ, beg_bal_cash_equ, im_n_incr_cash_equ, '1' update_flag \
 FROM %s where end_date > %d order by end_date asc "
 COMPANYFINANCE_SELECTSQL = {"company_income":INCOMEHIST_SELECTSQL,
                             "company_cashflow":CASHFLOWHIST_SELECTSQL,
@@ -276,7 +276,6 @@ total_hldr_eqy_inc_min_int,total_liab_hldr_eqy,lt_payroll_payable,oth_comp_incom
 oth_eqt_tools_p_shr,lending_funds,acc_receivable,st_fin_payable,payables,\
 hfs_assets,hfs_sales,update_flag) \
 value (%s,%s,%s,%s,%s,\
-%s,%s,%s,%s,%s,\
 %s,%s,%s,%s,%s,\
 %s,%s,%s,%s,%s,\
 %s,%s,%s,%s,%s,\
