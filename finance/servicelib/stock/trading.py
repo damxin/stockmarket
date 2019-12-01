@@ -500,8 +500,8 @@ def getProductFinanceInfo(dbCntInfo,sourcetable,desctable):
     engine = dbCntInfo.getEngineByTableName(sourceTable)
     # 获取tusharepro中的数据
     for rowIndex in productInfoDf.index:
-        # if rowIndex < 2:
-        #     continue
+        if rowIndex >= 0:
+            continue
         if rowIndex % 200 == 0 and rowIndex != 0:
             time.sleep(60)
         oneProductInfo = productInfoDf.iloc[rowIndex]
@@ -540,6 +540,8 @@ def getProductFinanceInfo(dbCntInfo,sourcetable,desctable):
     productReportDateDict = getmaxreportdate(dbCntInfo, destTable)
     # 获取表中存在的数据。
     for rowIndex in productInfoDf.index:
+        if rowIndex < 1:
+            continue
         oneProductInfo = productInfoDf.iloc[rowIndex]
         productCode = oneProductInfo["product_code"]
         maxreportdate = productReportDateDict[productCode]
@@ -564,7 +566,7 @@ if __name__ == "__main__":
     # getProductBasicInfo(dbCntInfo)
     # getAllNoneSubscriptionTradePriceFromTusharePro(dbCntInfo)
     # getProductFinanceInfo(dbCntInfo, "histincome", "company_income")
-    getProductFinanceInfo(dbCntInfo, "histcastflow", "company_cashflow")
+    # getProductFinanceInfo(dbCntInfo, "histcastflow", "company_cashflow")
     getProductFinanceInfo(dbCntInfo, "histbalance", "company_balance_sheet")
     # pcodeDataUpdateDict = {}
     # pcodeDataUpdateDict["000008"] = "1"
