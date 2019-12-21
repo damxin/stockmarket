@@ -2,8 +2,8 @@
 # from sqlalchemy import create_engine
 # from selenium import webdriver  # 导入Selenium的webdriver
 # from selenium.webdriver.common.keys import Keys  # 导入Keys
-import pymysql
-import win32gui as win32gui
+# import pymysql
+# import win32gui as win32gui
 from pyecharts import options as opts
 from pyecharts.charts import Kline
 
@@ -40,42 +40,48 @@ def kline_datazoom_inside(data):
     )
     return c
 
-def loginichat():
-    import itchat as wxchat
-    wxchat.login()
-    # wxchat.send('hello filehelper', toUserName='filehelper')
-def setText(aString):
-    w.OpenClipboard()
-    w.EmptyClipboard()
-    w.SetClipboardData(win32con.CF_UNICODETEXT, aString)
-    w.CloseClipboard()
+# def loginichat():
+#     '''
+#     该功能已经失效
+#     :return:
+#     '''
+#     import itchat as wxchat
+#     wxchat.login()
+#     # wxchat.send('hello filehelper', toUserName='filehelper')
 
-
-def setImage(data):  # 写入剪切板
-
-    w.OpenClipboard()
-    try:
-        # Unicode tests
-        w.EmptyClipboard()
-        w.SetClipboardData(win32con.CF_DIB, data)
-    except:
-        traceback.print_exc()
-    finally:
-        w.CloseClipboard()
-def ctrlV():
-    win32api.keybd_event(17,0,0,0)  #ctrl键位码是17
-    win32api.keybd_event(86,0,0,0)  #v键位码是86
-    win32api.keybd_event(86,0,win32con.KEYEVENTF_KEYUP,0) #释放按键
-    win32api.keybd_event(17,0,win32con.KEYEVENTF_KEYUP,0)
-
-def altS():
-    win32api.keybd_event(18, 0, 0, 0)    #Alt
-    win32api.keybd_event(83,0,0,0) #s
-    win32api.keybd_event(83,0,win32con.KEYEVENTF_KEYUP,0) #释放按键
-    win32api.keybd_event(18,0,win32con.KEYEVENTF_KEYUP,0)
+# def setText(aString):
+#     w.OpenClipboard()
+#     w.EmptyClipboard()
+#     w.SetClipboardData(win32con.CF_UNICODETEXT, aString)
+#     w.CloseClipboard()
+#
+#
+# def setImage(data):  # 写入剪切板
+#     import win32clipboard as w
+#     w.OpenClipboard()
+#     try:
+#         # Unicode tests
+#         w.EmptyClipboard()
+#         w.SetClipboardData(win32con.CF_DIB, data)
+#     except:
+#         traceback.print_exc()
+#     finally:
+#         w.CloseClipboard()
+# def ctrlV():
+#     win32api.keybd_event(17,0,0,0)  #ctrl键位码是17
+#     win32api.keybd_event(86,0,0,0)  #v键位码是86
+#     win32api.keybd_event(86,0,win32con.KEYEVENTF_KEYUP,0) #释放按键
+#     win32api.keybd_event(17,0,win32con.KEYEVENTF_KEYUP,0)
+#
+# def altS():
+#     win32api.keybd_event(18, 0, 0, 0)    #Alt
+#     win32api.keybd_event(83,0,0,0) #s
+#     win32api.keybd_event(83,0,win32con.KEYEVENTF_KEYUP,0) #释放按键
+#     win32api.keybd_event(18,0,win32con.KEYEVENTF_KEYUP,0)
 
 if __name__ == "__main__":
-    # loginichat()
+    # return
+# loginichat()
 # import sys;sys.argv = ['', 'Test.testName']
 # df = ts.get_hist_data("000001", start='2019-08-22', end='2019-08-31')
 # print(df)
@@ -151,7 +157,7 @@ if __name__ == "__main__":
 #     # cdata = kline_base(data)
 #     cdata = kline_datazoom_inside(data)
 #     cdata.render()
-    setText('123455'）
-    hwnd = win32gui.FindWindow(None, "微信")
-    ctrlV()
-    altS()
+#     setText('123455')
+#     hwnd = win32gui.FindWindow(None, "微信")
+#     ctrlV()
+#     altS()

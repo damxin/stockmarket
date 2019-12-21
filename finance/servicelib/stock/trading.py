@@ -540,8 +540,6 @@ def getProductFinanceInfo(dbCntInfo,sourcetable,desctable):
     productReportDateDict = getmaxreportdate(dbCntInfo, destTable)
     # 获取表中存在的数据。
     for rowIndex in productInfoDf.index:
-        if rowIndex < 1:
-            continue
         oneProductInfo = productInfoDf.iloc[rowIndex]
         productCode = oneProductInfo["product_code"]
         maxreportdate = productReportDateDict[productCode]
@@ -558,9 +556,9 @@ def getProductFinanceInfo(dbCntInfo,sourcetable,desctable):
 
 if __name__ == "__main__":
     filedata = open(".\stock_basics.txt", 'w+')
-    xmlfile = "E:\\pydevproj\\stockmarket\\finance\\resource\\finance.xml"
-    # xmlfile = "F:\\nfx\\Python\\stockmarket\\finance\\resource\\finance.xml"
-    dbCntInfo = dbcnt.DbCnt(xmlfile)
+    # xmlfile = "E:\\pydevproj\\stockmarket\\finance\\resource\\finance.xml"
+    xmlfile = "F:\\nfx\\Python\\stockmarket\\finance\\resource\\finance.xml"
+    # dbCntInfo = dbcnt.DbCnt(xmlfile)
     # getprofitdata(dbCntInfo)
     # getStockBasicsPro(dbCntInfo)
     # getProductBasicInfo(dbCntInfo)
