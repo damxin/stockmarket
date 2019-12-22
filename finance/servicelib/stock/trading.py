@@ -58,29 +58,6 @@ def getProductBasicInfo(dbCntInfo):
     souceDbBase.closeDBConnect()
     destDbBase.closeDBConnect()
 
-
-'''
-    获取产品的资产负债表
-    product_code 获取指定产品
-'''
-
-
-def getSpecialCompanyBalanceSheet(product_code):
-    if len(product_code) == 0:
-        return
-
-
-'''
-    获取产品的资产负债表
-    product_code 如果为*，则获取所有的产品
-                 为具体值，则获取指定产品
-'''
-
-
-def getCompanyBalanceSheet(product_code):
-    if product_code in gc.CONST_STR_STAR:
-        return
-
 def insertIntoNormalDbFromNotDealDBData(dbCntInfo,startdate,pcodeDataUpdateDict):
     '''
     从临时库的交易数据插入到正式库中
@@ -110,7 +87,6 @@ def insertIntoNormalDbFromNotDealDBData(dbCntInfo,startdate,pcodeDataUpdateDict)
                     sourceList.append(tuple(oneList.values()))
                 destDbBase.execInsertManySql(sc.PRODUCTTRADEDATA_INSERTSQL, sourceList)
         else :
-
             realDataSql = sc.PRODUCTHISTTRADEDATATUSHAREPRO_SQL % (sourceTable + str(startdate))
 
     print("all productcode data insert success!")

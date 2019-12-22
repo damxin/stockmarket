@@ -126,6 +126,12 @@ class DbCnt:
         for dbCntinfo in self.dbCntdicts.values():
             dbCntinfo.closeDBConnect()
 
+    def initDatabaseSession(self):
+        '''
+        创建连接池，不用每次都需要重新创建连接
+        :return:
+        '''
+        return
 
 # if __name__ == '__main__':
 #     dbCnt = DbCnt("F:\\nfx\\Python\\stockmarket\\finance\\resource\\finance.xml")

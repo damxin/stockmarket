@@ -50,12 +50,12 @@ def getCurProductBasicInfoByProductCode(dbCntInfo, productcode):
     return pd.DataFrame(tableRetTuple).iloc[0]
 
 
-'''
-    20190102格式化为2019-01-02
-'''
-
-
 def dateSpecailFormat(intDateFormat):
+    '''
+    20190102格式化为2019-01-02
+    :param intDateFormat:
+    :return:
+    '''
     if intDateFormat < 10000000:
         print("date format is exception!", end="")
         print(intDateFormat)
@@ -151,3 +151,48 @@ def insertNormalDbByCurProductCode(dbCntInfo,sourcetable,desttable,selectsql,ins
         for oneList in sourceRetList:
             sourceList.append(tuple(oneList.values()))
         destDbBase.execInsertManySql(insertsql, sourceList)
+
+def getcompanyfinancedata(dbcntinfo,product_code,compfinancetblname,datatype,datalength=5) -> pd.DataFrame:
+    '''
+    company_income,company_cashflow,company_balance_sheet数据获取
+    :param dbcntinfo 数据库连接
+    :param compfinancetblname:company_income,company_cashflow,company_balance_sheet
+    :param product_code: None则报错，只支持单一产品数据获取
+    :param datatype:Y:年，Q:季度
+    :param datalength默认值为5，显示5年，季度就没有日期了。
+    :return:DataFrame (product_code,......)
+    '''
+
+    if product_code is None or datatype is None:
+        raise ValueError("the param of function getcompanyfinancedata(%s) is error!\n please check!"%compfinancetblname)
+    if datatype is not "Y" and datatype is not "Q":
+        raise ValueError(
+            "the param of function getcompanyfinancedata datatype(%s) is error!\n please check!" % datatype)
+
+    dbSqlSession = dbcntinfo.getDBCntInfoByTableName(compfinancetblname, product_code)
+    allDataGetSql=""
+    if datatype is "Y":
+        companyfinacepubselsql = sc.COMPANYFINANCE_PUBYEARSELECTSQL[compfinancetblname]
+        allDataGetSql = companyfinacepubselsql % (product_code,product_code,product_code,datalength)
+        print("getcompanyfinancedata get sql:" + allDataGetSql)
+    elif datatype is "Q":
+        companyfinacepubselsql = sc.COMPANYFINANCE_PUBQUARTSELECTSQL[compfinancetblname]
+        allDataGetSql = companyfinacepubselsql % (product_code, product_code, datalength)
+        print("getcompanyfinancedata get sql:"+allDataGetSql)
+    tradeDataTupleInList = dbSqlSession.execSelectAllSql(allDataGetSql)
+    dfdata = listdictTypeChangeToDataFrame(tradeDataTupleInList)
+
+    return dfdata
+
+def getRateNextToByList(dataList) -> list:
+    '''
+    对传入的list计算rate，计算公式(下一个值-当前值)/当前值,以百分比表示,保留2位小数
+    :param dataList:
+    :return:
+    '''
+    rateList = []
+    dataLength = len(dataList)
+    for dataindex in range(dataLength-1):
+        rateList.append(float(int((dataList[dataindex+1]-dataList[dataindex])/dataList[dataindex]*10000)/100))
+    return rateList
+

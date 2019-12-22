@@ -35,90 +35,94 @@ import pandas as pd
 
 from finance.util import GlobalCons as gc
 from finance.servicelib.stock import trading as sttradepb
+from finance.servicelib.public import public as pb
+from finance.servicelib.processinit import dbcnt
 
-def companybasicinfoanalyce(product_code, showtype=None) -> Grid:
+def getcompanyrerevenueandprofitcomp(dbCntInfo,product_code, showtype=None) -> Bar:
     '''
-    公司基础信息展示，营收和净利润的直方图
+     company_income 利润表的营业总收入(total_revenue)和营业利润(operate_profit)，展示值和增长百分比
     :param product_code:
-    :param showtype:Y:年，Q:季度，默认为Q
-    :return:
+    :param showtype:Y:年，Q:季度，默认为Y
+    :return: 展示最近最多5年的数据
     '''
-    x_data = ["{}月".format(i) for i in range(1, 13)]
+
+    curBaseInfo = pb.getCurProductBasicInfoByProductCode(dbCntInfo, product_code)
+    productname = curBaseInfo["product_name"]
+
+    companytblname = "company_income"
+    datalengthshow = 6  # 展示的数据量
+    comincomedf = pb.getcompanyfinancedata(dbCntInfo, product_code, companytblname, showtype, datalengthshow)
+    comincomedf = comincomedf.sort_values(by="report_date", ascending=True)
+    xReportDateList = comincomedf["report_date"].tail(datalengthshow - 1).astype(str).tolist()  # x轴坐标
+    totalrevenueList = ((comincomedf["total_revenue"]/100).astype(int)/100).astype(float).tolist()  # 营业总收入
+    profitList = ((comincomedf["operate_profit"]/100).astype(int)/100).astype(float).tolist() # 营业利润
+    print(profitList[1:])
+    totalRevRateList = pb.getRateNextToByList(totalrevenueList)  # 营业总收入增长百分比 (2019-2018)/2018
+    print(totalRevRateList)
+    print(type(totalRevRateList[0]))
+    profitRateList = pb.getRateNextToByList(profitList)  # 营业利润增长百分比
+
+    y_min = min(profitList)
+    y_max = max(totalrevenueList)
+
     bar = (
         Bar()
-            .add_xaxis(x_data)
-            .add_yaxis(
-            "蒸发量",
-            [2.0, 4.9, 7.0, 23.2, 25.6, 76.7, 135.6, 162.2, 32.6, 20.0, 6.4, 3.3],
-            yaxis_index=0,
-            color="#d14a61",
-        )
-            .add_yaxis(
-            "降水量",
-            [2.6, 5.9, 9.0, 26.4, 28.7, 70.7, 175.6, 182.2, 48.7, 18.8, 6.0, 2.3],
-            yaxis_index=1,
-            color="#5793f3",
-        )
+            .add_xaxis(xReportDateList)
+            .add_yaxis("营业总收入(万元)", totalrevenueList[1:])
+            .add_yaxis("营业利润(万元)", profitList[1:])
             .extend_axis(
             yaxis=opts.AxisOpts(
-                name="蒸发量",
-                type_="value",
-                min_=0,
-                max_=250,
-                position="right",
-                axisline_opts=opts.AxisLineOpts(
-                    linestyle_opts=opts.LineStyleOpts(color="#d14a61")
-                ),
-                axislabel_opts=opts.LabelOpts(formatter="{value} ml"),
+                axislabel_opts=opts.LabelOpts(formatter="{value}"),
+                interval=10
             )
         )
-            .extend_axis(
-            yaxis=opts.AxisOpts(
-                type_="value",
-                name="温度",
-                min_=0,
-                max_=25,
-                position="left",
-                axisline_opts=opts.AxisLineOpts(
-                    linestyle_opts=opts.LineStyleOpts(color="#675bba")
-                ),
-                axislabel_opts=opts.LabelOpts(formatter="{value} °C"),
-                splitline_opts=opts.SplitLineOpts(
-                    is_show=True, linestyle_opts=opts.LineStyleOpts(opacity=1)
-                ),
-            )
-        )
+            .set_series_opts(label_opts=opts.LabelOpts(is_show=False))
             .set_global_opts(
+            title_opts=opts.TitleOpts(title=productname+"("+product_code+")"),
             yaxis_opts=opts.AxisOpts(
-                name="降水量",
-                min_=0,
-                max_=250,
-                position="right",
-                offset=80,
-                axisline_opts=opts.AxisLineOpts(
-                    linestyle_opts=opts.LineStyleOpts(color="#5793f3")
-                ),
-                axislabel_opts=opts.LabelOpts(formatter="{value} ml"),
+                min_=y_min,
+                max_=y_max,
+                axislabel_opts=opts.LabelOpts(formatter="{value}")
             ),
-            title_opts=opts.TitleOpts(title="Grid-多 Y 轴示例"),
-            tooltip_opts=opts.TooltipOpts(trigger="axis", axis_pointer_type="cross"),
         )
     )
 
     line = (
-        Line()
-            .add_xaxis(x_data)
-            .add_yaxis(
-            "平均温度",
-            [2.0, 2.2, 3.3, 4.5, 6.3, 10.2, 20.3, 23.4, 23.0, 16.5, 12.0, 6.2],
-            yaxis_index=2,
-            color="#675bba",
-            label_opts=opts.LabelOpts(is_show=False),
-        )
-    )
-
+            Line()
+            .add_xaxis(xReportDateList)
+            .add_yaxis("营业收入增长率", totalRevRateList, yaxis_index=1)
+            .add_yaxis("营业利润增长率", profitRateList, yaxis_index=1)
+            )
+    # line.render("testline.html")
     bar.overlap(line)
-    return Grid().add(bar, opts.GridOpts(pos_left="5%", pos_right="20%"), is_control_axis_index=True)
+
+    return bar
+
+
+
+def companybasicinfoanalyce(product_code, showtype=None):
+    '''
+    公司基础信息展示
+    :param product_code:
+    :param showtype:Y:年，Q:季度，默认为Y
+    :return:
+    '''
+
+    # 参数检查
+    if product_code is None:
+        raise RuntimeError("productcode is None! error!!")
+    # 1. 获取展示类型
+    showtype = showtype if showtype is not None else "Y"
+    # 2.
+    xmlfile = "F:\\nfx\\Python\\stockmarket\\finance\\resource\\finance.xml"
+    dbCntInfo = dbcnt.DbCnt(xmlfile)
+
+    # 营业收入, 营业利润 展示
+    getcompanyrerevenueandprofitcomp(dbCntInfo,product_code,showtype).render("%s_totalrevandprofit.html"%product_code)
+
+    dbCntInfo.closeAllDBConnect()
+
+    return
 
 def tradeDataShowKLine(product_code, ma=None, autoType=None) -> Grid:
     '''
@@ -311,8 +315,10 @@ def tradeDataShowKLine(product_code, ma=None, autoType=None) -> Grid:
     return grid_chart
 
 if __name__ == "__main__":
+
     product_code = "600763" # 通策医疗
-    tradeDataShowKLine(product_code,ma=None,autoType="qfq").render("%s.html"%product_code)
+    companybasicinfoanalyce(product_code)
+    # tradeDataShowKLine(product_code,ma=None,autoType="qfq").render("%s.html"%product_code)
 
     # overlap_line_scatter().render()
     # x = Faker.choose()

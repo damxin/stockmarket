@@ -344,4 +344,204 @@ values (%s, %s, %s, %s, %s, %s, \
 COMPANYFINANCE_INSERTSQL = {"company_income":INCOME_INSERTSQL,
                             "company_cashflow":CASHFLOW_INSERTSQL,
                             "company_balance_sheet":BALANCE_INSERTQL}
+
+# 正式表中的数据获取,获取出的数据进行处理
+INCOME_PUBYEARSELECTSQL = "SELECT a.product_code,a.announce_date,a.f_announce_date,a.report_type,a.report_date,\
+a.company_type,a.basic_eps,a.diluted_eps,a.total_revenue,a.revenue,\
+a.int_income,a.prem_earned,a.comm_income,a.n_commis_income,a.n_oth_income,\
+a.n_oth_b_income,a.prem_income,a.out_prem,a.une_prem_reser,a.reins_income,\
+a.n_sec_tb_income,a.n_sec_uw_income,a.n_asset_mg_income,a.oth_b_income,a.fv_value_chg_gain,\
+a.invest_income,a.ass_invest_income,a.forex_gain,a.total_cogs,a.oper_cost,\
+a.int_exp,a.comm_exp,a.biz_tax_surchg,a.sell_exp,a.admin_exp,\
+a.fin_exp,a.assets_impair_loss,a.prem_refund,a.compens_payout,a.reser_insur_liab,\
+a.div_payt,a.reins_exp,a.oper_exp,a.compens_payout_refu,a.insur_reser_refu,\
+a.reins_cost_refund,a.other_bus_cost,a.operate_profit,a.non_oper_income,a.non_oper_exp,\
+a.nca_disploss,a.total_profit,a.income_tax,a.n_income,a.n_income_attr_p,\
+a.minority_gain,a.oth_compr_income,a.t_compr_income,a.compr_inc_attr_p,a.compr_inc_attr_m_s, \
+a.ebit,a.ebitda,a.insurance_exp,a.undist_profit,a.distable_profit,\
+a.update_flag \
+FROM (SELECT a.* \
+	  FROM company_income a \
+	 WHERE a.product_code = '%s' \
+	   AND a.report_date %% 10000 = 1231 \
+	UNION \
+	SELECT a.* \
+	  FROM company_income a, \
+	       (SELECT MAX(a.report_date) maxreportdate \
+		      FROM company_income a \
+		     WHERE a.product_code = '%s') b \
+	 WHERE a.product_code = '%s' \
+	   AND a.report_date = b.maxreportdate) a \
+  ORDER BY a.report_date DESC \
+  LIMIT %d"
+CASHFLOW_PUBYEARSELECTSQL = "SELECT a.product_code,a.announce_date,a.f_announce_date,a.report_date,a.report_type, \
+a.company_type,a.net_profit,a.finan_exp,a.c_fr_sale_sg,a.recp_tax_rends, \
+a.n_depos_incr_fi,a.n_incr_loans_cb,a.n_inc_borr_oth_fi,a.prem_fr_orig_contr,a.n_incr_insured_dep, \
+a.n_reinsur_prem,a.n_incr_disp_tfa,a.ifc_cash_incr,a.n_incr_disp_faas,a.n_incr_loans_oth_bank, \
+a.n_cap_incr_repur,a.c_fr_oth_operate_a,a.c_inf_fr_operate_a,a.c_paid_goods_s,a.c_paid_to_for_empl, \
+a.c_paid_for_taxes,a.n_incr_clt_loan_adv,a.n_incr_dep_cbob,a.c_pay_claims_orig_inco,a.pay_handling_chrg, \
+a.pay_comm_insur_plcy,a.oth_cash_pay_oper_act,a.st_cash_out_act,a.n_cashflow_act,a.oth_recp_ral_inv_act, \
+a.c_disp_withdrwl_invest,a.c_recp_return_invest,a.n_recp_disp_fiolta,a.n_recp_disp_sobu,a.stot_inflows_inv_act, \
+a.c_pay_acq_const_fiolta,a.c_paid_invest,a.n_disp_subs_oth_biz,a.oth_pay_ral_inv_act,a.n_incr_pledge_loan, \
+a.stot_out_inv_act,a.n_cashflow_inv_act,a.c_recp_borrow,a.proc_issue_bonds,a.oth_cash_recp_ral_fnc_act, \
+a.stot_cash_in_fnc_act,a.free_cashflow,a.c_prepay_amt_borr,a.c_pay_dist_dpcp_int_exp,a.incl_dvd_profit_paid_sc_ms, \
+a.oth_cashpay_ral_fnc_act,a.stot_cashout_fnc_act,a.n_cash_flows_fnc_act,a.eff_fx_flu_cash,a.n_incr_cash_cash_equ, \
+a.c_cash_equ_beg_period,a.c_cash_equ_end_period,a.c_recp_cap_contrib,a.incl_cash_rec_saims,a.uncon_invest_loss, \
+a.prov_depr_assets,a.depr_fa_coga_dpba,a.amort_intang_assets,a.lt_amort_deferred_exp,a.decr_deferred_exp, \
+a.incr_acc_exp,a.loss_disp_fiolta,a.loss_scr_fa,a.loss_fv_chg,a.invest_loss, \
+a.decr_def_inc_tax_assets,a.incr_def_inc_tax_liab,a.decr_inventories,a.decr_oper_payable,a.incr_oper_payable, \
+a.others_payable,a.conv_debt_into_cap,a.conv_copbonds_due_within_1y,a.fa_fnc_leases,a.end_bal_cash, \
+a.beg_bal_cash,a.end_bal_cash_equ,a.beg_bal_cash_equ,a.im_n_incr_cash_equ,a.update_flag \
+  FROM (SELECT a.* \
+	  FROM company_cashflow a \
+	 WHERE a.product_code = '%s' \
+	   AND a.report_date %%10000 = 1231 \
+	UNION \
+	SELECT a.* \
+	  FROM company_cashflow a, \
+	       (SELECT MAX(a.report_date) maxreportdate \
+		  FROM company_balance_sheet a \
+		 WHERE a.product_code = '%s') b \
+	 WHERE a.product_code = '%s' \
+	   AND a.report_date = b.maxreportdate) a \
+  ORDER BY a.report_date DESC \
+  LIMIT %d"
+BALACESHEET_PUBYEARSELECTSQL = "SELECT a.product_code,a.announce_date,a.f_announce_date,a.report_date,a.report_type, \
+a.company_type,a.total_share,a.cap_rese,a.undistr_profit,a.surplus_rese, \
+a.special_rese,a.money_cap,a.trade_asset,a.notes_willreceiv,a.accounts_willreceiv, \
+a.other_willreceiv,a.prepayment,a.dividend_willreceiv,a.interest_willreceiv,a.inventories, \
+a.amor_exp,a.notcash_within_1y,a.sett_rsrv,a.loanto_oth_bank_fi,a.premium_receiv, \
+a.reinsur_receiv,a.reinsur_res_receiv,a.pur_resale_fa,a.oth_cur_assets,a.total_cur_assets, \
+a.fa_avail_for_sale,a.htm_invest,a.long_stock_invest,a.invest_real_estate,a.time_deposits, \
+a.oth_assets,a.long_term_rec,a.fix_assets,a.constr_in_process,a.const_materials, \
+a.fixed_assets_disp,a.produc_bio_assets,a.oil_and_gas_assets,a.intan_assets,a.study_spending, \
+a.goodwill,a.long_term_amor_exp,a.defer_tax_assets,a.decr_in_disbur,a.other_not_cash, \
+a.total_not_cash,a.cash_reser_cb,a.depos_in_oth_bfi,a.prec_metals,a.deriv_assets, \
+a.rr_reins_une_prem,a.rr_reins_outstd_cla,a.rr_reins_lins_liab,a.rr_reins_lthins_liab,a.refund_depos, \
+a.ph_pledge_loans,a.refund_cap_depos,a.indep_acct_assets,a.client_depos,a.client_prov, \
+a.transac_seat_fee,a.invest_as_receiv,a.total_assets,a.long_borrow,a.short_borrow, \
+a.central_bank_borrow,a.depos_ib_deposits,a.loan_oth_bank,a.trading_finance_load,a.notes_payable, \
+a.acct_payable,a.adv_receipts,a.sold_for_repur_fa,a.comm_payable,a.payroll_payable, \
+a.taxes_payable,a.interst_payable,a.dividend_payable,a.oth_payable,a.acc_exp, \
+a.deferred_inc,a.st_bonds_payable,a.payable_to_reinsurer,a.rsrv_insur_cont,a.acting_trading_sec, \
+a.acting_uw_sec,a.non_cur_liab_due_1y,a.oth_cur_liab,a.total_cur_liab,a.bond_payable, \
+a.long_money_payable,a.specific_payables,a.estimated_liab,a.defer_tax_liab,a.defer_inc_non_cur_liab, \
+a.other_not_cur_load,a.total_not_cur_load,a.depos_oth_bfi,a.deriv_liab,a.depos, \
+a.agency_bus_liab,a.oth_liab,a.prem_receiv_adva,a.depos_received,a.ph_invest, \
+a.reser_une_prem,a.reser_outstd_claims,a.reser_lins_liab,a.reser_lthins_liab,a.indept_acc_liab, \
+a.pledge_borr,a.indem_payable,a.policy_div_payable,a.total_liab,a.treasury_share, \
+a.ordin_risk_reser,a.forex_differ,a.invest_loss_unconf,a.minority_int,a.total_hldr_eqy_exc_min_int, \
+a.total_hldr_eqy_inc_min_int,a.total_liab_hldr_eqy,a.lt_payroll_payable,a.oth_comp_income,a.oth_eqt_tools, \
+a.oth_eqt_tools_p_shr,a.lending_funds,a.acc_receivable,a.st_fin_payable,a.payables, \
+a.hfs_assets,a.hfs_sales,a.update_flag \
+  FROM (SELECT a.* \
+	  FROM company_balance_sheet a \
+	 WHERE a.product_code = '%s' \
+	   AND a.report_date %%10000 = 1231 \
+	UNION \
+	SELECT a.* \
+	  FROM company_balance_sheet a, \
+	       (SELECT MAX(a.report_date) maxreportdate \
+		  FROM company_balance_sheet a \
+		 WHERE a.product_code = '%s') b \
+	 WHERE a.product_code = '%s' \
+	   AND a.report_date = b.maxreportdate) a \
+  ORDER BY a.report_date DESC \
+  LIMIT %d"
+
+COMPANYFINANCE_PUBYEARSELECTSQL = {"company_income":INCOME_PUBYEARSELECTSQL,
+                                   "company_cashflow": CASHFLOW_PUBYEARSELECTSQL,
+                                   "company_balance_sheet": BALACESHEET_PUBYEARSELECTSQL}
+
+INCOME_PUBQUARTSELECTSQL = "SELECT a.product_code,a.announce_date,a.f_announce_date,a.report_type,a.report_date,\
+a.company_type,a.basic_eps,a.diluted_eps,a.total_revenue,a.revenue,\
+a.int_income,a.prem_earned,a.comm_income,a.n_commis_income,a.n_oth_income,\
+a.n_oth_b_income,a.prem_income,a.out_prem,a.une_prem_reser,a.reins_income,\
+a.n_sec_tb_income,a.n_sec_uw_income,a.n_asset_mg_income,a.oth_b_income,a.fv_value_chg_gain,\
+a.invest_income,a.ass_invest_income,a.forex_gain,a.total_cogs,a.oper_cost,\
+a.int_exp,a.comm_exp,a.biz_tax_surchg,a.sell_exp,a.admin_exp,\
+a.fin_exp,a.assets_impair_loss,a.prem_refund,a.compens_payout,a.reser_insur_liab,\
+a.div_payt,a.reins_exp,a.oper_exp,a.compens_payout_refu,a.insur_reser_refu,\
+a.reins_cost_refund,a.other_bus_cost,a.operate_profit,a.non_oper_income,a.non_oper_exp,\
+a.nca_disploss,a.total_profit,a.income_tax,a.n_income,a.n_income_attr_p,\
+a.minority_gain,a.oth_compr_income,a.t_compr_income,a.compr_inc_attr_p,a.compr_inc_attr_m_s, \
+a.ebit,a.ebitda,a.insurance_exp,a.undist_profit,a.distable_profit,\
+a.update_flag \
+FROM (SELECT a.* \
+	  FROM company_income a, \
+	       (SELECT MAX(a.report_date) maxreportdate \
+		      FROM company_income a \
+		     WHERE a.product_code = '%s') b \
+	 WHERE a.product_code = '%s' \
+	   AND a.report_date%%10000 = b.maxreportdate%%10000) a \
+  ORDER BY a.report_date DESC \
+  LIMIT %d"
+CASHFLOW_PUBQUARTSELECTSQL = "SELECT a.product_code,a.announce_date,a.f_announce_date,a.report_date,a.report_type, \
+a.company_type,a.net_profit,a.finan_exp,a.c_fr_sale_sg,a.recp_tax_rends, \
+a.n_depos_incr_fi,a.n_incr_loans_cb,a.n_inc_borr_oth_fi,a.prem_fr_orig_contr,a.n_incr_insured_dep, \
+a.n_reinsur_prem,a.n_incr_disp_tfa,a.ifc_cash_incr,a.n_incr_disp_faas,a.n_incr_loans_oth_bank, \
+a.n_cap_incr_repur,a.c_fr_oth_operate_a,a.c_inf_fr_operate_a,a.c_paid_goods_s,a.c_paid_to_for_empl, \
+a.c_paid_for_taxes,a.n_incr_clt_loan_adv,a.n_incr_dep_cbob,a.c_pay_claims_orig_inco,a.pay_handling_chrg, \
+a.pay_comm_insur_plcy,a.oth_cash_pay_oper_act,a.st_cash_out_act,a.n_cashflow_act,a.oth_recp_ral_inv_act, \
+a.c_disp_withdrwl_invest,a.c_recp_return_invest,a.n_recp_disp_fiolta,a.n_recp_disp_sobu,a.stot_inflows_inv_act, \
+a.c_pay_acq_const_fiolta,a.c_paid_invest,a.n_disp_subs_oth_biz,a.oth_pay_ral_inv_act,a.n_incr_pledge_loan, \
+a.stot_out_inv_act,a.n_cashflow_inv_act,a.c_recp_borrow,a.proc_issue_bonds,a.oth_cash_recp_ral_fnc_act, \
+a.stot_cash_in_fnc_act,a.free_cashflow,a.c_prepay_amt_borr,a.c_pay_dist_dpcp_int_exp,a.incl_dvd_profit_paid_sc_ms, \
+a.oth_cashpay_ral_fnc_act,a.stot_cashout_fnc_act,a.n_cash_flows_fnc_act,a.eff_fx_flu_cash,a.n_incr_cash_cash_equ, \
+a.c_cash_equ_beg_period,a.c_cash_equ_end_period,a.c_recp_cap_contrib,a.incl_cash_rec_saims,a.uncon_invest_loss, \
+a.prov_depr_assets,a.depr_fa_coga_dpba,a.amort_intang_assets,a.lt_amort_deferred_exp,a.decr_deferred_exp, \
+a.incr_acc_exp,a.loss_disp_fiolta,a.loss_scr_fa,a.loss_fv_chg,a.invest_loss, \
+a.decr_def_inc_tax_assets,a.incr_def_inc_tax_liab,a.decr_inventories,a.decr_oper_payable,a.incr_oper_payable, \
+a.others_payable,a.conv_debt_into_cap,a.conv_copbonds_due_within_1y,a.fa_fnc_leases,a.end_bal_cash, \
+a.beg_bal_cash,a.end_bal_cash_equ,a.beg_bal_cash_equ,a.im_n_incr_cash_equ,a.update_flag \
+  FROM (SELECT a.* \
+          FROM company_cashflow a, \
+               (SELECT MAX(a.report_date) maxreportdate \
+              FROM company_balance_sheet a \
+             WHERE a.product_code = '%s') b \
+         WHERE a.product_code = '%s' \
+           AND a.report_date%%10000 = b.maxreportdate%%10000) a \
+  ORDER BY a.report_date DESC \
+  LIMIT %d"
+BALACESHEET_PUBQUARTSELECTSQL = "SELECT a.product_code,a.announce_date,a.f_announce_date,a.report_date,a.report_type, \
+a.company_type,a.total_share,a.cap_rese,a.undistr_profit,a.surplus_rese, \
+a.special_rese,a.money_cap,a.trade_asset,a.notes_willreceiv,a.accounts_willreceiv, \
+a.other_willreceiv,a.prepayment,a.dividend_willreceiv,a.interest_willreceiv,a.inventories, \
+a.amor_exp,a.notcash_within_1y,a.sett_rsrv,a.loanto_oth_bank_fi,a.premium_receiv, \
+a.reinsur_receiv,a.reinsur_res_receiv,a.pur_resale_fa,a.oth_cur_assets,a.total_cur_assets, \
+a.fa_avail_for_sale,a.htm_invest,a.long_stock_invest,a.invest_real_estate,a.time_deposits, \
+a.oth_assets,a.long_term_rec,a.fix_assets,a.constr_in_process,a.const_materials, \
+a.fixed_assets_disp,a.produc_bio_assets,a.oil_and_gas_assets,a.intan_assets,a.study_spending, \
+a.goodwill,a.long_term_amor_exp,a.defer_tax_assets,a.decr_in_disbur,a.other_not_cash, \
+a.total_not_cash,a.cash_reser_cb,a.depos_in_oth_bfi,a.prec_metals,a.deriv_assets, \
+a.rr_reins_une_prem,a.rr_reins_outstd_cla,a.rr_reins_lins_liab,a.rr_reins_lthins_liab,a.refund_depos, \
+a.ph_pledge_loans,a.refund_cap_depos,a.indep_acct_assets,a.client_depos,a.client_prov, \
+a.transac_seat_fee,a.invest_as_receiv,a.total_assets,a.long_borrow,a.short_borrow, \
+a.central_bank_borrow,a.depos_ib_deposits,a.loan_oth_bank,a.trading_finance_load,a.notes_payable, \
+a.acct_payable,a.adv_receipts,a.sold_for_repur_fa,a.comm_payable,a.payroll_payable, \
+a.taxes_payable,a.interst_payable,a.dividend_payable,a.oth_payable,a.acc_exp, \
+a.deferred_inc,a.st_bonds_payable,a.payable_to_reinsurer,a.rsrv_insur_cont,a.acting_trading_sec, \
+a.acting_uw_sec,a.non_cur_liab_due_1y,a.oth_cur_liab,a.total_cur_liab,a.bond_payable, \
+a.long_money_payable,a.specific_payables,a.estimated_liab,a.defer_tax_liab,a.defer_inc_non_cur_liab, \
+a.other_not_cur_load,a.total_not_cur_load,a.depos_oth_bfi,a.deriv_liab,a.depos, \
+a.agency_bus_liab,a.oth_liab,a.prem_receiv_adva,a.depos_received,a.ph_invest, \
+a.reser_une_prem,a.reser_outstd_claims,a.reser_lins_liab,a.reser_lthins_liab,a.indept_acc_liab, \
+a.pledge_borr,a.indem_payable,a.policy_div_payable,a.total_liab,a.treasury_share, \
+a.ordin_risk_reser,a.forex_differ,a.invest_loss_unconf,a.minority_int,a.total_hldr_eqy_exc_min_int, \
+a.total_hldr_eqy_inc_min_int,a.total_liab_hldr_eqy,a.lt_payroll_payable,a.oth_comp_income,a.oth_eqt_tools, \
+a.oth_eqt_tools_p_shr,a.lending_funds,a.acc_receivable,a.st_fin_payable,a.payables, \
+a.hfs_assets,a.hfs_sales,a.update_flag \
+  FROM (SELECT a.* \
+	  FROM company_balance_sheet a, \
+	       (SELECT MAX(a.report_date) maxreportdate \
+		  FROM company_balance_sheet a \
+		 WHERE a.product_code = '%s') b \
+	 WHERE a.product_code = '%s' \
+	   AND a.report_date%%10000 = b.maxreportdate%%10000) a \
+  ORDER BY a.report_date DESC \
+  LIMIT %d"
+
+COMPANYFINANCE_PUBQUARTSELECTSQL = {"company_income":INCOME_PUBQUARTSELECTSQL,
+                                   "company_cashflow": CASHFLOW_PUBQUARTSELECTSQL,
+                                   "company_balance_sheet": BALACESHEET_PUBQUARTSELECTSQL}
 # 公司相关的会计数据 end
