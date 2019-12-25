@@ -18,3 +18,41 @@ def downloadBSRP(stocklist):
         num = num + 1
         
     return num
+2. 行情数据
+昨天下载了一个花瓶，爬取了一下同花顺的接口API。
+数据行情，分时，都是返回的一张image。其他新闻，公告，资金等返回的json数据，和直接H5网页加载出来，大大简化了整个APP的复杂性。同时，也凸显了体验不是很流畅，特别是同花顺的社区评论功能板块，整个体验就十分差劲。这也是原生带来的流畅性。对比与抖音，就做的十分好。但是不利于维护和更新，同花顺侧重点就是数据及时性吧。
+
+获取股票数据的源头主要有：数据超市、雅虎、新浪、Google、和讯、搜狐、ChinaStockWebService、东方财富客户端、证券之星、网易财经。
+ChinaStockWebService
+
+缺点：不稳定，经常出现维护停止服务；只能获取当前行情和历史走势图。
+优点：国内数据提供商，以XML响应，速度较快。
+方法参考：http://www.webxml.com.cn/WebServices/ChinaStockWebService.asmx
+东方财富客户端
+
+缺点：手动操作导出；没有历史数据。
+优点：数据全面，速度较快。
+方法：通过东方财富网客户端自带的功能，导出数据。
+相对于其他获取方式，这种获取速度非常快，出错率非常低，而且数据非常全面，如果定期整理可以作为非常有效的数据使用。
+
+新浪
+
+缺点：历史股价数据不够完整，只能获取最近1023个数据节点。
+优点：速度非常快；可以获取行情图片；返回JSON，容易处理；可以获取历史的分价图数据和分时买卖交易列。
+方法1：HTTP://HQ.SINAJS.CN/LIST=[股票代码]
+返回结果：JSON实时数据，以逗号隔开相关数据，数据依次是“股票名称、今日开盘价、昨日收盘价、当前价格、今日最高价、今日最低价、竞买价、竞卖价、成交股数、成交金额、买1手、买1报价、买2手、买2报价、…、买5报价、…、卖5报价、日期、时间”。
+获取当前的股票行情，如http://hq.sinajs.cn/list=sh601006，注意新浪区分沪深是以sh和sz区分。
+方法2：获取各个时间段行情图。
+查看日K线图：http://image.sinajs.cn/newchart/daily/n/sh601006.gif分时线的查询：http://image.sinajs.cn/newchart/min/n/sh000001.gif日K线查询：http://image.sinajs.cn/newchart/daily/n/sh000001.gif周K线查询：http://image.sinajs.cn/newchart/weekly/n/sh000001.gif月K线查询：http://image.sinajs.cn/newchart/monthly/n/sh000001.gif
+方法3：http://money.finance.sina.com.cn/quotes_service/api/json_v2.php/CN_MarketData.getKLineData?symbol=[市场][股票代码]&scale=[周期]&ma=no&datalen=[长度]
+返回结果：获取5、10、30、60分钟JSON数据；day日期、open开盘价、high最高价、low最低价、close收盘价、volume成交量；向前复权的数据。
+注意，最多只能获取最近的1023个数据节点。
+例如，http://money.finance.sina.com.cn/quotes_service/api/json_v2.php/CN_MarketData.getKLineData?symbol=sz002095&scale=60&ma=no&datalen=1023，获取深圳市场002095股票的60分钟数据，获取最近的1023个节点。
+方法4：http://finance.sina.com.cn/realstock/company/[市场][股票代码]/[复权].js?d=[日期]
+[复权]：qianfuquan-前复权；houfuquan-后复权。
+返回结果：股票日期的股价JSON数据。
+例如，http://finance.sina.com.cn/realstock/company/sz002095/qianfuquan.js?d=2015-06-16，获取深圳市场002095股票的前复权2015-06-16的数据。
+注意，无法获取未复权的数据。
+注意，需要对返回数据进行处理才能使用，新浪会在末尾加入注释语句，打乱日期数据，key值需要自行加入双引号，否则无法解析JSON。
+注意，由于新浪的周线和月线数据，是以股票日线所有数据直接计算得到的，所以无法直接通过API获取周线和月线数据，需要自行处理。
+方法5：http://market.finance.sina.com.cn/downxls.php?date=[日期]&symbol=[市场][股票代码]
