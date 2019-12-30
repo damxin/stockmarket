@@ -32,3 +32,45 @@ def save_pdf(code, pdf_title_urls, path='./'):
                 if chunk:
                     fp.write(chunk)
 
+def yearpdfread(pdffilepath):
+    '''
+    pdf文件读取表格数据
+    :param pdffilepath:
+    :return:
+    '''
+    import pdfplumber
+    import pandas as pd
+
+    with pdfplumber.open(pdffilepath) as pdf:
+        totalpagenum = len(pdf.pages)
+        for pageid in range(totalpagenum):
+            cur_page = pdf.pages[pageid]
+            # 解析表格
+            tables = cur_page.extract_tables()
+            for table in tables:
+                print(table)
+                dealtable = []
+                lentable = len(table)
+                if lentable > 2:
+                    adjustflag = False
+                    for indtable in range(lentable):
+                        strtemp = "".join(table[indtable])
+                        if "调整" in strtemp:
+                            adjustflag = True
+                        if indtable > 2 or adjustflag == True:
+                            break
+                    # 文件有数据需要调整，以往的数据存在问题。
+                    if adjustflag == True:
+                        firstlist = table[0]
+                        secondlist = table[1]
+                        #  ['主要财务指标', '2016年', '2015年', None, '本期比上年同期\n增减(%)', '2014年', None],
+                        #  [None, None, '调整后', '调整前', None, '调整后', '调整前']
+                        # 调整为['主要财务指标', '2016年', '2015年_调整后', '2015年_调整前', '本期比上年同期\n增减(%)', '2014年_调整后', '2014年_调整前']
+
+
+                df = pd.DataFrame(table[1:], columns=table[0])
+                print(df)
+                print(df.iloc[:,0])
+                # if "主要财务指标" :
+            if pageid > 6 :
+                break
