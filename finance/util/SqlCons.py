@@ -123,7 +123,7 @@ oper_exp,compens_payout_refu,insur_reser_refu,reins_cost_refund,other_bus_cost,\
 operate_profit,non_oper_income,non_oper_exp,nca_disploss,total_profit,\
 income_tax,n_income,n_income_attr_p,minority_gain,oth_compr_income,\
 t_compr_income,compr_inc_attr_p,compr_inc_attr_m_s,ebit,ebitda,\
-insurance_exp,undist_profit,distable_profit,'1' update_flag \
+insurance_exp,undist_profit,distable_profit,'0' update_flag \
 FROM %s where end_date > %d order by end_date asc "
 
 BALANCEHIST_SELECTSQL = "SELECT LEFT(ts_code,6) product_code, ann_date announce_date,f_ann_date f_announce_date,\
@@ -174,7 +174,7 @@ indept_acc_liab,pledge_borr,indem_payable,policy_div_payable,total_liab,\
 treasury_share,ordin_risk_reser,forex_differ,invest_loss_unconf,minority_int,\
 total_hldr_eqy_exc_min_int,total_hldr_eqy_inc_min_int,total_liab_hldr_eqy,\
 lt_payroll_payable,oth_comp_income,oth_eqt_tools,oth_eqt_tools_p_shr,lending_funds,\
-acc_receivable,st_fin_payable,payables,hfs_assets,hfs_sales,'1' update_flag \
+acc_receivable,st_fin_payable,payables,hfs_assets,hfs_sales,'0' update_flag \
 FROM %s where end_date > %d order by end_date asc "
 
 CASHFLOWHIST_SELECTSQL = "SELECT LEFT(ts_code,6) product_code, ann_date announce_date,f_ann_date f_announce_date,\
@@ -213,7 +213,7 @@ depr_fa_coga_dpba, amort_intang_assets, lt_amort_deferred_exp, decr_deferred_exp
 loss_disp_fiolta, loss_scr_fa, loss_fv_chg, invest_loss, decr_def_inc_tax_assets, \
 incr_def_inc_tax_liab, decr_inventories, decr_oper_payable, incr_oper_payable, others others_payable, \
 conv_debt_into_cap, conv_copbonds_due_within_1y, fa_fnc_leases, end_bal_cash, beg_bal_cash, \
-end_bal_cash_equ, beg_bal_cash_equ, im_n_incr_cash_equ, '1' update_flag \
+end_bal_cash_equ, beg_bal_cash_equ, im_n_incr_cash_equ, '0' update_flag \
 FROM %s where end_date > %d order by end_date asc "
 COMPANYFINANCE_SELECTSQL = {"company_income":INCOMEHIST_SELECTSQL,
                             "company_cashflow":CASHFLOWHIST_SELECTSQL,

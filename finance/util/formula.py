@@ -1,5 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+## 废弃
 
 import numpy as np
 import pandas as pd
@@ -77,7 +78,7 @@ def STD(DF, N):
     return pd.Series.rolling(DF, N).std()
 
 
-def MACD(DF, FAST, SLOW, MID):
+def MACD(DF, FAST=9, SLOW=26, MID):
     EMAFAST = EMA(DF, FAST)
     EMASLOW = EMA(DF, SLOW)
     DIFF = EMAFAST - EMASLOW

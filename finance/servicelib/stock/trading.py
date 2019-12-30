@@ -470,29 +470,43 @@ def getProductFinanceInfo(dbCntInfo,sourcetable,desctable):
         return
 
     pro = ts.pro_api('00f0c017db5d284d992f78f0971c73c9ecba4aa03dee2f38e71e4d9c')
-    sourceTable = sourcetable # "histincome"
-    destTable = desctable #"company_income"
+    sourceTable = sourcetable # 比如"histincome"
+    destTable = desctable # 比如"company_income"
+
+    # 获取每个产品已经获取到的最大reportdate
+    productReportDateDict = getmaxreportdate(dbCntInfo, destTable)
 
     engine = dbCntInfo.getEngineByTableName(sourceTable)
     # 获取tusharepro中的数据
     for rowIndex in productInfoDf.index:
-        if rowIndex >= 0:
-            continue
+        # if rowIndex >= 0:
+        #     continue
         if rowIndex % 200 == 0 and rowIndex != 0:
             time.sleep(60)
         oneProductInfo = productInfoDf.iloc[rowIndex]
         productCode = oneProductInfo["product_code"]
+        maxreportdate = productReportDateDict[productCode]
+        maxreportdate = maxreportdate + 1
         print("%d %s begin to get %s data from intenert..."%(rowIndex, productCode,destTable))
         symbolProcuctCode = pb.code_to_symbol(productCode)
         df = pd.DataFrame()
         try :
             if destTable in "company_income":
-                df = pro.income(ts_code=symbolProcuctCode)
+                if maxreportdate == 1:
+                    df = pro.income(ts_code=symbolProcuctCode)
+                else :
+                    df = pro.income(ts_code=symbolProcuctCode, start_date=str(maxreportdate))
             elif destTable in "company_balance_sheet":
-                df = pro.balancesheet(ts_code=symbolProcuctCode)
+                if maxreportdate == 1:
+                    df = pro.balancesheet(ts_code=symbolProcuctCode)
+                else :
+                    df = pro.balancesheet(ts_code=symbolProcuctCode, start_date=str(maxreportdate))
             elif destTable in "company_cashflow":
-                df = pro.cashflow(ts_code=symbolProcuctCode)
-            else:
+                if maxreportdate == 1:
+                    df = pro.cashflow(ts_code=symbolProcuctCode)
+                else :
+                    df = pro.cashflow(ts_code=symbolProcuctCode, start_date=str(maxreportdate))
+            else :
                 raise Exception("destTable is exception!")
         except Exception as e:
             print(symbolProcuctCode + " connect time out!")
@@ -505,15 +519,16 @@ def getProductFinanceInfo(dbCntInfo,sourcetable,desctable):
                 df = pro.cashflow(ts_code=symbolProcuctCode)
             else:
                 raise Exception("destTable is exception!")
+        # 数据去重
+        # 数据相同删除重复的数据保留第一个数据
+        dfdup = df.drop_duplicates(subset=["ts_code","end_date"], keep='first', inplace=False)
 
         realSourTable = sourceTable + productCode
-        basicdf = df.reset_index(drop=True)
+        basicdf = dfdup.reset_index(drop=True)
         basicdf.to_sql(realSourTable, engine, if_exists="replace", index=False)
         print("%s get data finish!" % (productCode))
         time.sleep(1.5)
 
-    # 获取每个产品已经获取到的最大reportdate
-    productReportDateDict = getmaxreportdate(dbCntInfo, destTable)
     # 获取表中存在的数据。
     for rowIndex in productInfoDf.index:
         oneProductInfo = productInfoDf.iloc[rowIndex]
@@ -527,8 +542,8 @@ def getProductFinanceInfo(dbCntInfo,sourcetable,desctable):
         pb.insertNormalDbByCurProductCode(dbCntInfo, sourceTable, destTable, selectsql, insertsql,productCode)
         print("%s insert table %s finish!" % (realSourTable, destTable))
 
-
     return
+
 
 if __name__ == "__main__":
     filedata = open(".\stock_basics.txt", 'w+')
