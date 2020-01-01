@@ -17,7 +17,7 @@ from finance.util import SqlCons as sc
 from finance.util import GlobalCons as gc
 from finance.util import DictCons as dc
 from finance.servicelib.public import public as pb
-from finance.util.formula import MA
+# from finance.util.formula import MA
 
 
 def getStockBasics(dbCntInfo):
@@ -277,7 +277,6 @@ def getAllNoneSubscriptionTradePriceFromTusharePro(dbCntInfo):
         basicdf.to_sql(realsourcetable, engine, if_exists="replace", index=False)
         tradedate = pb.getnextnday(tradedate,1)
 
-
     insertsql = sc.PRODUCTTRADEDATA_INSERTSQL
     for productcode in productdf.index:
         oneproductdate = productdf.loc[productcode]
@@ -362,59 +361,59 @@ def getProfitData(dbCntInfo):
     print("all productcode profitschema finish download!")
     dbCntInfo.closeAllDBConnect()
 
-def getTradeDataFromDataBase(product_code, ma=None, autotype=None):
-    '''
-    获取交易数据准备K线图显示
-    :param product_code:
-    :param autotype:None未复权 qfq前复权 hfq后复权
-    :return: dataframe {trade_date,open,close,low,high, ma均线}
-    '''
-    ma = [30,60,99,120,250] if ma is None else ma
-    dataType = autotype.lower() if autotype is not None else "nfq" # nfq 未复权
-    xmlfile = "F:\\nfx\\Python\\stockmarket\\finance\\resource\\finance.xml"
-    dbCntInfo = dbcnt.DbCnt(xmlfile)
-    sourceTable = "producttradedata"
-    dbSqlSession = dbCntInfo.getDBCntInfoByTableName(sourceTable,product_code)
-    allDataGetSql = sc.PRODUCTTRADEDATA_GETALLDATA_SQL%product_code
-    tradeDataTupleInList = dbSqlSession.execSelectAllSql(allDataGetSql)
-
-    curBaseInfo = pb.getCurProductBasicInfoByProductCode(dbCntInfo,product_code)
-    productname = curBaseInfo["product_name"]
-    dbCntInfo.closeAllDBConnect()
-    dfdata = pb.listdictTypeChangeToDataFrame(tradeDataTupleInList)
-    if dataType not in "nfq":
-        ts_code = pb.code_to_symbol(product_code)
-        pro = ts.pro_api('00f0c017db5d284d992f78f0971c73c9ecba4aa03dee2f38e71e4d9c')
-        fcts = pro.adj_factor(ts_code=ts_code, trade_date="")[['trade_date', 'adj_factor']]
-        adjfactortable = "histadjfactor"
-        engine = dbCntInfo.getEngineByTableName(adjfactortable)
-        fcts.to_sql(adjfactortable, engine, if_exists="replace", index=False)
-        fcts['trade_date'] = fcts['trade_date'].astype(int)
-        if fcts.shape[0] == 0:
-            return None
-
-        dfdata = dfdata.set_index('trade_date', drop=False).merge(fcts.set_index('trade_date'), left_index=True,
-                                                                    right_index=True, how='left')
-        dfdata['adj_factor'] = dfdata['adj_factor'].fillna(method='bfill')
-
-        for col in gc.PRICE_COLS:
-            if dataType == 'hfq':
-                dfdata[col] = dfdata[col] * dfdata['adj_factor']
-            if dataType == 'qfq':
-                dfdata[col] = dfdata[col] * dfdata['adj_factor'] / float(fcts['adj_factor'][0])
-            dfdata[col] = dfdata[col].map(gc.FORMAT)
-        for col in gc.PRICE_COLS:
-            dfdata[col] = dfdata[col].astype(float)
-        dfdata = dfdata.drop('adj_factor', axis=1)
-    dfclose = dfdata['close'].sort_index(ascending=False)
-    for a in ma:
-        if isinstance(a, int):
-            dfdata['ma%s'%a] = MA(dfclose, a).map(gc.FORMAT).shift(-(a-1))
-            dfdata['ma%s'%a] = dfdata['ma%s'%a].astype(float)
-
-    # dfname._stat_axis.values.tolist() # 行名称
-    # dfname.columns.values.tolist()    # 列名称
-    return productname,dfdata
+# def getTradeDataFromDataBase(product_code, ma=None, autotype=None):
+#     '''
+#     获取交易数据准备K线图显示
+#     :param product_code:
+#     :param autotype:None未复权 qfq前复权 hfq后复权
+#     :return: dataframe {trade_date,open,close,low,high, ma均线}
+#     '''
+#     ma = [30,60,99,120,250] if ma is None else ma
+#     dataType = autotype.lower() if autotype is not None else "nfq" # nfq 未复权
+#     xmlfile = "F:\\nfx\\Python\\stockmarket\\finance\\resource\\finance.xml"
+#     dbCntInfo = dbcnt.DbCnt(xmlfile)
+#     sourceTable = "producttradedata"
+#     dbSqlSession = dbCntInfo.getDBCntInfoByTableName(sourceTable,product_code)
+#     allDataGetSql = sc.PRODUCTTRADEDATA_GETALLDATA_SQL%product_code
+#     tradeDataTupleInList = dbSqlSession.execSelectAllSql(allDataGetSql)
+#
+#     curBaseInfo = pb.getCurProductBasicInfoByProductCode(dbCntInfo,product_code)
+#     productname = curBaseInfo["product_name"]
+#     dbCntInfo.closeAllDBConnect()
+#     dfdata = pb.listdictTypeChangeToDataFrame(tradeDataTupleInList)
+#     if dataType not in "nfq":
+#         ts_code = pb.code_to_symbol(product_code)
+#         pro = ts.pro_api('00f0c017db5d284d992f78f0971c73c9ecba4aa03dee2f38e71e4d9c')
+#         fcts = pro.adj_factor(ts_code=ts_code, trade_date="")[['trade_date', 'adj_factor']]
+#         adjfactortable = "histadjfactor"
+#         engine = dbCntInfo.getEngineByTableName(adjfactortable)
+#         fcts.to_sql(adjfactortable, engine, if_exists="replace", index=False)
+#         fcts['trade_date'] = fcts['trade_date'].astype(int)
+#         if fcts.shape[0] == 0:
+#             return None
+#
+#         dfdata = dfdata.set_index('trade_date', drop=False).merge(fcts.set_index('trade_date'), left_index=True,
+#                                                                     right_index=True, how='left')
+#         dfdata['adj_factor'] = dfdata['adj_factor'].fillna(method='bfill')
+#
+#         for col in gc.PRICE_COLS:
+#             if dataType == 'hfq':
+#                 dfdata[col] = dfdata[col] * dfdata['adj_factor']
+#             if dataType == 'qfq':
+#                 dfdata[col] = dfdata[col] * dfdata['adj_factor'] / float(fcts['adj_factor'][0])
+#             dfdata[col] = dfdata[col].map(gc.FORMAT)
+#         for col in gc.PRICE_COLS:
+#             dfdata[col] = dfdata[col].astype(float)
+#         dfdata = dfdata.drop('adj_factor', axis=1)
+#     dfclose = dfdata['close'].sort_index(ascending=False)
+#     for a in ma:
+#         if isinstance(a, int):
+#             dfdata['ma%s'%a] = MA(dfclose, a).map(gc.FORMAT).shift(-(a-1))
+#             dfdata['ma%s'%a] = dfdata['ma%s'%a].astype(float)
+#
+#     # dfname._stat_axis.values.tolist() # 行名称
+#     # dfname.columns.values.tolist()    # 列名称
+#     return productname,dfdata
 
 def getSuspendProduct(dbCntInfo):
     '''
@@ -549,14 +548,14 @@ if __name__ == "__main__":
     filedata = open(".\stock_basics.txt", 'w+')
     # xmlfile = "E:\\pydevproj\\stockmarket\\finance\\resource\\finance.xml"
     xmlfile = "F:\\nfx\\Python\\stockmarket\\finance\\resource\\finance.xml"
-    # dbCntInfo = dbcnt.DbCnt(xmlfile)
+    dbCntInfo = dbcnt.DbCnt(xmlfile)
     # getprofitdata(dbCntInfo)
     # getStockBasicsPro(dbCntInfo)
     # getProductBasicInfo(dbCntInfo)
-    # getAllNoneSubscriptionTradePriceFromTusharePro(dbCntInfo)
+    getAllNoneSubscriptionTradePriceFromTusharePro(dbCntInfo)
     # getProductFinanceInfo(dbCntInfo, "histincome", "company_income")
     # getProductFinanceInfo(dbCntInfo, "histcastflow", "company_cashflow")
-    getProductFinanceInfo(dbCntInfo, "histbalance", "company_balance_sheet")
+    # getProductFinanceInfo(dbCntInfo, "histbalance", "company_balance_sheet")
     # pcodeDataUpdateDict = {}
     # pcodeDataUpdateDict["000008"] = "1"
     # pcodeDataUpdateDict["300100"] = "1"
