@@ -49,7 +49,7 @@ def yearpdfread(pdffilepath):
             tables = cur_page.extract_tables()
             for table in tables:
                 print(table)
-                dealtable = []
+                dealedtable = []
                 lentable = len(table)
                 if lentable > 2:
                     adjustflag = False
@@ -60,17 +60,32 @@ def yearpdfread(pdffilepath):
                         if indtable > 2 or adjustflag == True:
                             break
                     # 文件有数据需要调整，以往的数据存在问题。
+                    tablestartindex = 0
                     if adjustflag == True:
                         firstlist = table[0]
                         secondlist = table[1]
+                        tablestartindex = 1
                         #  ['主要财务指标', '2016年', '2015年', None, '本期比上年同期\n增减(%)', '2014年', None],
                         #  [None, None, '调整后', '调整前', None, '调整后', '调整前']
                         # 调整为['主要财务指标', '2016年', '2015年_调整后', '2015年_调整前', '本期比上年同期\n增减(%)', '2014年_调整后', '2014年_调整前']
-
-
-                df = pd.DataFrame(table[1:], columns=table[0])
-                print(df)
-                print(df.iloc[:,0])
-                # if "主要财务指标" :
-            if pageid > 6 :
-                break
+                        headmergelist = []
+                        for mergelistindex in range(len(firstlist)):
+                            if firstlist[mergelistindex] is not None and secondlist[mergelistindex] is not None:
+                                headmergelist.append(firstlist[mergelistindex]+"_"+secondlist[mergelistindex])
+                            elif firstlist[mergelistindex] is not None and secondlist[mergelistindex] is None:
+                                headmergelist.append(firstlist[mergelistindex])
+                            elif firstlist[mergelistindex] is None and secondlist[mergelistindex] is not None:
+                                headmergelist.append(secondlist[mergelistindex])
+                            else:
+                                assert firstlist[mergelistindex] is not None or secondlist[mergelistindex] is not None, "pdf parse error!"
+                        dealedtable.append(headmergelist)
+                    else :
+                        dealedtable.append(table[0])
+                    for indtable in range(lentable):
+                        if indtable <= tablestartindex:
+                            continue
+                        dealedtable.append(table[indtable])
+                if len(dealedtable) > 0:
+                    df = pd.DataFrame(dealedtable[1:], columns=dealedtable[0])
+                    print(df)
+                    print(df.iloc[:,0])
