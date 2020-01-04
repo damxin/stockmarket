@@ -196,10 +196,34 @@ def getRateNextToByList(dataList) -> list:
         rateList.append(float(int((dataList[dataindex+1]-dataList[dataindex])/dataList[dataindex]*10000)/100))
     return rateList
 
-def downloadloginsorupd():
+def downloadloginsorupd(dbcnt,productcode,eventtype,dealstatus,sourcetype):
     '''
+    表datadownloadlog日志记录插入或者更新
+    :param dbcnt: 数据库的连接
+    :param productcode:
+    :param eventtype: 1.交易数据 2.Income  3.Balancesheet 4.Cashflow
+    :param dealstatus: 0.准备开始 1.下载完成 2.导入正式表完成
+    :param sourcetype: 0.各自下载 1.批量下载
+    :return: True：成功，False：失败
+    '''
+    if productcode is None:
+        raise  ValueError("productcode do not valid value!")
+        return False
+    sqlsession = dbcnt.getDBCntInfoByTableName("datadownloadlog", productcode)
 
-    :return:
-    '''
+    logdate = int((date.today()).strftime("%Y%m%d"))
+    datadownloadlogsql = sc.DATADOWNLOG_GETDATA %(productcode,eventtype,sourcetype,logdate)
+    datalogexistlist = sqlsession.execSelectAllSql(datadownloadlogsql)
+    keyname = "cntnum"
+    cntnum = datalogexistlist[0][keyname]
+    # 有数据现在做更新
+    if cntnum > 0 :
+        datadownloadlogupdsql = sc.DATADOWNLOG_UPDATEDATA %(dealstatus,productcode,eventtype,sourcetype,logdate)
+        sqlsession.execUpdateOrDelSql(datadownloadlogupdsql)
+    else :
+        logtime = int(time.strftime('%H:%M:%S',time.localtime(time.time())))
+        datadownloadloginssql = sc.DATADOWNLOG_INSERTDATA %(productcode,eventtype,dealstatus,sourcetype,logdate,logtime)
+        sqlsession.execNotSelectSql(datadownloadloginssql)
+
     return True
 

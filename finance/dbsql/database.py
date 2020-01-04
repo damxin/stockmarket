@@ -58,6 +58,18 @@ class DataBase:
             print(strsql)
             print(e)
 
+    def execNotSelectSql(self, strsql):
+        '''
+         执行删除和更新语句
+        :param self:
+        :param strsql:
+        '''
+        try :
+            self.curcursor.execute(strsql)
+            self.connection.commit()  # 提交
+        except Exception as e:
+            print(strsql)
+            print(e)
 
     def getConnectInfo(self):
         return self.connection

@@ -119,13 +119,13 @@ DELIMITER $$
             SELECT DATABASE() INTO database_name; 
             SELECT COUNT(1) INTO v_rowcount FROM information_schema.tables WHERE table_schema= database_name AND table_name='exchangeinfo'; 
             IF v_rowcount = 0 THEN 
-    create table exchangeinfo
-    (
-      exchange_code varchar(10),
-      exchange_name varchar(60),
-      country_code varchar(20),
-      primary key (exchange_code)
-    );
+                create table exchangeinfo
+                (
+                  exchange_code varchar(10),
+                  exchange_name varchar(60),
+                  country_code varchar(20),
+                  primary key (exchange_code)
+                );
             END IF; 
     END$$ 
 DELIMITER; 

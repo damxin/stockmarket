@@ -25,7 +25,8 @@ TABLEDICT = {"stock_basics": LOGICNAME_TMPBASE,
              "histcastflow":LOGICNAME_TMPBASE,
              "company_cashflow":LOGICNAME_TRADE,
              "histbalance":LOGICNAME_TMPBASE,
-             "company_balance_sheet":LOGICNAME_TRADE}
+             "company_balance_sheet":LOGICNAME_TRADE,
+             "datadownloadlog":LOGICNAME_TRADE}
 
 ## 工作日begin
 WORKDAY_MAXDATESQL = "select max(trade_date) maxtradedate, exchange_code exchangecode from openday group by exchange_code"
@@ -545,3 +546,9 @@ COMPANYFINANCE_PUBQUARTSELECTSQL = {"company_income":INCOME_PUBQUARTSELECTSQL,
                                    "company_cashflow": CASHFLOW_PUBQUARTSELECTSQL,
                                    "company_balance_sheet": BALACESHEET_PUBQUARTSELECTSQL}
 # 公司相关的会计数据 end
+
+# datadownloadlog 日志文件begin
+DATADOWNLOG_GETDATA="select count(1) cntnum from datadownloadlog where product_code='%s' and eventtype='%s' and sourcetype='%s' and logdate=%d "
+DATADOWNLOG_INSERTDATA="INSERT INTO datadownloadlog(product_code,eventtype,dealstatus,sourcetype,logdate,logtime) VALUES ('%s','%s','%s','%s',%d,%d)"
+DATADOWNLOG_UPDATEDATA="update datadownloadlog set dealstatus='%s' where product_code='%s' and eventtype='%s' and sourcetype='%s' and logdate=%d"
+# datadownloadlog 日志文件end
