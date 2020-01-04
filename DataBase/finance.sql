@@ -547,4 +547,87 @@ CALL sp_db_mysql();
 DROP PROCEDURE IF EXISTS sp_db_mysql;
 
 
+DROP PROCEDURE IF EXISTS sp_db_mysql; 
+DELIMITER $$ 
+    CREATE PROCEDURE sp_db_mysql() 
+        BEGIN 
+            DECLARE v_rowcount INT; 
+            DECLARE database_name VARCHAR(100); 
+            SELECT DATABASE() INTO database_name; 
+            SELECT COUNT(1) INTO v_rowcount FROM information_schema.tables WHERE table_schema= database_name AND table_name='tfilefielddict'; 
+            IF v_rowcount = 0 THEN 
+                create table tfilefielddict
+                (
+                  filechiname varchar(60),
+                  l_fileid int(8)
+                );
+            END IF; 
+    END$$ 
+DELIMITER; 
+CALL sp_db_mysql(); 
+DROP PROCEDURE IF EXISTS sp_db_mysql;
+
+DROP PROCEDURE IF EXISTS sp_db_mysql; 
+DELIMITER $$ 
+    CREATE PROCEDURE sp_db_mysql() 
+        BEGIN 
+            DECLARE v_rowcount INT; 
+            DECLARE database_name VARCHAR(100); 
+            SELECT DATABASE() INTO database_name; 
+            SELECT COUNT(1) INTO v_rowcount FROM information_schema.tables WHERE table_schema= database_name AND table_name='tstfielddict'; 
+            IF v_rowcount = 0 THEN 
+                create table tstfielddict
+                (
+                  dbengname varchar(30),
+                  l_stid int(8)
+                );
+            END IF; 
+    END$$ 
+DELIMITER; 
+CALL sp_db_mysql(); 
+DROP PROCEDURE IF EXISTS sp_db_mysql;
+
+DROP PROCEDURE IF EXISTS sp_db_mysql; 
+DELIMITER $$ 
+    CREATE PROCEDURE sp_db_mysql() 
+        BEGIN 
+            DECLARE v_rowcount INT; 
+            DECLARE database_name VARCHAR(100); 
+            SELECT DATABASE() INTO database_name; 
+            SELECT COUNT(1) INTO v_rowcount FROM information_schema.tables WHERE table_schema= database_name AND table_name='tfilestfield'; 
+            IF v_rowcount = 0 THEN 
+                create table tfilestfield
+                (
+                  l_fileid int(8),
+                  l_stid int(8),
+                  filetype varchar(2)
+                );
+            END IF; 
+    END$$ 
+DELIMITER; 
+CALL sp_db_mysql(); 
+DROP PROCEDURE IF EXISTS sp_db_mysql;
+
+DROP PROCEDURE IF EXISTS sp_db_mysql; 
+DELIMITER $$ 
+    CREATE PROCEDURE sp_db_mysql() 
+        BEGIN 
+            DECLARE v_rowcount INT; 
+            DECLARE database_name VARCHAR(100); 
+            SELECT DATABASE() INTO database_name; 
+            SELECT COUNT(1) INTO v_rowcount FROM information_schema.tables WHERE table_schema= database_name AND table_name='datadownloadlog'; 
+            IF v_rowcount = 0 THEN 
+                create table datadownloadlog
+                (
+                  product_code varchar(10),
+                  eventtype varchar(1),
+                  dealstatus varchar(1),
+                  sourcetype varchar(1)
+                );
+            END IF; 
+    END$$ 
+DELIMITER; 
+CALL sp_db_mysql(); 
+DROP PROCEDURE IF EXISTS sp_db_mysql;
+
  
