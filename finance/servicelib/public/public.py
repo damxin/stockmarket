@@ -196,3 +196,10 @@ def getRateNextToByList(dataList) -> list:
         rateList.append(float(int((dataList[dataindex+1]-dataList[dataindex])/dataList[dataindex]*10000)/100))
     return rateList
 
+def downloadloginsorupd():
+    '''
+
+    :return:
+    '''
+    return True
+

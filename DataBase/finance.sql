@@ -622,7 +622,9 @@ DELIMITER $$
                   product_code varchar(10),
                   eventtype varchar(1),
                   dealstatus varchar(1),
-                  sourcetype varchar(1)
+                  sourcetype varchar(1),
+                  logdate int(8),
+                  logtime int(6)
                 );
             END IF; 
     END$$ 
