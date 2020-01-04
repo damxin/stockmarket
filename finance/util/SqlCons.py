@@ -548,7 +548,7 @@ COMPANYFINANCE_PUBQUARTSELECTSQL = {"company_income":INCOME_PUBQUARTSELECTSQL,
 # 公司相关的会计数据 end
 
 # datadownloadlog 日志文件begin
-DATADOWNLOG_GETDATA="select count(1) cntnum from datadownloadlog where product_code='%s' and eventtype='%s' and sourcetype='%s' and logdate=%d "
+DATADOWNLOG_GETDATA="select product_code,eventtype,dealstatus,sourcetype,logdate,logtime from datadownloadlog where product_code='%s' and eventtype='%s' and sourcetype='%s' and logdate=%d "
 DATADOWNLOG_INSERTDATA="INSERT INTO datadownloadlog(product_code,eventtype,dealstatus,sourcetype,logdate,logtime) VALUES ('%s','%s','%s','%s',%d,%d)"
 DATADOWNLOG_UPDATEDATA="update datadownloadlog set dealstatus='%s' where product_code='%s' and eventtype='%s' and sourcetype='%s' and logdate=%d"
 # datadownloadlog 日志文件end

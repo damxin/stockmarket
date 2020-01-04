@@ -214,7 +214,7 @@ def downloadloginsorupd(dbcnt,productcode,eventtype,dealstatus,sourcetype):
     logdate = int((date.today()).strftime("%Y%m%d"))
     datadownloadlogsql = sc.DATADOWNLOG_GETDATA %(productcode,eventtype,sourcetype,logdate)
     datalogexistlist = sqlsession.execSelectAllSql(datadownloadlogsql)
-    keyname = "cntnum"
+    keyname = "product_code"
     cntnum = datalogexistlist[0][keyname]
     # 有数据现在做更新
     if cntnum > 0 :
