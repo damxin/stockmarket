@@ -579,7 +579,7 @@ DELIMITER $$
                 create table tstfielddict
                 (
                   dbengname varchar(30),
-                  l_stid int(4)
+                  l_stid int(5)
                 );
             END IF; 
     END$$ 
@@ -599,7 +599,7 @@ DELIMITER $$
                 create table tfilestfield
                 (
                   l_fileid int(4),
-                  l_stid int(4),
+                  l_stid int(5),
                   filetype varchar(2)
                 );
             END IF; 
