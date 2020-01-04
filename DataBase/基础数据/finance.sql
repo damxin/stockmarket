@@ -559,7 +559,7 @@ DELIMITER $$
                 create table tfilefielddict
                 (
                   filechiname varchar(60),
-                  l_fileid int(8)
+                  l_fileid int(4)
                 );
             END IF; 
     END$$ 
@@ -579,7 +579,7 @@ DELIMITER $$
                 create table tstfielddict
                 (
                   dbengname varchar(30),
-                  l_stid int(8)
+                  l_stid int(4)
                 );
             END IF; 
     END$$ 
@@ -598,8 +598,8 @@ DELIMITER $$
             IF v_rowcount = 0 THEN 
                 create table tfilestfield
                 (
-                  l_fileid int(8),
-                  l_stid int(8),
+                  l_fileid int(4),
+                  l_stid int(4),
                   filetype varchar(2)
                 );
             END IF; 
