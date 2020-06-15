@@ -17,6 +17,25 @@ import pandas as pd
 from datetime import date, timedelta
 
 
+def getMaxTradeDateFromCurProductCode(dbCntInfo,productCode) -> int:
+    '''
+    获取产品代码在数据库中存储的最大交易日期
+    :param dbCntInfo:
+    :param productCode:
+    :return:
+    '''
+
+    sourcetable = "producttradedata"
+    tableDbBase = dbCntInfo.getDBCntInfoByTableName(tablename=sourcetable, productcode=productCode)
+    execlsql="select max(trade_date) maxtradedate from producttradedata where product_code = '%s' "%productCode
+    tableRetTuple = tableDbBase.execSelectSmallSql(execlsql)
+   # print(tableRetTuple)
+   # print(tableRetTuple[0]['maxtradedate'])
+    maxDate = 19000101 if tableRetTuple[0]['maxtradedate'] is None else tableRetTuple[0]['maxtradedate']
+
+   # print(maxDate)
+    return maxDate
+
 def getAllProductBasicInfo(dbCntInfo, ipostatus=None):
     '''
     返回所有的产品的基本信息，默认只返回依然上市的产品，退市的不返回

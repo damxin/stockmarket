@@ -6,6 +6,7 @@ Created on 2019/09/04
 @contact: nfx080523@hotmail.com
 '''
 
+import os
 import tushare as ts
 import time
 import pandas as pd
@@ -543,16 +544,69 @@ def getProductFinanceInfo(dbCntInfo,sourcetable,desctable):
 
     return
 
+def tdxShLdayToStock(softPath, dbCntInfo, relativePath=None, dataType="sh"):
+    '''
+    tdx数据读取到数据库中
+    参考网站:https://www.jianshu.com/p/9dd3ef74fe96
+    tdx目录结构：https://www.cnblogs.com/ftrako/p/3800687.html
+    :param softpath:
+    :param dbCntInfo 数据库连接
+    :param dataType:
+    :return:
+    '''
+
+    import os
+    import struct
+    import datetime
+
+    relativePath = "/vipdoc/sh/lday/" if relativePath is None else relativePath
+    absolutePath = softPath+relativePath
+
+    listTradeFile = os.listdir(absolutePath)
+    for productTradeFile in listTradeFile:
+        productCode = productTradeFile[2:]
+        # 获取该股票的最大日期
+        filepath = absolutePath + productTradeFile
+        print("正在"+productCode+"文件:"+filepath)
+        with open(filepath, 'rb') as fname:
+            while True:
+                stock_date = fname.read(4)
+                stock_open = fname.read(4)
+                stock_high = fname.read(4)
+                stock_low = fname.read(4)
+                stock_close = fname.read(4)
+                stock_amount = fname.read(4)
+                stock_vol = fname.read(4)
+                stock_reservation = fname.read(4)
+
+                # date,open,high,low,close,amount,vol,reservation
+
+                if not stock_date:
+                    break
+                stock_date = struct.unpack("l", stock_date)  # 4字节 如20091229
+                stock_open = struct.unpack("l", stock_open)  # 开盘价*100
+                stock_high = struct.unpack("l", stock_high)  # 最高价*100
+                stock_low = struct.unpack("l", stock_low)  # 最低价*100
+                stock_close = struct.unpack("l", stock_close)  # 收盘价*100
+                stock_amount = struct.unpack("f", stock_amount)  # 成交额
+                stock_vol = struct.unpack("l", stock_vol)  # 成交量
+                stock_reservation = struct.unpack("l", stock_reservation)  # 保留值
+
+                date_format = datetime.datetime.strptime(str(stock_date[0]), '%Y%M%d')  # 格式化日期
+                list = date_format.strftime('%Y-%M-%d') + "," + str(stock_open[0] / 100) + "," + str(
+                    stock_high[0] / 100.0) + "," + str(stock_low[0] / 100.0) + "," + str(
+                    stock_close[0] / 100.0) + "," + str(stock_vol[0]) + "\r\n"
+    return
 
 if __name__ == "__main__":
-    filedata = open(".\stock_basics.txt", 'w+')
+    #filedata = open(".\stock_basics.txt", 'w+')
     # xmlfile = "E:\\pydevproj\\stockmarket\\finance\\resource\\finance.xml"
     xmlfile = "F:\\nfx\\Python\\stockmarket\\finance\\resource\\finance.xml"
     dbCntInfo = dbcnt.DbCnt(xmlfile)
     # getprofitdata(dbCntInfo)
     # getStockBasicsPro(dbCntInfo)
     # getProductBasicInfo(dbCntInfo)
-    getAllNoneSubscriptionTradePriceFromTusharePro(dbCntInfo)
+    #getAllNoneSubscriptionTradePriceFromTusharePro(dbCntInfo)
     # getProductFinanceInfo(dbCntInfo, "histincome", "company_income")
     # getProductFinanceInfo(dbCntInfo, "histcastflow", "company_cashflow")
     # getProductFinanceInfo(dbCntInfo, "histbalance", "company_balance_sheet")
@@ -588,5 +642,5 @@ if __name__ == "__main__":
     # insertsql = sc.PRODUCTTRADEDATA_INSERTSQL
     # insertNormalDbByCurProductCode(productCode, dbCntInfo, sourceTable, destTable, selectsql, insertsql)
     # dbCntInfo.closeAllDBConnect()
-    filedata.close()
+    # filedata.close()
 
