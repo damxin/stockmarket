@@ -10,6 +10,7 @@ import os
 import tushare as ts
 import time
 import pandas as pd
+import logging
 
 
 from finance.dbsql import mysqldatabase
@@ -544,65 +545,157 @@ def getProductFinanceInfo(dbCntInfo,sourcetable,desctable):
 
     return
 
-def tdxShLdayToStock(softPath, dbCntInfo, relativePath=None, dataType="sh"):
+def tdxProductTradeData2Database(dbCntInfo, productCode,absolutePath,productTradeFile):
+    '''
+    单个产品的通达信数据解析后插入到数据库中
+    :param dbCntInfo:
+    :param productCode:
+    :param absolutePath:
+    :param productTradeFile:
+    :return:
+    '''
+
+    import struct
+    from finance.util import SqlCons as sqlcons
+
+    filepath = absolutePath + productTradeFile
+
+    # 获取该股票的最大日期
+    maxTradeDate = pb.getMaxTradeDateFromCurProductCode(dbCntInfo, productCode)
+    if maxTradeDate == 190000101:
+        print("当前产品%s没有在productbaseinfo表中,请添加!" % productCode)
+    print("正在处理产品代码为(" + productCode + ")的文件filepath:" + filepath + "(" + str(maxTradeDate) + ")")
+    sourcetable = "producttradedata"
+    tableDbBase = dbCntInfo.getDBCntInfoByTableName(tablename=sourcetable, productcode=productCode)
+    with open(filepath, 'rb') as fname:
+        while True:
+            stock_date = fname.read(4)
+            stock_open = fname.read(4)
+            stock_high = fname.read(4)
+            stock_low = fname.read(4)
+            stock_close = fname.read(4)
+            stock_amount = fname.read(4)
+            stock_vol = fname.read(4)
+            stock_reservation = fname.read(4)
+
+            # date,open,high,low,close,amount,vol,reservation
+
+            if not stock_date:
+                break
+            stock_date = struct.unpack("l", stock_date)  # 4字节 如20091229
+
+            tradedate = stock_date[0]
+            if tradedate <= maxTradeDate:
+                continue
+            stock_open = struct.unpack("l", stock_open)  # 开盘价*100
+            openPrice = stock_open[0] / 100.0
+            stock_high = struct.unpack("l", stock_high)  # 最高价*100
+            highPrice = stock_high[0] / 100.0
+            stock_low = struct.unpack("l", stock_low)  # 最低价*100
+            lowPrice = stock_low[0] / 100.0
+            stock_close = struct.unpack("l", stock_close)  # 收盘价*100
+            closePrice = stock_close[0] / 100.0
+            stock_amount = struct.unpack("f", stock_amount)  # 成交额
+            productAmount = stock_amount[0]
+            stock_vol = struct.unpack("l", stock_vol)  # 成交量
+            productVolumn = stock_vol[0]
+            # stock_reservation = struct.unpack("l", stock_reservation)  # 保留值
+            # print("%d,%f"%(tradedate,openPrice))
+            # 数据插入到数据库中
+            # product_code, trade_date,open_price,high_price,close_price,low_price,product_volume,product_amount
+            execlSql = sqlcons.TDXDATAINSERTDATABASE % (
+            productCode, tradedate, openPrice, highPrice, closePrice, lowPrice, productVolumn, productAmount)
+            excepte = tableDbBase.execNotSelectSql(execlSql)
+            if excepte is not None:
+                print(excepte)
+                print("productVolumn(%f),productAmount(%f)" % (productVolumn, productAmount))
+                print("执行异常，程序终止!")
+                return excepte
+    print("产品代码为(" + productCode + ")的文件处理完毕!")
+    return None
+
+def tdxShLdayToStock(dbCntInfo, dataType="sh", softPath="D:/software/new_haitong", relativePath=None):
     '''
     tdx数据读取到数据库中
     参考网站:https://www.jianshu.com/p/9dd3ef74fe96
     tdx目录结构：https://www.cnblogs.com/ftrako/p/3800687.html
     :param softpath:
-    :param dbCntInfo 数据库连接
     :param dataType:
     :return:
     '''
 
     import os
-    import struct
-    import datetime
+    from finance.util import DictCons as dictcons
+    from finance.servicelib.public import public
+    from concurrent.futures import ThreadPoolExecutor,as_completed
 
-    relativePath = "/vipdoc/sh/lday/" if relativePath is None else relativePath
+    relativePath = "/vipdoc/"+dataType+"/lday/" if relativePath is None else relativePath
     absolutePath = softPath+relativePath
 
+
     listTradeFile = os.listdir(absolutePath)
+    # maxWorkers = public.getCpuCount()*2-1
+    maxWorkers = public.getCpuCount()
+    threadPool = ThreadPoolExecutor(max_workers=1,thread_name_prefix="st_")
+    future_list = []
+    futurecount = 0
     for productTradeFile in listTradeFile:
-        productCode = productTradeFile[2:]
-        # 获取该股票的最大日期
-        filepath = absolutePath + productTradeFile
-        print("正在"+productCode+"文件:"+filepath)
-        with open(filepath, 'rb') as fname:
-            while True:
-                stock_date = fname.read(4)
-                stock_open = fname.read(4)
-                stock_high = fname.read(4)
-                stock_low = fname.read(4)
-                stock_close = fname.read(4)
-                stock_amount = fname.read(4)
-                stock_vol = fname.read(4)
-                stock_reservation = fname.read(4)
+        print("正在处理产品代码为的文件:" + productTradeFile)
+        productCode = productTradeFile[2:-4]
+        # SELECT subleft3 FROM (SELECT  LEFT(a.`product_code`,3) subleft3,a.product_code FROM producttradedata a GROUP BY a.product_code) a GROUP BY subleft3;
+        # 000,001,002,003,300,600,601,603,688
+        subleft3 = productCode[:3]
+        marketType=""
+        if subleft3 in dictcons.DICTCONS_CODETOMARKETTYPE:
+            marketType = dictcons.DICTCONS_CODETOMARKETTYPE[subleft3]
+            print("正在处理产品代码为(" + productCode + ")的markettype:" + str(marketType))
+        else :
+            print("正在处理产品代码为(" + productCode + ")的文件,跳过该产品:" + subleft3)
+            continue
+        # sh000001是上证指数，而000001是平安银行是深圳A股，因此这里要过滤
+        if dataType == "sz":
+            if (marketType == 2 or marketType == 4 or marketType == 3) is False:
+                continue
+        else :
+            if (marketType == 1 or marketType == 8) is False:
+                continue
+        print("处理第%d的产品代码%s"%(futurecount,productCode))
+        func_var = [dbCntInfo, productCode,absolutePath,productTradeFile]
+        future = threadPool.submit(lambda p: tdxProductTradeData2Database(*p), func_var)
+        future_list.append(future)
+        futurecount = futurecount + 1
+        time.sleep(0.001)
+        # if futurecount == 100:
+        #     break
 
-                # date,open,high,low,close,amount,vol,reservation
+    retfuture = 0
+    # while future in future_list:
+    #     print(future, end='')
+    #     print(future.done())
+    print("while %d futures begin to wait!"%futurecount)
+    for future in as_completed(future_list):
+        print("future finish", end = '')
+        print(future.result())
+        retfuture = retfuture + 1
+        print("返回的future数(%d)"%retfuture)
+    print("while future still wait!")
+    threadPool.shutdown(wait=True)
+    print("future all finished!")
 
-                if not stock_date:
-                    break
-                stock_date = struct.unpack("l", stock_date)  # 4字节 如20091229
-                stock_open = struct.unpack("l", stock_open)  # 开盘价*100
-                stock_high = struct.unpack("l", stock_high)  # 最高价*100
-                stock_low = struct.unpack("l", stock_low)  # 最低价*100
-                stock_close = struct.unpack("l", stock_close)  # 收盘价*100
-                stock_amount = struct.unpack("f", stock_amount)  # 成交额
-                stock_vol = struct.unpack("l", stock_vol)  # 成交量
-                stock_reservation = struct.unpack("l", stock_reservation)  # 保留值
-
-                date_format = datetime.datetime.strptime(str(stock_date[0]), '%Y%M%d')  # 格式化日期
-                list = date_format.strftime('%Y-%M-%d') + "," + str(stock_open[0] / 100) + "," + str(
-                    stock_high[0] / 100.0) + "," + str(stock_low[0] / 100.0) + "," + str(
-                    stock_close[0] / 100.0) + "," + str(stock_vol[0]) + "\r\n"
-    return
+    return None
 
 if __name__ == "__main__":
-    #filedata = open(".\stock_basics.txt", 'w+')
+    path = 'D:/software/new_haitong'
+    xmlfile = "G:\\nfx\\Python\\stockmarket\\finance\\resource\\finance.xml"
+    dbCntInfo = dbcnt.DbCnt(xmlfile,dbpool=True)
+    resultexpt = tdxShLdayToStock(dbCntInfo, "sz", path)
+    if resultexpt is None:
+        tdxShLdayToStock(dbCntInfo, "sh", path)
+    dbCntInfo.closeAllDBConnect()
+    # filedata = open(".\stock_basics.txt", 'w+')
     # xmlfile = "E:\\pydevproj\\stockmarket\\finance\\resource\\finance.xml"
-    xmlfile = "F:\\nfx\\Python\\stockmarket\\finance\\resource\\finance.xml"
-    dbCntInfo = dbcnt.DbCnt(xmlfile)
+    # xmlfile = "F:\\nfx\\Python\\stockmarket\\finance\\resource\\finance.xml"
+    # dbCntInfo = dbcnt.DbCnt(xmlfile)
     # getprofitdata(dbCntInfo)
     # getStockBasicsPro(dbCntInfo)
     # getProductBasicInfo(dbCntInfo)

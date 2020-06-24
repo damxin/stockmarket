@@ -16,20 +16,31 @@ class DataBase:
     '''
 
     def closeDBConnect(self):
-        self.curcursor.close()
-        self.connection.close()
-
-    '''
-        一次性插入较多数据量
-    '''
+        if self.curcursor is not None:
+            self.curcursor.close()
+            self.curcursor = None
+        if self.connection is not None:
+            self.connection.close()
+            self.connection = None
+        if self.dbpool is not None:
+            self.dbpool.close()
 
     def execInsertMany(self, insert_sql, datalist):
+        '''
+            一次性插入较多数据量
+        '''
         try:
+            if self.dbpool is not None:
+                self.connection = self.dbpool.connection(shareable=True)
+                self.curcursor = self.connection.cursor()
             self.curcursor.executemany(insert_sql, datalist)  # 注意，第一个参数是None
             self.connection.commit()  # 提交
         except Exception as e:
             print(e)
             self.connection.rollback()
+        finally:
+            if self.dbpool is not None:
+                self.closeDBConnect()
 
     '''
         作用:sql语句执行查询语句,查询小数据量
@@ -37,12 +48,18 @@ class DataBase:
 
     def execSelectSmallSql(self, strsql):
         try :
+            if self.dbpool is not None:
+                self.connection = self.dbpool.connection(shareable=True)
+                self.curcursor = self.connection.cursor()
             self.curcursor.execute(strsql)
             results = self.curcursor.fetchall()
             return results
         except Exception as e:
-            print(strsql)
+            print("sql select small执行异常:" + strsql,end='')
             print(e)
+        finally :
+            if self.dbpool is not None:
+                self.closeDBConnect()
 
     def execSelectAllSql(self, strsql):
         '''
@@ -51,12 +68,18 @@ class DataBase:
         :return:list[tuple]
         '''
         try :
+            if self.dbpool is not None:
+                self.connection = self.dbpool.connection(shareable=True)
+                self.curcursor = self.connection.cursor()
             self.curcursor.execute(strsql)
             results = self.curcursor.fetchall()
             return results
         except Exception as e:
-            print(strsql)
+            print("sql select all执行异常:" + strsql, end = '')
             print(e)
+        finally:
+            if self.dbpool is not None:
+                self.closeDBConnect()
 
     def execNotSelectSql(self, strsql):
         '''
@@ -65,11 +88,18 @@ class DataBase:
         :param strsql:
         '''
         try :
+            if self.dbpool is not None:
+                self.connection = self.dbpool.connection(shareable=True)
+                self.curcursor = self.connection.cursor()
             self.curcursor.execute(strsql)
             self.connection.commit()  # 提交
         except Exception as e:
             print(strsql)
             print(e)
+        finally:
+            if self.dbpool is not None:
+                self.closeDBConnect()
+        return None
 
     def getConnectInfo(self):
         return self.connection

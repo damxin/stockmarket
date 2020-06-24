@@ -132,10 +132,12 @@ def tdxShLdayToStock(softPath,dbCntInfo, dataType="sh", relativePath=None):
     import os
     import struct
     from finance.util import DictCons as dictcons
+    from finance.util import SqlCons as sqlcons
 
     relativePath = "/vipdoc/"+dataType+"/lday/" if relativePath is None else relativePath
     absolutePath = softPath+relativePath
 
+    sourcetable = "producttradedata"
     listTradeFile = os.listdir(absolutePath)
     for productTradeFile in listTradeFile:
         print("正在处理产品代码为的文件:" + productTradeFile)
@@ -165,6 +167,7 @@ def tdxShLdayToStock(softPath,dbCntInfo, dataType="sh", relativePath=None):
         if maxTradeDate == 190000101:
             print("当前产品%s没有在productbaseinfo表中,请添加!"%productCode)
         print("正在处理产品代码为(" + productCode + ")的文件:" + filepath+"("+str(maxTradeDate)+")")
+        tableDbBase = dbCntInfo.getDBCntInfoByTableName(tablename=sourcetable, productcode=productCode)
         with open(filepath, 'rb') as fname:
             while True:
                 stock_date = fname.read(4)
@@ -198,15 +201,27 @@ def tdxShLdayToStock(softPath,dbCntInfo, dataType="sh", relativePath=None):
                 stock_vol = struct.unpack("l", stock_vol)  # 成交量
                 productVolumn = stock_vol[0]
                 # stock_reservation = struct.unpack("l", stock_reservation)  # 保留值
-                print("%d,%f"%(tradedate,openPrice))
-                break
-    return
+                # print("%d,%f"%(tradedate,openPrice))
+                # 数据插入到数据库中
+                # product_code, trade_date,open_price,high_price,close_price,low_price,product_volume,product_amount
+                execlSql = sqlcons.TDXDATAINSERTDATABASE%(productCode,tradedate,openPrice,highPrice,closePrice,lowPrice,productVolumn,productAmount)
+                excepte = tableDbBase.execNotSelectSql(execlSql)
+                if excepte is not None :
+                    print(excepte)
+                    print("productVolumn(%f),productAmount(%f)"%(productVolumn,productAmount))
+                    print("执行异常，程序终止!")
+                    return excepte
+        print("产品代码为(" + productCode + ")的文件处理完毕!")
+    return None
 
 if __name__ == "__main__":
     path = 'D:/software/new_haitong'
     xmlfile = "G:\\nfx\\Python\\stockmarket\\finance\\resource\\finance.xml"
     dbCntInfo = dbcnt.DbCnt(xmlfile)
-    tdxShLdayToStock(path,dbCntInfo,"sz")
+    resultexpt = tdxShLdayToStock(path,dbCntInfo,"sz")
+    if resultexpt is None:
+        tdxShLdayToStock(path, dbCntInfo, "sh")
+    dbCntInfo.closeAllDBConnect()
     # return
 # loginichat()
 # import sys;sys.argv = ['', 'Test.testName']

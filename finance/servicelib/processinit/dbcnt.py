@@ -8,6 +8,7 @@ Created on 2019/09/04
 
 from finance.dbsql import mysqldatabase
 from finance.dbsql import oracledatabase
+from finance.dbsql import dbpool
 from sqlalchemy import create_engine
 from finance.servicelib.processinit.xmlcfg import XmlCfg
 from finance.util import GlobalCons as gc
@@ -16,11 +17,13 @@ from finance.util import SqlCons as sc
 
 class DbCnt:
 
+    dbthredpool=False
     def __init__(self, xmlfilepath):
         '''
-        完成xml文件解析，同时创建所有的数据库连接池
+        完成xml文件解析，同时创建所有的数据库连接,单的
         :param xmlfilepath:
         '''
+        DbCnt.dbthredpool = False
         dbCfg = XmlCfg(xmlfilepath)
         dbCfgInfoDicts = dbCfg.getDbInfoFromXmlFile()
         self.dbCfgInfoDicts = dbCfgInfoDicts
@@ -30,24 +33,55 @@ class DbCnt:
         self.dataBaseRule = dbcntinfo.execSelectManySql(sc.DATABASERULE_SQL)
         print(self.dataBaseRule)
 
-    def getDbCnt(self):
+    def __init__(self, xmlfilepath, dbpool):
+        '''
+        完成xml文件解析，同时创建所有的数据库连接池，暂时只支持mysql
+        :param xmlfilepath:
+        '''
+        DbCnt.dbthredpool = dbpool
+        dbCfg = XmlCfg(xmlfilepath)
+        dbCfgInfoDicts = dbCfg.getDbInfoFromXmlFile()
+        self.dbCfgInfoDicts = dbCfgInfoDicts
+        self.dbCntdicts = {}
+        self.getDbCnt(dbpool)
+        dbcntinfo = self.getDbBaseByLogicName(gc.DBBASELOGICNAME)
+        self.dataBaseRule = dbcntinfo.execSelectManySql(sc.DATABASERULE_SQL)
+        print(self.dataBaseRule)
+
+    def getDbCnt(self, dbispool=False):
         for logicNameKey, dbCfgInfoValue in self.dbCfgInfoDicts.items():
             print(logicNameKey)
             print(dbCfgInfoValue)
             dbType = dbCfgInfoValue[gc.DBTYPEKEY]
             if dbType == gc.MYSQLDB:
-                msqldbase = mysqldatabase.MysqlDatabase(dbCfgInfoValue[gc.SERVERKEY], dbCfgInfoValue[gc.PORTKEY],
-                                                        dbCfgInfoValue[gc.USERNAMEKEY], dbCfgInfoValue[gc.PASSWORDKEY],
-                                                        dbCfgInfoValue[gc.DATABASEKEY])
-                msqldbase.createConnection()
-                self.dbCntdicts[logicNameKey] = msqldbase
+                if dbispool is False:
+                    msqldbase = mysqldatabase.MysqlDatabase(dbCfgInfoValue[gc.SERVERKEY], dbCfgInfoValue[gc.PORTKEY],
+                                                            dbCfgInfoValue[gc.USERNAMEKEY], dbCfgInfoValue[gc.PASSWORDKEY],
+                                                            dbCfgInfoValue[gc.DATABASEKEY])
+                    retsult = msqldbase.createConnection()
+                    if retsult == 0:
+                        self.dbCntdicts[logicNameKey] = msqldbase
+                    else :
+                        print("createConnect failed! error!")
+                else :
+                    msqldbase = dbpool.DbPool(dbCfgInfoValue[gc.SERVERKEY], dbCfgInfoValue[gc.PORTKEY],
+                                              dbCfgInfoValue[gc.USERNAMEKEY], dbCfgInfoValue[gc.PASSWORDKEY],
+                                              dbCfgInfoValue[gc.DATABASEKEY])
+                    retsult = msqldbase.createConnection()
+                    if retsult == 0:
+                        self.dbCntdicts[logicNameKey] = msqldbase
+                    else :
+                        print("createConnect failed! error!")
             elif dbType == gc.ORACLEDB:
                 oracledbase = oracledatabase.OracleDatabase(dbCfgInfoValue[gc.SERVERKEY], dbCfgInfoValue[gc.PORTKEY],
                                                             dbCfgInfoValue[gc.USERNAMEKEY],
                                                             dbCfgInfoValue[gc.PASSWORDKEY],
                                                             dbCfgInfoValue[gc.DATABASEKEY])
-                oracledbase.createConnection()
-                self.dbCntdicts[logicNameKey] = oracledbase
+                retsult = oracledbase.createConnection()
+                if retsult == 0:
+                    self.dbCntdicts[logicNameKey] = oracledbase
+                else:
+                    print("createConnect failed! error!")
 
     def getTradeLogicNameByProductCodeAndTradeDate(self,productcode,tradedate):
         '''
@@ -125,13 +159,6 @@ class DbCnt:
         '''
         for dbCntinfo in self.dbCntdicts.values():
             dbCntinfo.closeDBConnect()
-
-    def initDatabaseSession(self):
-        '''
-        创建连接池，不用每次都需要重新创建连接
-        :return:
-        '''
-        return
 
 # if __name__ == '__main__':
 #     dbCnt = DbCnt("F:\\nfx\\Python\\stockmarket\\finance\\resource\\finance.xml")

@@ -20,6 +20,7 @@ class MysqlDatabase(DataBase):
             self.curcursor = msqlcon.cursor(cursor=mysql.cursors.DictCursor)
             #            self.curcursor = msqlcon.cursor()
             self.connection = msqlcon
+            self.dbpool = None
         except Exception as e:
             ret = 1
             print(e)

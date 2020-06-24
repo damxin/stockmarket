@@ -29,7 +29,10 @@ def getMaxTradeDateFromCurProductCode(dbCntInfo,productCode) -> int:
     tableDbBase = dbCntInfo.getDBCntInfoByTableName(tablename=sourcetable, productcode=productCode)
     execlsql="select max(trade_date) maxtradedate from producttradedata where product_code = '%s' "%productCode
     tableRetTuple = tableDbBase.execSelectSmallSql(execlsql)
-   # print(tableRetTuple)
+    print(productCode,end='')
+    print(type(tableRetTuple))
+    print(productCode, end='')
+    print(tableRetTuple)
    # print(tableRetTuple[0]['maxtradedate'])
     maxDate = 19000101 if tableRetTuple[0]['maxtradedate'] is None else tableRetTuple[0]['maxtradedate']
 
@@ -245,4 +248,14 @@ def downloadloginsorupd(dbcnt,productcode,eventtype,dealstatus,sourcetype):
         sqlsession.execNotSelectSql(datadownloadloginssql)
 
     return True
+
+def getCpuCount():
+    '''
+    返回机器cpu个数
+    :return:
+    '''
+    from multiprocessing import cpu_count
+    print("cpu个数(%d)"%cpu_count())
+    return cpu_count()
+
 

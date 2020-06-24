@@ -632,4 +632,358 @@ DELIMITER;
 CALL sp_db_mysql(); 
 DROP PROCEDURE IF EXISTS sp_db_mysql;
 
+
+CREATE TABLE entdaytradedata01
+(
+  product_code VARCHAR(10),
+  trade_date INT(8),
+  open_price DECIMAL(16,2),
+high_price DECIMAL(16,2),
+close_price DECIMAL(16,2),
+low_price DECIMAL(16,2),
+merge_flag CHAR(1),
+PRIMARY KEY (product_code, trade_date)
+);
+CREATE TABLE entdaytradedata02
+(
+  product_code VARCHAR(10),
+  trade_date INT(8),
+  open_price DECIMAL(16,2),
+high_price DECIMAL(16,2),
+close_price DECIMAL(16,2),
+low_price DECIMAL(16,2),
+merge_flag CHAR(1),
+PRIMARY KEY (product_code, trade_date)
+);
+CREATE TABLE entdaytradedata03
+(
+  product_code VARCHAR(10),
+  trade_date INT(8),
+  open_price DECIMAL(16,2),
+high_price DECIMAL(16,2),
+close_price DECIMAL(16,2),
+low_price DECIMAL(16,2),
+merge_flag CHAR(1),
+PRIMARY KEY (product_code, trade_date)
+);
+CREATE TABLE entdaytradedata04
+(
+  product_code VARCHAR(10),
+  trade_date INT(8),
+  open_price DECIMAL(16,2),
+high_price DECIMAL(16,2),
+close_price DECIMAL(16,2),
+low_price DECIMAL(16,2),
+merge_flag CHAR(1),
+PRIMARY KEY (product_code, trade_date)
+);
+CREATE TABLE entdaytradedata05
+(
+  product_code VARCHAR(10),
+  trade_date INT(8),
+  open_price DECIMAL(16,2),
+high_price DECIMAL(16,2),
+close_price DECIMAL(16,2),
+low_price DECIMAL(16,2),
+merge_flag CHAR(1),
+PRIMARY KEY (product_code, trade_date)
+);
+CREATE TABLE entdaytradedata06
+(
+  product_code VARCHAR(10),
+  trade_date INT(8),
+  open_price DECIMAL(16,2),
+high_price DECIMAL(16,2),
+close_price DECIMAL(16,2),
+low_price DECIMAL(16,2),
+merge_flag CHAR(1),
+PRIMARY KEY (product_code, trade_date)
+);
+CREATE TABLE entdaytradedata07
+(
+  product_code VARCHAR(10),
+  trade_date INT(8),
+  open_price DECIMAL(16,2),
+high_price DECIMAL(16,2),
+close_price DECIMAL(16,2),
+low_price DECIMAL(16,2),
+merge_flag CHAR(1),
+PRIMARY KEY (product_code, trade_date)
+);
+CREATE TABLE entdaytradedata08
+(
+  product_code VARCHAR(10),
+  trade_date INT(8),
+  open_price DECIMAL(16,2),
+high_price DECIMAL(16,2),
+close_price DECIMAL(16,2),
+low_price DECIMAL(16,2),
+merge_flag CHAR(1),
+PRIMARY KEY (product_code, trade_date)
+);
+CREATE TABLE entdaytradedata09
+(
+  product_code VARCHAR(10),
+  trade_date INT(8),
+  open_price DECIMAL(16,2),
+high_price DECIMAL(16,2),
+close_price DECIMAL(16,2),
+low_price DECIMAL(16,2),
+merge_flag CHAR(1),
+PRIMARY KEY (product_code, trade_date)
+);
+CREATE TABLE entdaytradedata10
+(
+  product_code VARCHAR(10),
+  trade_date INT(8),
+  open_price DECIMAL(16,2),
+high_price DECIMAL(16,2),
+close_price DECIMAL(16,2),
+low_price DECIMAL(16,2),
+merge_flag CHAR(1),
+PRIMARY KEY (product_code, trade_date)
+);
+CREATE TABLE entdaytradedata11
+(
+  product_code VARCHAR(10),
+  trade_date INT(8),
+  open_price DECIMAL(16,2),
+high_price DECIMAL(16,2),
+close_price DECIMAL(16,2),
+low_price DECIMAL(16,2),
+merge_flag CHAR(1),
+PRIMARY KEY (product_code, trade_date)
+);
+CREATE TABLE entdaytradedata12
+(
+  product_code VARCHAR(10),
+  trade_date INT(8),
+  open_price DECIMAL(16,2),
+high_price DECIMAL(16,2),
+close_price DECIMAL(16,2),
+low_price DECIMAL(16,2),
+merge_flag CHAR(1),
+PRIMARY KEY (product_code, trade_date)
+);
+CREATE TABLE entdaytradedata13
+(
+  product_code VARCHAR(10),
+  trade_date INT(8),
+  open_price DECIMAL(16,2),
+high_price DECIMAL(16,2),
+close_price DECIMAL(16,2),
+low_price DECIMAL(16,2),
+merge_flag CHAR(1),
+PRIMARY KEY (product_code, trade_date)
+);
+CREATE TABLE entdaytradedata14
+(
+  product_code VARCHAR(10),
+  trade_date INT(8),
+  open_price DECIMAL(16,2),
+high_price DECIMAL(16,2),
+close_price DECIMAL(16,2),
+low_price DECIMAL(16,2),
+merge_flag CHAR(1),
+PRIMARY KEY (product_code, trade_date)
+);
+CREATE TABLE entdaytradedata15
+(
+  product_code VARCHAR(10),
+  trade_date INT(8),
+  open_price DECIMAL(16,2),
+high_price DECIMAL(16,2),
+close_price DECIMAL(16,2),
+low_price DECIMAL(16,2),
+merge_flag CHAR(1),
+PRIMARY KEY (product_code, trade_date)
+);
+CREATE TABLE entdaytradedata16
+(
+  product_code VARCHAR(10),
+  trade_date INT(8),
+  open_price DECIMAL(16,2),
+high_price DECIMAL(16,2),
+close_price DECIMAL(16,2),
+low_price DECIMAL(16,2),
+merge_flag CHAR(1),
+PRIMARY KEY (product_code, trade_date)
+);
+CREATE TABLE entdaytradedata17
+(
+  product_code VARCHAR(10),
+  trade_date INT(8),
+  open_price DECIMAL(16,2),
+high_price DECIMAL(16,2),
+close_price DECIMAL(16,2),
+low_price DECIMAL(16,2),
+merge_flag CHAR(1),
+PRIMARY KEY (product_code, trade_date)
+);
+CREATE TABLE entdaytradedata18
+(
+  product_code VARCHAR(10),
+  trade_date INT(8),
+  open_price DECIMAL(16,2),
+high_price DECIMAL(16,2),
+close_price DECIMAL(16,2),
+low_price DECIMAL(16,2),
+merge_flag CHAR(1),
+PRIMARY KEY (product_code, trade_date)
+);
+CREATE TABLE entdaytradedata19
+(
+  product_code VARCHAR(10),
+  trade_date INT(8),
+  open_price DECIMAL(16,2),
+high_price DECIMAL(16,2),
+close_price DECIMAL(16,2),
+low_price DECIMAL(16,2),
+merge_flag CHAR(1),
+PRIMARY KEY (product_code, trade_date)
+);
+CREATE TABLE entdaytradedata20
+(
+  product_code VARCHAR(10),
+  trade_date INT(8),
+  open_price DECIMAL(16,2),
+high_price DECIMAL(16,2),
+close_price DECIMAL(16,2),
+low_price DECIMAL(16,2),
+merge_flag CHAR(1),
+PRIMARY KEY (product_code, trade_date)
+);
+CREATE TABLE entdaytradedata21
+(
+  product_code VARCHAR(10),
+  trade_date INT(8),
+  open_price DECIMAL(16,2),
+high_price DECIMAL(16,2),
+close_price DECIMAL(16,2),
+low_price DECIMAL(16,2),
+merge_flag CHAR(1),
+PRIMARY KEY (product_code, trade_date)
+);
+CREATE TABLE entdaytradedata22
+(
+  product_code VARCHAR(10),
+  trade_date INT(8),
+  open_price DECIMAL(16,2),
+high_price DECIMAL(16,2),
+close_price DECIMAL(16,2),
+low_price DECIMAL(16,2),
+merge_flag CHAR(1),
+PRIMARY KEY (product_code, trade_date)
+);
+CREATE TABLE entdaytradedata23
+(
+  product_code VARCHAR(10),
+  trade_date INT(8),
+  open_price DECIMAL(16,2),
+high_price DECIMAL(16,2),
+close_price DECIMAL(16,2),
+low_price DECIMAL(16,2),
+merge_flag CHAR(1),
+PRIMARY KEY (product_code, trade_date)
+);
+CREATE TABLE entdaytradedata24
+(
+  product_code VARCHAR(10),
+  trade_date INT(8),
+  open_price DECIMAL(16,2),
+high_price DECIMAL(16,2),
+close_price DECIMAL(16,2),
+low_price DECIMAL(16,2),
+merge_flag CHAR(1),
+PRIMARY KEY (product_code, trade_date)
+);
+CREATE TABLE entdaytradedata25
+(
+  product_code VARCHAR(10),
+  trade_date INT(8),
+  open_price DECIMAL(16,2),
+high_price DECIMAL(16,2),
+close_price DECIMAL(16,2),
+low_price DECIMAL(16,2),
+merge_flag CHAR(1),
+PRIMARY KEY (product_code, trade_date)
+);
+CREATE TABLE entdaytradedata26
+(
+  product_code VARCHAR(10),
+  trade_date INT(8),
+  open_price DECIMAL(16,2),
+high_price DECIMAL(16,2),
+close_price DECIMAL(16,2),
+low_price DECIMAL(16,2),
+merge_flag CHAR(1),
+PRIMARY KEY (product_code, trade_date)
+);
+CREATE TABLE entdaytradedata27
+(
+  product_code VARCHAR(10),
+  trade_date INT(8),
+  open_price DECIMAL(16,2),
+high_price DECIMAL(16,2),
+close_price DECIMAL(16,2),
+low_price DECIMAL(16,2),
+merge_flag CHAR(1),
+PRIMARY KEY (product_code, trade_date)
+);
+CREATE TABLE entdaytradedata28
+(
+  product_code VARCHAR(10),
+  trade_date INT(8),
+  open_price DECIMAL(16,2),
+high_price DECIMAL(16,2),
+close_price DECIMAL(16,2),
+low_price DECIMAL(16,2),
+merge_flag CHAR(1),
+PRIMARY KEY (product_code, trade_date)
+);
+CREATE TABLE entdaytradedata29
+(
+  product_code VARCHAR(10),
+  trade_date INT(8),
+  open_price DECIMAL(16,2),
+high_price DECIMAL(16,2),
+close_price DECIMAL(16,2),
+low_price DECIMAL(16,2),
+merge_flag CHAR(1),
+PRIMARY KEY (product_code, trade_date)
+);
+CREATE TABLE entdaytradedata30
+(
+  product_code VARCHAR(10),
+  trade_date INT(8),
+  open_price DECIMAL(16,2),
+high_price DECIMAL(16,2),
+close_price DECIMAL(16,2),
+low_price DECIMAL(16,2),
+merge_flag CHAR(1),
+PRIMARY KEY (product_code, trade_date)
+);
+CREATE TABLE entdaytradedata31
+(
+  product_code VARCHAR(10),
+  trade_date INT(8),
+  open_price DECIMAL(16,2),
+high_price DECIMAL(16,2),
+close_price DECIMAL(16,2),
+low_price DECIMAL(16,2),
+merge_flag CHAR(1),
+PRIMARY KEY (product_code, trade_date)
+);
+CREATE TABLE entdaytradedata32
+(
+  product_code VARCHAR(10),
+  trade_date INT(8),
+  open_price DECIMAL(16,2),
+high_price DECIMAL(16,2),
+close_price DECIMAL(16,2),
+low_price DECIMAL(16,2),
+merge_flag CHAR(1),
+PRIMARY KEY (product_code, trade_date)
+);
+
  

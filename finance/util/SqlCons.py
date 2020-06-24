@@ -552,3 +552,8 @@ DATADOWNLOG_GETDATA="select product_code,eventtype,dealstatus,sourcetype,logdate
 DATADOWNLOG_INSERTDATA="INSERT INTO datadownloadlog(product_code,eventtype,dealstatus,sourcetype,logdate,logtime) VALUES ('%s','%s','%s','%s',%d,%d)"
 DATADOWNLOG_UPDATEDATA="update datadownloadlog set dealstatus='%s' where product_code='%s' and eventtype='%s' and sourcetype='%s' and logdate=%d"
 # datadownloadlog 日志文件end
+
+# 通达信数据插入数据库语句 begin
+TDXDATAINSERTDATABASE="INSERT INTO producttradedata(product_code, trade_date,open_price,high_price,close_price,low_price,product_volume,product_amount)\
+        VALUES('%s',%d,%f,%f,%f,%f,%f,%f)"
+# 通达信数据插入数据库语句 end

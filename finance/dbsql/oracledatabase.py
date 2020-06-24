@@ -17,6 +17,7 @@ class OracleDatabase(DataBase):
             osqlcon = oracle.connect(cntinfo)
             self.curcursor = osqlcon.cursor()
             self.connection = osqlcon
+            self.dbpool = None
         except oracle.DatabaseError as msg:
             ret = 1
             print(msg);
