@@ -35,7 +35,7 @@ class OracleDatabase(DataBase):
     def execSelectManySql(self, strsql, ordercause=None):
         endcol = strsql.find("from")
         strmanysql = "select %s from ( select rownum rn, %s where rownum <= %d) a where rn > %d" % (
-        strsql[6:endcol], strsql[6:], self.fetchmanystartrow + DataBase.ROWNUM, self.fetchmanystartrow)
+            strsql[6:endcol], strsql[6:], self.fetchmanystartrow + DataBase.ROWNUM, self.fetchmanystartrow)
         #        print(strmanysql)
         self.curcursor.execute(strmanysql)
         results = self.curcursor.fetchmany(DataBase.ROWNUM)

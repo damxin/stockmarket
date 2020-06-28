@@ -34,7 +34,7 @@ class MysqlDatabase(DataBase):
     def execSelectManySql(self, strsql, ordercause=None):
         orderby = ordercause if ordercause is not None else ""
         pagestrsql = strsql + orderby + " limit " + str(self.fetchmanystartrow) + "," + str(DataBase.ROWNUM)
-        try :
+        try:
             self.curcursor.execute(pagestrsql)
         except Exception as e:
             print(pagestrsql)
@@ -47,18 +47,21 @@ class MysqlDatabase(DataBase):
             self.fetchmanystartrow = self.fetchmanystartrow + retrown
         return results
 
-    '''
-        作用:sql语句执行插入语句,实现一次插入多条
-        insertlist必须是list(list)或者list(tuple)
-    '''
-
     def execInsertManySql(self, strinsertsql, insertlist):
+        '''
+                作用:sql语句执行插入语句,实现一次插入多条
+                insertlist必须是list(list)或者list(tuple)
+        :param strinsertsql:
+        :param insertlist:
+        :return:
+        '''
+
         if isinstance(insertlist, list) is False or \
                 isinstance(insertlist[0], (tuple, list)) is False:
             print(type(insertlist))
             print(type(insertlist[0]))
-            raise RuntimeError("insertlist type is wrong!" )
-        try :
+            raise RuntimeError("insertlist type is wrong!")
+        try:
             self.curcursor.executemany(strinsertsql, insertlist)
             self.connection.commit()
         except Exception as e:

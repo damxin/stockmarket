@@ -17,7 +17,7 @@ import pandas as pd
 from datetime import date, timedelta
 
 
-def getMaxTradeDateFromCurProductCode(dbCntInfo,productCode) -> int:
+def getMaxTradeDateFromCurProductCode(dbCntInfo, productCode) -> int:
     '''
     获取产品代码在数据库中存储的最大交易日期
     :param dbCntInfo:
@@ -27,17 +27,18 @@ def getMaxTradeDateFromCurProductCode(dbCntInfo,productCode) -> int:
 
     sourcetable = "producttradedata"
     tableDbBase = dbCntInfo.getDBCntInfoByTableName(tablename=sourcetable, productcode=productCode)
-    execlsql="select max(trade_date) maxtradedate from producttradedata where product_code = '%s' "%productCode
+    execlsql = "select max(trade_date) maxtradedate from producttradedata where product_code = '%s' " % productCode
     tableRetTuple = tableDbBase.execSelectSmallSql(execlsql)
-    print(productCode,end='')
+    print(productCode, end='')
     print(type(tableRetTuple))
     print(productCode, end='')
     print(tableRetTuple)
-   # print(tableRetTuple[0]['maxtradedate'])
+    # print(tableRetTuple[0]['maxtradedate'])
     maxDate = 19000101 if tableRetTuple[0]['maxtradedate'] is None else tableRetTuple[0]['maxtradedate']
 
-   # print(maxDate)
+    # print(maxDate)
     return maxDate
+
 
 def getAllProductBasicInfo(dbCntInfo, ipostatus=None):
     '''
@@ -52,11 +53,12 @@ def getAllProductBasicInfo(dbCntInfo, ipostatus=None):
     if ipostatus in "A":
         selectsql = selectsql + sc.PRODUCTBASICINFO_GETSQL
     else:
-        selectsql = selectsql + sc.PRODUCTBASICINFO_GETSQL + " where ipo_status = '%s' "%ipostatus
+        selectsql = selectsql + sc.PRODUCTBASICINFO_GETSQL + " where ipo_status = '%s' " % ipostatus
     tableRetListDict = tableDbBase.execSelectSmallSql(selectsql)
     if len(tableRetListDict) == 0:
         return
     return pd.DataFrame(tableRetListDict)
+
 
 def getCurProductBasicInfoByProductCode(dbCntInfo, productcode):
     '''
@@ -66,7 +68,7 @@ def getCurProductBasicInfoByProductCode(dbCntInfo, productcode):
     :return:
     '''
     tableDbBase = dbCntInfo.getDBCntInfoByTableName("productbasicinfo")
-    tableRetTuple = tableDbBase.execSelectSmallSql(sc.CURPRODUCTBASICINFO_GETSQL%productcode)
+    tableRetTuple = tableDbBase.execSelectSmallSql(sc.CURPRODUCTBASICINFO_GETSQL % productcode)
     if len(tableRetTuple) == 0:
         return
     return pd.DataFrame(tableRetTuple).iloc[0]
@@ -89,12 +91,10 @@ def dateSpecailFormat(intDateFormat):
     return strDate
 
 
-'''
-    生成symbol代码标志
-'''
-
-
 def code_to_symbol(code):
+    '''
+        生成symbol代码标志
+    '''
     if code in gc.INDEX_LABELS:
         return gc.INDEX_LIST[code]
     else:
@@ -103,35 +103,39 @@ def code_to_symbol(code):
         else:
             return '%s.sh' % code if code[:1] in ['5', '6', '9'] or code[:2] in ['11', '13'] else '%s.sz' % code
 
+
 def getYesterday() -> int:
     '''
     返回昨日日期，比如20191010
     int :return:
     '''
-    yesterday=int((date.today()-timedelta(days=1)).strftime("%Y%m%d"))
+    yesterday = int((date.today() - timedelta(days=1)).strftime("%Y%m%d"))
     return yesterday
 
-def getnextnday(curdate,n) -> int:
+
+def getnextnday(curdate, n) -> int:
     '''
     返回下一日日期，比如20191010
     int :return:
     '''
     import datetime
-    y = int(curdate/10000)
-    m = int(curdate/100%100)
-    d = int(curdate%100)
+    y = int(curdate / 10000)
+    m = int(curdate / 100 % 100)
+    d = int(curdate % 100)
     the_date = datetime.datetime(y, m, d)
     result_date = the_date + datetime.timedelta(days=n)
     nextnday = int(result_date.strftime("%Y%m%d"))
     return nextnday
+
 
 def getTodayDate():
     '''
     返回今日日期，比如20191010
     int :return:
     '''
-    todayday=int((date.today()).strftime("%Y%m%d"))
+    todayday = int((date.today()).strftime("%Y%m%d"))
     return todayday
+
 
 def listdictTypeChangeToDataFrame(datalistdict):
     '''
@@ -144,14 +148,15 @@ def listdictTypeChangeToDataFrame(datalistdict):
     datadf = pd.DataFrame(datalistdict)
     for keyname in datalistdict[0]:
         dictvalue = datalistdict[0][keyname]
-        if isinstance(dictvalue,decimal.Decimal):
+        if isinstance(dictvalue, decimal.Decimal):
             datadf[keyname] = datadf[keyname].astype(float)
-        elif isinstance(dictvalue,int):
+        elif isinstance(dictvalue, int):
             datadf[keyname] = datadf[keyname].astype(int)
 
     return datadf
 
-def insertNormalDbByCurProductCode(dbCntInfo,sourcetable,desttable,selectsql,insertsql,productcode=None):
+
+def insertNormalDbByCurProductCode(dbCntInfo, sourcetable, desttable, selectsql, insertsql, productcode=None):
     '''
     source表中数据批量插入到正式库中
     :param productcode:可为None
@@ -174,7 +179,8 @@ def insertNormalDbByCurProductCode(dbCntInfo,sourcetable,desttable,selectsql,ins
             sourceList.append(tuple(oneList.values()))
         destDbBase.execInsertManySql(insertsql, sourceList)
 
-def getcompanyfinancedata(dbcntinfo,product_code,compfinancetblname,datatype,datalength=5) -> pd.DataFrame:
+
+def getcompanyfinancedata(dbcntinfo, product_code, compfinancetblname, datatype, datalength=5) -> pd.DataFrame:
     '''
     company_income,company_cashflow,company_balance_sheet数据获取
     :param dbcntinfo 数据库连接
@@ -186,25 +192,27 @@ def getcompanyfinancedata(dbcntinfo,product_code,compfinancetblname,datatype,dat
     '''
 
     if product_code is None or datatype is None:
-        raise ValueError("the param of function getcompanyfinancedata(%s) is error!\n please check!"%compfinancetblname)
+        raise ValueError(
+            "the param of function getcompanyfinancedata(%s) is error!\n please check!" % compfinancetblname)
     if datatype is not "Y" and datatype is not "Q":
         raise ValueError(
             "the param of function getcompanyfinancedata datatype(%s) is error!\n please check!" % datatype)
 
     dbSqlSession = dbcntinfo.getDBCntInfoByTableName(compfinancetblname, product_code)
-    allDataGetSql=""
+    allDataGetSql = ""
     if datatype is "Y":
         companyfinacepubselsql = sc.COMPANYFINANCE_PUBYEARSELECTSQL[compfinancetblname]
-        allDataGetSql = companyfinacepubselsql % (product_code,product_code,product_code,datalength)
+        allDataGetSql = companyfinacepubselsql % (product_code, product_code, product_code, datalength)
         print("getcompanyfinancedata get sql:" + allDataGetSql)
     elif datatype is "Q":
         companyfinacepubselsql = sc.COMPANYFINANCE_PUBQUARTSELECTSQL[compfinancetblname]
         allDataGetSql = companyfinacepubselsql % (product_code, product_code, datalength)
-        print("getcompanyfinancedata get sql:"+allDataGetSql)
+        print("getcompanyfinancedata get sql:" + allDataGetSql)
     tradeDataTupleInList = dbSqlSession.execSelectAllSql(allDataGetSql)
     dfdata = listdictTypeChangeToDataFrame(tradeDataTupleInList)
 
     return dfdata
+
 
 def getRateNextToByList(dataList) -> list:
     '''
@@ -214,11 +222,12 @@ def getRateNextToByList(dataList) -> list:
     '''
     rateList = []
     dataLength = len(dataList)
-    for dataindex in range(dataLength-1):
-        rateList.append(float(int((dataList[dataindex+1]-dataList[dataindex])/dataList[dataindex]*10000)/100))
+    for dataindex in range(dataLength - 1):
+        rateList.append(float(int((dataList[dataindex + 1] - dataList[dataindex]) / dataList[dataindex] * 10000) / 100))
     return rateList
 
-def downloadloginsorupd(dbcnt,productcode,eventtype,dealstatus,sourcetype):
+
+def downloadloginsorupd(dbcnt, productcode, eventtype, dealstatus, sourcetype):
     '''
     表datadownloadlog日志记录插入或者更新
     :param dbcnt: 数据库的连接
@@ -229,25 +238,27 @@ def downloadloginsorupd(dbcnt,productcode,eventtype,dealstatus,sourcetype):
     :return: True：成功，False：失败
     '''
     if productcode is None:
-        raise  ValueError("productcode do not valid value!")
+        raise ValueError("productcode do not valid value!")
         return False
     sqlsession = dbcnt.getDBCntInfoByTableName("datadownloadlog", productcode)
 
     logdate = int((date.today()).strftime("%Y%m%d"))
-    datadownloadlogsql = sc.DATADOWNLOG_GETDATA %(productcode,eventtype,sourcetype,logdate)
+    datadownloadlogsql = sc.DATADOWNLOG_GETDATA % (productcode, eventtype, sourcetype, logdate)
     datalogexistlist = sqlsession.execSelectAllSql(datadownloadlogsql)
     keyname = "product_code"
     cntnum = datalogexistlist[0][keyname]
     # 有数据现在做更新
-    if cntnum > 0 :
-        datadownloadlogupdsql = sc.DATADOWNLOG_UPDATEDATA %(dealstatus,productcode,eventtype,sourcetype,logdate)
+    if cntnum > 0:
+        datadownloadlogupdsql = sc.DATADOWNLOG_UPDATEDATA % (dealstatus, productcode, eventtype, sourcetype, logdate)
         sqlsession.execUpdateOrDelSql(datadownloadlogupdsql)
-    else :
-        logtime = int(time.strftime('%H:%M:%S',time.localtime(time.time())))
-        datadownloadloginssql = sc.DATADOWNLOG_INSERTDATA %(productcode,eventtype,dealstatus,sourcetype,logdate,logtime)
+    else:
+        logtime = int(time.strftime('%H:%M:%S', time.localtime(time.time())))
+        datadownloadloginssql = sc.DATADOWNLOG_INSERTDATA % (
+            productcode, eventtype, dealstatus, sourcetype, logdate, logtime)
         sqlsession.execNotSelectSql(datadownloadloginssql)
 
     return True
+
 
 def getCpuCount():
     '''
@@ -255,7 +266,25 @@ def getCpuCount():
     :return:
     '''
     from multiprocessing import cpu_count
-    print("cpu个数(%d)"%cpu_count())
+    print("cpu个数(%d)" % cpu_count())
     return cpu_count()
 
 
+def getRealTableName(tableName, productCode):
+    '''
+    对于分表进行真实表的拼接
+    :param tableName:
+    :param productCode:
+    :return:
+    '''
+    if tableName not in sc.SPLITTBLDICT:
+        return None
+
+    strlength = len(productCode)
+    modelnum = int(productCode[strlength - 2:])
+    resultnum = modelnum % sc.SPLITTBLDICT[tableName]
+    resultnum = 32 if resultnum == 0 else resultnum
+    strresult = str(resultnum)
+    realtablename = tableName + strresult.zfill(2)
+
+    return realtablename

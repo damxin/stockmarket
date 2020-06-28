@@ -642,6 +642,7 @@ high_price DECIMAL(16,2),
 close_price DECIMAL(16,2),
 low_price DECIMAL(16,2),
 merge_flag CHAR(1),
+updown_flag char(1),
 PRIMARY KEY (product_code, trade_date)
 );
 CREATE TABLE entdaytradedata02
@@ -653,6 +654,7 @@ high_price DECIMAL(16,2),
 close_price DECIMAL(16,2),
 low_price DECIMAL(16,2),
 merge_flag CHAR(1),
+updown_flag char(1),
 PRIMARY KEY (product_code, trade_date)
 );
 CREATE TABLE entdaytradedata03
@@ -664,6 +666,7 @@ high_price DECIMAL(16,2),
 close_price DECIMAL(16,2),
 low_price DECIMAL(16,2),
 merge_flag CHAR(1),
+updown_flag char(1),
 PRIMARY KEY (product_code, trade_date)
 );
 CREATE TABLE entdaytradedata04
@@ -675,6 +678,7 @@ high_price DECIMAL(16,2),
 close_price DECIMAL(16,2),
 low_price DECIMAL(16,2),
 merge_flag CHAR(1),
+updown_flag char(1),
 PRIMARY KEY (product_code, trade_date)
 );
 CREATE TABLE entdaytradedata05
@@ -686,6 +690,7 @@ high_price DECIMAL(16,2),
 close_price DECIMAL(16,2),
 low_price DECIMAL(16,2),
 merge_flag CHAR(1),
+updown_flag char(1),
 PRIMARY KEY (product_code, trade_date)
 );
 CREATE TABLE entdaytradedata06
@@ -697,6 +702,7 @@ high_price DECIMAL(16,2),
 close_price DECIMAL(16,2),
 low_price DECIMAL(16,2),
 merge_flag CHAR(1),
+updown_flag char(1),
 PRIMARY KEY (product_code, trade_date)
 );
 CREATE TABLE entdaytradedata07
@@ -708,6 +714,7 @@ high_price DECIMAL(16,2),
 close_price DECIMAL(16,2),
 low_price DECIMAL(16,2),
 merge_flag CHAR(1),
+updown_flag char(1),
 PRIMARY KEY (product_code, trade_date)
 );
 CREATE TABLE entdaytradedata08
@@ -719,6 +726,7 @@ high_price DECIMAL(16,2),
 close_price DECIMAL(16,2),
 low_price DECIMAL(16,2),
 merge_flag CHAR(1),
+updown_flag char(1),
 PRIMARY KEY (product_code, trade_date)
 );
 CREATE TABLE entdaytradedata09
@@ -730,6 +738,7 @@ high_price DECIMAL(16,2),
 close_price DECIMAL(16,2),
 low_price DECIMAL(16,2),
 merge_flag CHAR(1),
+updown_flag char(1),
 PRIMARY KEY (product_code, trade_date)
 );
 CREATE TABLE entdaytradedata10
@@ -741,6 +750,7 @@ high_price DECIMAL(16,2),
 close_price DECIMAL(16,2),
 low_price DECIMAL(16,2),
 merge_flag CHAR(1),
+updown_flag char(1),
 PRIMARY KEY (product_code, trade_date)
 );
 CREATE TABLE entdaytradedata11
@@ -752,6 +762,7 @@ high_price DECIMAL(16,2),
 close_price DECIMAL(16,2),
 low_price DECIMAL(16,2),
 merge_flag CHAR(1),
+updown_flag char(1),
 PRIMARY KEY (product_code, trade_date)
 );
 CREATE TABLE entdaytradedata12
@@ -763,6 +774,7 @@ high_price DECIMAL(16,2),
 close_price DECIMAL(16,2),
 low_price DECIMAL(16,2),
 merge_flag CHAR(1),
+updown_flag char(1),
 PRIMARY KEY (product_code, trade_date)
 );
 CREATE TABLE entdaytradedata13
@@ -774,6 +786,7 @@ high_price DECIMAL(16,2),
 close_price DECIMAL(16,2),
 low_price DECIMAL(16,2),
 merge_flag CHAR(1),
+updown_flag char(1),
 PRIMARY KEY (product_code, trade_date)
 );
 CREATE TABLE entdaytradedata14
@@ -785,6 +798,7 @@ high_price DECIMAL(16,2),
 close_price DECIMAL(16,2),
 low_price DECIMAL(16,2),
 merge_flag CHAR(1),
+updown_flag char(1),
 PRIMARY KEY (product_code, trade_date)
 );
 CREATE TABLE entdaytradedata15
@@ -796,6 +810,7 @@ high_price DECIMAL(16,2),
 close_price DECIMAL(16,2),
 low_price DECIMAL(16,2),
 merge_flag CHAR(1),
+updown_flag char(1),
 PRIMARY KEY (product_code, trade_date)
 );
 CREATE TABLE entdaytradedata16
@@ -807,6 +822,7 @@ high_price DECIMAL(16,2),
 close_price DECIMAL(16,2),
 low_price DECIMAL(16,2),
 merge_flag CHAR(1),
+updown_flag char(1),
 PRIMARY KEY (product_code, trade_date)
 );
 CREATE TABLE entdaytradedata17
@@ -818,6 +834,7 @@ high_price DECIMAL(16,2),
 close_price DECIMAL(16,2),
 low_price DECIMAL(16,2),
 merge_flag CHAR(1),
+updown_flag char(1),
 PRIMARY KEY (product_code, trade_date)
 );
 CREATE TABLE entdaytradedata18
@@ -829,6 +846,7 @@ high_price DECIMAL(16,2),
 close_price DECIMAL(16,2),
 low_price DECIMAL(16,2),
 merge_flag CHAR(1),
+updown_flag char(1),
 PRIMARY KEY (product_code, trade_date)
 );
 CREATE TABLE entdaytradedata19
@@ -840,6 +858,7 @@ high_price DECIMAL(16,2),
 close_price DECIMAL(16,2),
 low_price DECIMAL(16,2),
 merge_flag CHAR(1),
+updown_flag char(1),
 PRIMARY KEY (product_code, trade_date)
 );
 CREATE TABLE entdaytradedata20
@@ -851,6 +870,7 @@ high_price DECIMAL(16,2),
 close_price DECIMAL(16,2),
 low_price DECIMAL(16,2),
 merge_flag CHAR(1),
+updown_flag char(1),
 PRIMARY KEY (product_code, trade_date)
 );
 CREATE TABLE entdaytradedata21
@@ -862,6 +882,7 @@ high_price DECIMAL(16,2),
 close_price DECIMAL(16,2),
 low_price DECIMAL(16,2),
 merge_flag CHAR(1),
+updown_flag char(1),
 PRIMARY KEY (product_code, trade_date)
 );
 CREATE TABLE entdaytradedata22
@@ -873,6 +894,7 @@ high_price DECIMAL(16,2),
 close_price DECIMAL(16,2),
 low_price DECIMAL(16,2),
 merge_flag CHAR(1),
+updown_flag char(1),
 PRIMARY KEY (product_code, trade_date)
 );
 CREATE TABLE entdaytradedata23
@@ -884,6 +906,7 @@ high_price DECIMAL(16,2),
 close_price DECIMAL(16,2),
 low_price DECIMAL(16,2),
 merge_flag CHAR(1),
+updown_flag char(1),
 PRIMARY KEY (product_code, trade_date)
 );
 CREATE TABLE entdaytradedata24
@@ -895,6 +918,7 @@ high_price DECIMAL(16,2),
 close_price DECIMAL(16,2),
 low_price DECIMAL(16,2),
 merge_flag CHAR(1),
+updown_flag char(1),
 PRIMARY KEY (product_code, trade_date)
 );
 CREATE TABLE entdaytradedata25
@@ -906,6 +930,7 @@ high_price DECIMAL(16,2),
 close_price DECIMAL(16,2),
 low_price DECIMAL(16,2),
 merge_flag CHAR(1),
+updown_flag char(1),
 PRIMARY KEY (product_code, trade_date)
 );
 CREATE TABLE entdaytradedata26
@@ -917,6 +942,7 @@ high_price DECIMAL(16,2),
 close_price DECIMAL(16,2),
 low_price DECIMAL(16,2),
 merge_flag CHAR(1),
+updown_flag char(1),
 PRIMARY KEY (product_code, trade_date)
 );
 CREATE TABLE entdaytradedata27
@@ -928,6 +954,7 @@ high_price DECIMAL(16,2),
 close_price DECIMAL(16,2),
 low_price DECIMAL(16,2),
 merge_flag CHAR(1),
+updown_flag char(1),
 PRIMARY KEY (product_code, trade_date)
 );
 CREATE TABLE entdaytradedata28
@@ -939,6 +966,7 @@ high_price DECIMAL(16,2),
 close_price DECIMAL(16,2),
 low_price DECIMAL(16,2),
 merge_flag CHAR(1),
+updown_flag char(1),
 PRIMARY KEY (product_code, trade_date)
 );
 CREATE TABLE entdaytradedata29
@@ -950,6 +978,7 @@ high_price DECIMAL(16,2),
 close_price DECIMAL(16,2),
 low_price DECIMAL(16,2),
 merge_flag CHAR(1),
+updown_flag char(1),
 PRIMARY KEY (product_code, trade_date)
 );
 CREATE TABLE entdaytradedata30
@@ -961,6 +990,7 @@ high_price DECIMAL(16,2),
 close_price DECIMAL(16,2),
 low_price DECIMAL(16,2),
 merge_flag CHAR(1),
+updown_flag char(1),
 PRIMARY KEY (product_code, trade_date)
 );
 CREATE TABLE entdaytradedata31
@@ -972,6 +1002,7 @@ high_price DECIMAL(16,2),
 close_price DECIMAL(16,2),
 low_price DECIMAL(16,2),
 merge_flag CHAR(1),
+updown_flag char(1),
 PRIMARY KEY (product_code, trade_date)
 );
 CREATE TABLE entdaytradedata32
@@ -983,6 +1014,7 @@ high_price DECIMAL(16,2),
 close_price DECIMAL(16,2),
 low_price DECIMAL(16,2),
 merge_flag CHAR(1),
+updown_flag char(1),
 PRIMARY KEY (product_code, trade_date)
 );
 

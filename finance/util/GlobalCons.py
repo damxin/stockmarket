@@ -23,6 +23,32 @@ CONST_STR_STAR = "*"
 PRICE_COLS = ['open', 'close', 'low', 'high']
 FORMAT = lambda x: '%.2f' % x
 
+# F:5min, T:30min，S:60min， D:日，W:周，M:月，Y：年
+K_YEAR = 'Y'
+K_MONTH = 'M'
+K_WEEK = 'W'
+K_DAY = 'D'
+K_60MIN = 'S'
+K_30MIN = 'T'
+K_5MIN = 'F'
+
+# producttradedata对应的常量
+PRODCODEKEY = "product_code"
+TRADEDATEKEY = "trade_date"
+OPENPRICEKEY = "open_price"
+HIGHPRICEKEY = "high_price"
+CLOSEPRICEKEY = "close_price"
+LOWPRICEKEY = "low_price"
+PRODVOLKEY = "product_volume"
+PRODAMOUNTKEY = "product_amount"
+MERGEFLAGKKEY = "merge_flag"
+UPDOWNFLAGKEY = "updown_flag"
+
+# 趋势标志
+TRENDFLAG_UP = "UP"
+TRENDFLAG_DOWN = "DOWN"
+
+
 # 主库的逻辑名
 DBBASELOGICNAME = "dbbase"
 

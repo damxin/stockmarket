@@ -1,7 +1,7 @@
 # -*- coding:utf-8 -*-
 
 class DataBase:
-    ROWNUM = 100
+    ROWNUM = 1000
 
     def __init__(self, serverip, serverport, username, passwd, databasename):
         self.ipaddr = serverip
@@ -35,9 +35,11 @@ class DataBase:
                 self.curcursor = self.connection.cursor()
             self.curcursor.executemany(insert_sql, datalist)  # 注意，第一个参数是None
             self.connection.commit()  # 提交
+            return None
         except Exception as e:
             print(e)
             self.connection.rollback()
+            return e
         finally:
             if self.dbpool is not None:
                 self.closeDBConnect()
@@ -47,7 +49,7 @@ class DataBase:
     '''
 
     def execSelectSmallSql(self, strsql):
-        try :
+        try:
             if self.dbpool is not None:
                 self.connection = self.dbpool.connection(shareable=True)
                 self.curcursor = self.connection.cursor()
@@ -55,9 +57,10 @@ class DataBase:
             results = self.curcursor.fetchall()
             return results
         except Exception as e:
-            print("sql select small执行异常:" + strsql,end='')
+            print("sql select small执行异常:" + strsql, end='')
             print(e)
-        finally :
+            return e
+        finally:
             if self.dbpool is not None:
                 self.closeDBConnect()
 
@@ -65,9 +68,9 @@ class DataBase:
         '''
         一次性获取所有数据量
         :param strsql:
-        :return:list[tuple]
+        :return:list[dict]
         '''
-        try :
+        try:
             if self.dbpool is not None:
                 self.connection = self.dbpool.connection(shareable=True)
                 self.curcursor = self.connection.cursor()
@@ -75,7 +78,7 @@ class DataBase:
             results = self.curcursor.fetchall()
             return results
         except Exception as e:
-            print("sql select all执行异常:" + strsql, end = '')
+            print("sql select all执行异常:" + strsql, end='')
             print(e)
         finally:
             if self.dbpool is not None:
@@ -87,7 +90,7 @@ class DataBase:
         :param self:
         :param strsql:
         '''
-        try :
+        try:
             if self.dbpool is not None:
                 self.connection = self.dbpool.connection(shareable=True)
                 self.curcursor = self.connection.cursor()
@@ -96,6 +99,7 @@ class DataBase:
         except Exception as e:
             print(strsql)
             print(e)
+            return e
         finally:
             if self.dbpool is not None:
                 self.closeDBConnect()

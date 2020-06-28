@@ -14,10 +14,36 @@ from finance.servicelib.processinit.xmlcfg import XmlCfg
 from finance.util import GlobalCons as gc
 from finance.util import SqlCons as sc
 
+gDbCntFlag = False
+gdbCntInfo = None
+
+def createDbConnect(xmlfile, dbpool=False):
+    '''
+
+    :param xmlfile: xml文件所在位置
+    :param dbpool: 数据库池
+    :return:
+    '''
+
+    global gDbCntFlag
+    global gdbCntInfo
+    if gDbCntFlag is not True:
+        gdbCntInfo = DbCnt(xmlfile, dbpool)
+        gDbCntFlag = True
+    return gdbCntInfo
+
+def getDBCntInfoByTableName(tableName, productCode = None,tradeDate = None):
+    global gDbCntFlag
+    global gdbCntInfo
+    if gDbCntFlag is not True:
+        print("database connect does not create,please call function createDbConnect first!")
+        return None
+    connectDb = gdbCntInfo.getDBCntInfoByTableName(tableName, productCode, tradeDate)
+    return connectDb
 
 class DbCnt:
+    dbthredpool = False
 
-    dbthredpool=False
     def __init__(self, xmlfilepath):
         '''
         完成xml文件解析，同时创建所有的数据库连接,单的
@@ -56,21 +82,22 @@ class DbCnt:
             if dbType == gc.MYSQLDB:
                 if dbispool is False:
                     msqldbase = mysqldatabase.MysqlDatabase(dbCfgInfoValue[gc.SERVERKEY], dbCfgInfoValue[gc.PORTKEY],
-                                                            dbCfgInfoValue[gc.USERNAMEKEY], dbCfgInfoValue[gc.PASSWORDKEY],
+                                                            dbCfgInfoValue[gc.USERNAMEKEY],
+                                                            dbCfgInfoValue[gc.PASSWORDKEY],
                                                             dbCfgInfoValue[gc.DATABASEKEY])
                     retsult = msqldbase.createConnection()
                     if retsult == 0:
                         self.dbCntdicts[logicNameKey] = msqldbase
-                    else :
+                    else:
                         print("createConnect failed! error!")
-                else :
+                else:
                     msqldbase = dbpool.DbPool(dbCfgInfoValue[gc.SERVERKEY], dbCfgInfoValue[gc.PORTKEY],
                                               dbCfgInfoValue[gc.USERNAMEKEY], dbCfgInfoValue[gc.PASSWORDKEY],
                                               dbCfgInfoValue[gc.DATABASEKEY])
                     retsult = msqldbase.createConnection()
                     if retsult == 0:
                         self.dbCntdicts[logicNameKey] = msqldbase
-                    else :
+                    else:
                         print("createConnect failed! error!")
             elif dbType == gc.ORACLEDB:
                 oracledbase = oracledatabase.OracleDatabase(dbCfgInfoValue[gc.SERVERKEY], dbCfgInfoValue[gc.PORTKEY],
@@ -83,7 +110,7 @@ class DbCnt:
                 else:
                     print("createConnect failed! error!")
 
-    def getTradeLogicNameByProductCodeAndTradeDate(self,productcode,tradedate):
+    def getTradeLogicNameByProductCodeAndTradeDate(self, productcode, tradedate):
         '''
         返回分库表的逻辑名称
         :param productcode:
@@ -103,7 +130,7 @@ class DbCnt:
                 tradeLogicName = oneBaseRuleTuple["logicname"]
                 break
         if len(tradeLogicName) < 1:
-            print("%d 's %s do not get trade logic name! error!"%(realTradeDate,productcode))
+            print("%d 's %s do not get trade logic name! error!" % (realTradeDate, productcode))
             raise RuntimeError("trade logic name do not get! error!!")
         return tradeLogicName
 
@@ -118,7 +145,7 @@ class DbCnt:
         if tablename in sc.TABLEDICT:
             logicname = sc.TABLEDICT[tablename]
             if logicname in "trade":
-                reallogicname = self.getTradeLogicNameByProductCodeAndTradeDate(productcode,tradedate)
+                reallogicname = self.getTradeLogicNameByProductCodeAndTradeDate(productcode, tradedate)
             else:
                 reallogicname = logicname
             dbSqlBase = self.getDbBaseByLogicName(reallogicname)

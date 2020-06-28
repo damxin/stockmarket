@@ -10,7 +10,8 @@ Created on 2019/09/04
 LOGICNAME_TMPBASE = "tmpbase"
 LOGICNAME_DBBASE = "dbbase"
 LOGICNAME_TRADE = "trade"
-TABLEDICT = {"stock_basics": LOGICNAME_TMPBASE,
+TABLEDICT = {
+            "stock_basics": LOGICNAME_TMPBASE,
              "productbasicinfo": LOGICNAME_DBBASE,
              "histtradedata": LOGICNAME_TMPBASE,
              "producttradedata": LOGICNAME_TRADE,
@@ -26,7 +27,11 @@ TABLEDICT = {"stock_basics": LOGICNAME_TMPBASE,
              "company_cashflow":LOGICNAME_TRADE,
              "histbalance":LOGICNAME_TMPBASE,
              "company_balance_sheet":LOGICNAME_TRADE,
-             "datadownloadlog":LOGICNAME_TRADE}
+             "datadownloadlog":LOGICNAME_TRADE,
+             "entdaytradedata":LOGICNAME_TRADE
+            }
+# 表名:单表拆分的表个数
+SPLITTBLDICT = {"entdaytradedata":32}
 
 ## 工作日begin
 WORKDAY_MAXDATESQL = "select max(trade_date) maxtradedate, exchange_code exchangecode from openday group by exchange_code"
@@ -557,3 +562,12 @@ DATADOWNLOG_UPDATEDATA="update datadownloadlog set dealstatus='%s' where product
 TDXDATAINSERTDATABASE="INSERT INTO producttradedata(product_code, trade_date,open_price,high_price,close_price,low_price,product_volume,product_amount)\
         VALUES('%s',%d,%f,%f,%f,%f,%f,%f)"
 # 通达信数据插入数据库语句 end
+
+# 日交易数据获取 begin
+DAYTRADEDATA_GET="select product_code, trade_date,open_price,high_price,close_price,low_price,product_volume,product_amount from \
+                 producttradedata where product_code = '%s'and trade_date > %d order by trade_date "
+# 日交易数据获取 end
+
+# 日交易包含关系处理后的数据插入 begin
+ENTDAYTRADEDATA_INSERT="INSERT INTO %s (product_code, trade_date,open_price,high_price,close_price,low_price,merge_flag,updown_flag) VALUES ('%s',%d,%f,%f,%f,%f,'%s','%s') "
+# 日交易包含关系处理后的数据插入 end
