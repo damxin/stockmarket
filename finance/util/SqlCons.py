@@ -571,3 +571,13 @@ DAYTRADEDATA_GET="select product_code, trade_date,open_price,high_price,close_pr
 # 日交易包含关系处理后的数据插入 begin
 ENTDAYTRADEDATA_INSERT="INSERT INTO %s (product_code, trade_date,open_price,high_price,close_price,low_price,merge_flag,updown_flag) VALUES ('%s',%d,%f,%f,%f,%f,'%s','%s') "
 # 日交易包含关系处理后的数据插入 end
+
+# 日entdaytradedata表中数据获取 begin
+ENTDAYTRADEDATA_GET="select product_code, trade_date,open_price,high_price,close_price,low_price,merge_flag,updown_flag from %s a where a.product_code = '%s' and a.trade_date > %d order by a.trade_date "
+ENTDAYTRADEDATA_UPDATEUUPDOWNFLAG = "update %s set updown_flag = '%s' where product_code = '%s' and trade_date = %d"
+# 最近A或者B交易日数据
+ENTDAYTRADEDATA_LASTAORBGET = "select product_code, trade_date,open_price,high_price,close_price,low_price,merge_flag,updown_flag \
+ from %s a where a.product_code = '%s' and a.trade_date >= (SELECT IFNULL(MAX(trade_date),0) FROM %s a WHERE a.product_code = '%s' AND a.updown_flag IN ('A','B')) \
+ order by a.trade_date "
+# 日entdaytradedata表中数据获取 end
+

@@ -44,6 +44,17 @@ PRODAMOUNTKEY = "product_amount"
 MERGEFLAGKKEY = "merge_flag"
 UPDOWNFLAGKEY = "updown_flag"
 
+# 笔的顶分型
+APICALTYPING = "A"
+# 笔的底分型
+BASETYPING = "B"
+# 伪顶分型
+UPTYPING = "U"
+# 伪底分型
+DOWNTYPING = "D"
+# 中间K线
+NORMALTYPING = "N"
+
 # 趋势标志
 TRENDFLAG_UP = "UP"
 TRENDFLAG_DOWN = "DOWN"
