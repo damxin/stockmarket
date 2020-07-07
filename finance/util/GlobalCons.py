@@ -59,6 +59,9 @@ NORMALTYPING = "N"
 TRENDFLAG_UP = "UP"
 TRENDFLAG_DOWN = "DOWN"
 
+# 多少笔回一次数据库
+COUNTNUM = 50
+
 
 # 主库的逻辑名
 DBBASELOGICNAME = "dbbase"

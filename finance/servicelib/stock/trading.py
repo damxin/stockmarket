@@ -15,6 +15,7 @@ import logging
 
 from finance.dbsql import mysqldatabase
 from finance.servicelib.processinit import dbcnt
+from finance.servicelib.processinit import stocklog
 from finance.util import SqlCons as sc
 from finance.util import GlobalCons as gc
 from finance.util import DictCons as dc
@@ -223,7 +224,7 @@ def getCurProductTradeData(productcode,dbCntInfo,engine):
 
 def getAllNoneSubscriptionTradePriceFromTusharePro(dbCntInfo):
     '''
-    获取产品的不复权每日交易数据 Product_trade_data
+    获取产品的不复权每日交易数据 Producttradedata
     :param dbCntInfo:
     :return:
     '''
@@ -564,7 +565,8 @@ def tdxProductTradeData2Database(dbCntInfo, productCode,absolutePath,productTrad
     maxTradeDate = pb.getMaxTradeDateFromCurProductCode(dbCntInfo, productCode)
     if maxTradeDate == 190000101:
         print("当前产品%s没有在productbaseinfo表中,请添加!" % productCode)
-    print("正在处理产品代码为(" + productCode + ")的文件filepath:" + filepath + "(" + str(maxTradeDate) + ")")
+    print("线程开始正在处理产品代码为(" + productCode + ")的文件filepath:" + filepath + "(" + str(maxTradeDate) + ")")
+    logging.info("线程开始处理产品代码为(" + productCode + ")的文件filepath:" + filepath + "(" + str(maxTradeDate) + ")")
     sourcetable = "producttradedata"
     tableDbBase = dbCntInfo.getDBCntInfoByTableName(tablename=sourcetable, productcode=productCode)
     with open(filepath, 'rb') as fname:
@@ -611,7 +613,8 @@ def tdxProductTradeData2Database(dbCntInfo, productCode,absolutePath,productTrad
                 print("productVolumn(%f),productAmount(%f)" % (productVolumn, productAmount))
                 print("执行异常，程序终止!")
                 return excepte
-    print("产品代码为(" + productCode + ")的文件处理完毕!")
+    print("线程处理产品代码为(" + productCode + ")的文件处理完毕!")
+    logging.info("线程处理产品代码为(" + productCode + ")的文件处理完毕!")
     return None
 
 def tdxShLdayToStock(dbCntInfo, dataType="sh", softPath="D:/software/new_haitong", relativePath=None):
@@ -625,6 +628,7 @@ def tdxShLdayToStock(dbCntInfo, dataType="sh", softPath="D:/software/new_haitong
     '''
 
     import os
+    import time
     from finance.util import DictCons as dictcons
     from finance.servicelib.public import public
     from concurrent.futures import ThreadPoolExecutor,as_completed
@@ -632,11 +636,17 @@ def tdxShLdayToStock(dbCntInfo, dataType="sh", softPath="D:/software/new_haitong
     relativePath = "/vipdoc/"+dataType+"/lday/" if relativePath is None else relativePath
     absolutePath = softPath+relativePath
 
-
+    startTime = time.time()
     listTradeFile = os.listdir(absolutePath)
     # maxWorkers = public.getCpuCount()*2-1
     maxWorkers = public.getCpuCount()
-    threadPool = ThreadPoolExecutor(max_workers=1,thread_name_prefix="st_")
+    if maxWorkers > 1:
+        # maxWorkers = maxWorkers -1
+        # 多了貌似数据库也存在问题。
+        maxWorkers = 1
+    print("create maxWorks(%d)"%maxWorkers)
+    logging.info("create maxWorks(%d)"%maxWorkers)
+    threadPool = ThreadPoolExecutor(max_workers=maxWorkers,thread_name_prefix="st_")
     future_list = []
     futurecount = 0
     for productTradeFile in listTradeFile:
@@ -664,15 +674,23 @@ def tdxShLdayToStock(dbCntInfo, dataType="sh", softPath="D:/software/new_haitong
         future = threadPool.submit(lambda p: tdxProductTradeData2Database(*p), func_var)
         future_list.append(future)
         futurecount = futurecount + 1
-        time.sleep(0.001)
-        # if futurecount == 100:
+        # time.sleep(0.02)
+        # if futurecount % maxWorkers == 0:
+        #     print("now sleep %d"%futurecount)
+        #     logging.info("now sleep %d"%futurecount)
+        #     time.sleep(0.5)
+
         #     break
+    print("当前开始时间： ", time.strftime('%Y.%m.%d %H:%M:%S ', time.localtime(startTime)))
+    print("当前结束时间： ", time.strftime('%Y.%m.%d %H:%M:%S ', time.localtime(time.time())))
+
 
     retfuture = 0
     # while future in future_list:
     #     print(future, end='')
     #     print(future.done())
     print("while %d futures begin to wait!"%futurecount)
+    logging.info("while %d futures begin to wait!"%futurecount)
     for future in as_completed(future_list):
         print("future finish", end = '')
         print(future.result())
@@ -685,6 +703,7 @@ def tdxShLdayToStock(dbCntInfo, dataType="sh", softPath="D:/software/new_haitong
     return None
 
 if __name__ == "__main__":
+    stocklog.initLogging()
     path = 'D:/software/new_haitong'
     xmlfile = "G:\\nfx\\Python\\stockmarket\\finance\\resource\\finance.xml"
     dbCntInfo = dbcnt.DbCnt(xmlfile,dbpool=True)

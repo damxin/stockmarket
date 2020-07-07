@@ -69,6 +69,28 @@ class MysqlDatabase(DataBase):
             print(strinsertsql)
             raise RuntimeError("execInsertManySql is error!")
 
+    def execupdatemanysql(self, strupdatesql, updatelist):
+        '''
+                作用:sql语句执行插入语句,实现一次插入多条
+                updatelist必须是tuple(tuple)或者list(tuple)
+        :param strinsertsql:
+        :param insertlist:
+        :return:
+        '''
+
+        if isinstance(updatelist, list) is False or \
+                isinstance(updatelist[0], tuple) is False:
+            print(type(updatelist))
+            print(type(updatelist[0]))
+            raise RuntimeError("updatelist type is wrong!")
+        try:
+            self.curcursor.executemany(strupdatesql, updatelist)
+            self.connection.commit()
+        except Exception as e:
+            self.connection.rollback()
+            print(strupdatesql)
+            raise RuntimeError("execupdatemanysql is error!")
+
     # def gettablecol(self, tablename):
     #     strexecsql = "select column_name from information_schema.columns where table_schema= database() and upper(table_name) = upper('%s') order by column_name" % tablename
     #     print(strexecsql)

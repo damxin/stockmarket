@@ -37,6 +37,7 @@ class DataBase:
             self.connection.commit()  # 提交
             return None
         except Exception as e:
+            print("ora-error insert:" + insert_sql, end='')
             print(e)
             self.connection.rollback()
             return e
@@ -53,11 +54,14 @@ class DataBase:
             if self.dbpool is not None:
                 self.connection = self.dbpool.connection(shareable=True)
                 self.curcursor = self.connection.cursor()
+                print("dbpool:"+strsql,end="")
+                print(self.connection,end="")
+                print(self.curcursor)
             self.curcursor.execute(strsql)
             results = self.curcursor.fetchall()
             return results
         except Exception as e:
-            print("sql select small执行异常:" + strsql, end='')
+            print("ora-error small:" + strsql, end='')
             print(e)
             return e
         finally:
@@ -78,7 +82,7 @@ class DataBase:
             results = self.curcursor.fetchall()
             return results
         except Exception as e:
-            print("sql select all执行异常:" + strsql, end='')
+            print("ora-error all:" + strsql, end='')
             print(e)
         finally:
             if self.dbpool is not None:
