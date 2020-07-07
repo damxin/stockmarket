@@ -1,0 +1,200 @@
+INSERT INTO stocktrade3.producttradedata(product_code,trade_date,open_price,high_price,close_price,low_price,product_volume,product_amount)
+SELECT product_code,trade_date,open_price,high_price,close_price,low_price,product_volume,product_amount
+   FROM stockmarket.producttradedata a, stockmarket.productdatabaserule b
+  WHERE a.product_code BETWEEN b.min_product_code AND b.max_product_code
+    AND b.logic_name = 'trade4';
+INSERT INTO stocktrade3.entdaytradedata01
+(product_code,trade_date,open_price,high_price,close_price,low_price,merge_flag,updown_flag)
+SELECT product_code,trade_date,open_price,high_price,close_price,low_price,merge_flag,updown_flag
+   FROM stockmarket.entdaytradedata01 a, stockmarket.productdatabaserule b
+   WHERE a.product_code BETWEEN b.min_product_code AND b.max_product_code
+    AND b.logic_name = 'trade4';
+INSERT INTO stocktrade3.entdaytradedata02
+(product_code,trade_date,open_price,high_price,close_price,low_price,merge_flag,updown_flag)
+   SELECT product_code,trade_date,open_price,high_price,close_price,low_price,merge_flag,updown_flag
+   FROM stockmarket.entdaytradedata02 a, stockmarket.productdatabaserule b
+   WHERE a.product_code BETWEEN b.min_product_code AND b.max_product_code
+    AND b.logic_name = 'trade4';
+INSERT INTO stocktrade3.entdaytradedata03
+(product_code,trade_date,open_price,high_price,close_price,low_price,merge_flag,updown_flag)
+   SELECT product_code,trade_date,open_price,high_price,close_price,low_price,merge_flag,updown_flag
+   FROM stockmarket.entdaytradedata03 a, stockmarket.productdatabaserule b
+   WHERE a.product_code BETWEEN b.min_product_code AND b.max_product_code
+    AND b.logic_name = 'trade4';
+INSERT INTO stocktrade3.entdaytradedata04
+(product_code,trade_date,open_price,high_price,close_price,low_price,merge_flag,updown_flag)
+   SELECT product_code,trade_date,open_price,high_price,close_price,low_price,merge_flag,updown_flag
+   FROM stockmarket.entdaytradedata04 a, stockmarket.productdatabaserule b
+   WHERE a.product_code BETWEEN b.min_product_code AND b.max_product_code
+    AND b.logic_name = 'trade4';
+INSERT INTO stocktrade3.entdaytradedata05
+(product_code,trade_date,open_price,high_price,close_price,low_price,merge_flag,updown_flag)
+   SELECT product_code,trade_date,open_price,high_price,close_price,low_price,merge_flag,updown_flag
+   FROM stockmarket.entdaytradedata05 a, stockmarket.productdatabaserule b
+   WHERE a.product_code BETWEEN b.min_product_code AND b.max_product_code
+    AND b.logic_name = 'trade4';
+INSERT INTO stocktrade3.entdaytradedata06
+(product_code,trade_date,open_price,high_price,close_price,low_price,merge_flag,updown_flag)
+   SELECT product_code,trade_date,open_price,high_price,close_price,low_price,merge_flag,updown_flag
+   FROM stockmarket.entdaytradedata06 a, stockmarket.productdatabaserule b
+   WHERE a.product_code BETWEEN b.min_product_code AND b.max_product_code
+    AND b.logic_name = 'trade4';
+INSERT INTO stocktrade3.entdaytradedata07
+(product_code,trade_date,open_price,high_price,close_price,low_price,merge_flag,updown_flag)
+   SELECT product_code,trade_date,open_price,high_price,close_price,low_price,merge_flag,updown_flag
+   FROM stockmarket.entdaytradedata07 a, stockmarket.productdatabaserule b
+   WHERE a.product_code BETWEEN b.min_product_code AND b.max_product_code
+    AND b.logic_name = 'trade4';
+INSERT INTO stocktrade3.entdaytradedata08
+(product_code,trade_date,open_price,high_price,close_price,low_price,merge_flag,updown_flag)
+   SELECT product_code,trade_date,open_price,high_price,close_price,low_price,merge_flag,updown_flag
+   FROM stockmarket.entdaytradedata08 a, stockmarket.productdatabaserule b
+   WHERE a.product_code BETWEEN b.min_product_code AND b.max_product_code
+    AND b.logic_name = 'trade4';
+INSERT INTO stocktrade3.entdaytradedata09
+(product_code,trade_date,open_price,high_price,close_price,low_price,merge_flag,updown_flag)
+   SELECT product_code,trade_date,open_price,high_price,close_price,low_price,merge_flag,updown_flag
+   FROM stockmarket.entdaytradedata09 a, stockmarket.productdatabaserule b
+   WHERE a.product_code BETWEEN b.min_product_code AND b.max_product_code
+    AND b.logic_name = 'trade4';
+INSERT INTO stocktrade3.entdaytradedata10
+(product_code,trade_date,open_price,high_price,close_price,low_price,merge_flag,updown_flag)
+   SELECT product_code,trade_date,open_price,high_price,close_price,low_price,merge_flag,updown_flag
+   FROM stockmarket.entdaytradedata10 a, stockmarket.productdatabaserule b
+   WHERE a.product_code BETWEEN b.min_product_code AND b.max_product_code
+    AND b.logic_name = 'trade4';
+INSERT INTO stocktrade3.entdaytradedata11
+(product_code,trade_date,open_price,high_price,close_price,low_price,merge_flag,updown_flag)
+   SELECT product_code,trade_date,open_price,high_price,close_price,low_price,merge_flag,updown_flag
+   FROM stockmarket.entdaytradedata11 a, stockmarket.productdatabaserule b
+   WHERE a.product_code BETWEEN b.min_product_code AND b.max_product_code
+    AND b.logic_name = 'trade4';
+INSERT INTO stocktrade3.entdaytradedata12
+(product_code,trade_date,open_price,high_price,close_price,low_price,merge_flag,updown_flag)
+   SELECT product_code,trade_date,open_price,high_price,close_price,low_price,merge_flag,updown_flag
+   FROM stockmarket.entdaytradedata12 a, stockmarket.productdatabaserule b
+   WHERE a.product_code BETWEEN b.min_product_code AND b.max_product_code
+    AND b.logic_name = 'trade4';
+INSERT INTO stocktrade3.entdaytradedata13
+(product_code,trade_date,open_price,high_price,close_price,low_price,merge_flag,updown_flag)
+   SELECT product_code,trade_date,open_price,high_price,close_price,low_price,merge_flag,updown_flag
+   FROM stockmarket.entdaytradedata13 a, stockmarket.productdatabaserule b
+   WHERE a.product_code BETWEEN b.min_product_code AND b.max_product_code
+    AND b.logic_name = 'trade4';
+INSERT INTO stocktrade3.entdaytradedata14
+(product_code,trade_date,open_price,high_price,close_price,low_price,merge_flag,updown_flag)
+   SELECT product_code,trade_date,open_price,high_price,close_price,low_price,merge_flag,updown_flag
+   FROM stockmarket.entdaytradedata14 a, stockmarket.productdatabaserule b
+   WHERE a.product_code BETWEEN b.min_product_code AND b.max_product_code
+    AND b.logic_name = 'trade4';
+INSERT INTO stocktrade3.entdaytradedata15
+(product_code,trade_date,open_price,high_price,close_price,low_price,merge_flag,updown_flag)
+   SELECT product_code,trade_date,open_price,high_price,close_price,low_price,merge_flag,updown_flag
+   FROM stockmarket.entdaytradedata15 a, stockmarket.productdatabaserule b
+   WHERE a.product_code BETWEEN b.min_product_code AND b.max_product_code
+    AND b.logic_name = 'trade4';
+INSERT INTO stocktrade3.entdaytradedata16
+(product_code,trade_date,open_price,high_price,close_price,low_price,merge_flag,updown_flag)
+   SELECT product_code,trade_date,open_price,high_price,close_price,low_price,merge_flag,updown_flag
+   FROM stockmarket.entdaytradedata16 a, stockmarket.productdatabaserule b
+   WHERE a.product_code BETWEEN b.min_product_code AND b.max_product_code
+    AND b.logic_name = 'trade4';
+INSERT INTO stocktrade3.entdaytradedata17
+(product_code,trade_date,open_price,high_price,close_price,low_price,merge_flag,updown_flag)
+   SELECT product_code,trade_date,open_price,high_price,close_price,low_price,merge_flag,updown_flag
+   FROM stockmarket.entdaytradedata17 a, stockmarket.productdatabaserule b
+   WHERE a.product_code BETWEEN b.min_product_code AND b.max_product_code
+    AND b.logic_name = 'trade4';
+INSERT INTO stocktrade3.entdaytradedata18
+(product_code,trade_date,open_price,high_price,close_price,low_price,merge_flag,updown_flag)
+   SELECT product_code,trade_date,open_price,high_price,close_price,low_price,merge_flag,updown_flag
+   FROM stockmarket.entdaytradedata18 a, stockmarket.productdatabaserule b
+   WHERE a.product_code BETWEEN b.min_product_code AND b.max_product_code
+    AND b.logic_name = 'trade4';
+INSERT INTO stocktrade3.entdaytradedata19
+(product_code,trade_date,open_price,high_price,close_price,low_price,merge_flag,updown_flag)
+   SELECT product_code,trade_date,open_price,high_price,close_price,low_price,merge_flag,updown_flag
+   FROM stockmarket.entdaytradedata19 a, stockmarket.productdatabaserule b
+   WHERE a.product_code BETWEEN b.min_product_code AND b.max_product_code
+    AND b.logic_name = 'trade4';
+
+
+
+INSERT INTO stocktrade3.entdaytradedata20
+(product_code,trade_date,open_price,high_price,close_price,low_price,merge_flag,updown_flag)
+   SELECT product_code,trade_date,open_price,high_price,close_price,low_price,merge_flag,updown_flag
+   FROM stockmarket.entdaytradedata20 a, stockmarket.productdatabaserule b
+   WHERE a.product_code BETWEEN b.min_product_code AND b.max_product_code
+    AND b.logic_name = 'trade4';
+INSERT INTO stocktrade3.entdaytradedata21
+(product_code,trade_date,open_price,high_price,close_price,low_price,merge_flag,updown_flag)
+   SELECT product_code,trade_date,open_price,high_price,close_price,low_price,merge_flag,updown_flag
+   FROM stockmarket.entdaytradedata21 a, stockmarket.productdatabaserule b
+   WHERE a.product_code BETWEEN b.min_product_code AND b.max_product_code
+    AND b.logic_name = 'trade4';
+INSERT INTO stocktrade3.entdaytradedata22
+(product_code,trade_date,open_price,high_price,close_price,low_price,merge_flag,updown_flag)
+   SELECT product_code,trade_date,open_price,high_price,close_price,low_price,merge_flag,updown_flag
+   FROM stockmarket.entdaytradedata22 a, stockmarket.productdatabaserule b
+   WHERE a.product_code BETWEEN b.min_product_code AND b.max_product_code
+    AND b.logic_name = 'trade4';
+INSERT INTO stocktrade3.entdaytradedata23
+(product_code,trade_date,open_price,high_price,close_price,low_price,merge_flag,updown_flag)
+   SELECT product_code,trade_date,open_price,high_price,close_price,low_price,merge_flag,updown_flag
+   FROM stockmarket.entdaytradedata23 a, stockmarket.productdatabaserule b
+   WHERE a.product_code BETWEEN b.min_product_code AND b.max_product_code
+    AND b.logic_name = 'trade4';
+INSERT INTO stocktrade3.entdaytradedata24
+(product_code,trade_date,open_price,high_price,close_price,low_price,merge_flag,updown_flag)
+   SELECT product_code,trade_date,open_price,high_price,close_price,low_price,merge_flag,updown_flag
+   FROM stockmarket.entdaytradedata24 a, stockmarket.productdatabaserule b
+   WHERE a.product_code BETWEEN b.min_product_code AND b.max_product_code
+    AND b.logic_name = 'trade4';
+INSERT INTO stocktrade3.entdaytradedata25
+(product_code,trade_date,open_price,high_price,close_price,low_price,merge_flag,updown_flag)
+   SELECT product_code,trade_date,open_price,high_price,close_price,low_price,merge_flag,updown_flag
+   FROM stockmarket.entdaytradedata25 a, stockmarket.productdatabaserule b
+   WHERE a.product_code BETWEEN b.min_product_code AND b.max_product_code
+    AND b.logic_name = 'trade4';
+INSERT INTO stocktrade3.entdaytradedata26
+(product_code,trade_date,open_price,high_price,close_price,low_price,merge_flag,updown_flag)
+   SELECT product_code,trade_date,open_price,high_price,close_price,low_price,merge_flag,updown_flag
+   FROM stockmarket.entdaytradedata26 a, stockmarket.productdatabaserule b
+   WHERE a.product_code BETWEEN b.min_product_code AND b.max_product_code
+    AND b.logic_name = 'trade4';
+INSERT INTO stocktrade3.entdaytradedata27
+(product_code,trade_date,open_price,high_price,close_price,low_price,merge_flag,updown_flag)
+   SELECT product_code,trade_date,open_price,high_price,close_price,low_price,merge_flag,updown_flag
+   FROM stockmarket.entdaytradedata27 a, stockmarket.productdatabaserule b
+   WHERE a.product_code BETWEEN b.min_product_code AND b.max_product_code
+    AND b.logic_name = 'trade4';
+INSERT INTO stocktrade3.entdaytradedata28
+(product_code,trade_date,open_price,high_price,close_price,low_price,merge_flag,updown_flag)
+   SELECT product_code,trade_date,open_price,high_price,close_price,low_price,merge_flag,updown_flag
+   FROM stockmarket.entdaytradedata28 a, stockmarket.productdatabaserule b
+   WHERE a.product_code BETWEEN b.min_product_code AND b.max_product_code
+    AND b.logic_name = 'trade4';
+INSERT INTO stocktrade3.entdaytradedata29
+(product_code,trade_date,open_price,high_price,close_price,low_price,merge_flag,updown_flag)
+   SELECT product_code,trade_date,open_price,high_price,close_price,low_price,merge_flag,updown_flag
+   FROM stockmarket.entdaytradedata29 a, stockmarket.productdatabaserule b
+   WHERE a.product_code BETWEEN b.min_product_code AND b.max_product_code
+    AND b.logic_name = 'trade4';
+INSERT INTO stocktrade3.entdaytradedata30
+(product_code,trade_date,open_price,high_price,close_price,low_price,merge_flag,updown_flag)
+   SELECT product_code,trade_date,open_price,high_price,close_price,low_price,merge_flag,updown_flag
+   FROM stockmarket.entdaytradedata30 a, stockmarket.productdatabaserule b
+   WHERE a.product_code BETWEEN b.min_product_code AND b.max_product_code
+    AND b.logic_name = 'trade4';
+INSERT INTO stocktrade3.entdaytradedata31
+(product_code,trade_date,open_price,high_price,close_price,low_price,merge_flag,updown_flag)
+   SELECT product_code,trade_date,open_price,high_price,close_price,low_price,merge_flag,updown_flag
+   FROM stockmarket.entdaytradedata31 a, stockmarket.productdatabaserule b
+   WHERE a.product_code BETWEEN b.min_product_code AND b.max_product_code
+    AND b.logic_name = 'trade4';
+INSERT INTO stocktrade3.entdaytradedata32
+(product_code,trade_date,open_price,high_price,close_price,low_price,merge_flag,updown_flag)
+   SELECT product_code,trade_date,open_price,high_price,close_price,low_price,merge_flag,updown_flag
+   FROM stockmarket.entdaytradedata32 a, stockmarket.productdatabaserule b
+   WHERE a.product_code BETWEEN b.min_product_code AND b.max_product_code
+    AND b.logic_name = 'trade4';
