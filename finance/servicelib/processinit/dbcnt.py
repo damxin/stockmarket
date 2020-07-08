@@ -17,16 +17,20 @@ from finance.util import SqlCons as sc
 gDbCntFlag = False
 gdbCntInfo = None
 
-def createDbConnect(xmlfile, dbpool=False):
+def createDbConnect(dbpool=False):
     '''
 
-    :param xmlfile: xml文件所在位置
+    :param xmlfile: xml文件所在位置,G:\\nfx\\Python\\stockmarket\\finance\\resource\\finance.xml
     :param dbpool: 数据库池
     :return:
     '''
+    import os
 
     global gDbCntFlag
     global gdbCntInfo
+    pwdpath = os.getcwd()
+    financePos = pwdpath.find("finance")
+    xmlfile = pwdpath[:financePos] + "finance\\resource\\finance.xml"
     if gDbCntFlag is not True:
         gdbCntInfo = DbCnt(xmlfile, dbpool)
         gDbCntFlag = True

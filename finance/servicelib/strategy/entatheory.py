@@ -359,14 +359,14 @@ class EntangLingTheory():
 
 def futureKLine(logicname):
     '''
-
+    进程并发，每个进程都有自己的数据库连接
     :param databaseno: productdatabaserule的logicname的trade1,trade2,trade3
     :return:
     '''
     stocklog.initLogging(logicname)
     try:
         xmlfile = "G:\\nfx\\Python\\stockmarket\\finance\\resource\\finance.xml"
-        dbCntInfo = dbcnt.createDbConnect(xmlfile, dbpool=False)
+        dbCntInfo = dbcnt.createDbConnect(dbpool=False)
         productBasicInfodf = pb.getAllProductBasicInfo(dbCntInfo, ipostatus='A')
         for rowIndex in productBasicInfodf.index:
             oneProductTuple = productBasicInfodf.iloc[rowIndex]
@@ -384,6 +384,72 @@ def futureKLine(logicname):
     finally:
         dbCntInfo.closeAllDBConnect()
     return None
+
+    def enttheoryfirbuy(self, klineType='D') -> list:
+        '''
+         依据传入的级别，寻找一买
+        :param self:
+        :param klineType:
+        :return:
+        '''
+
+        firstbuyprodlist = []
+        return firstbuyprodlist
+
+    def enttheorysecbuy(self, klineType='D') -> list:
+        '''
+         依据传入的级别，寻找二买
+        :param self:
+        :param klineType:
+        :return:
+        '''
+
+        secbuyprodlist = []
+        return secbuyprodlist
+
+    def enttheorysecbuy(self, klineType='D') -> list:
+        '''
+         依据传入的级别，寻找三买
+        :param self:
+        :param klineType:
+        :return: 符合条件的产品列表
+        '''
+
+        thirbuyprodlist = []
+        return thirbuyprodlist
+
+    def enttheoryincentral(self, klineType='D') -> list:
+        '''
+         依据传入的级别，产品在中枢中
+        :param self:
+        :param klineType:
+        :return: 符合条件的产品列表
+        '''
+
+        centralprodlist = []
+        return centralprodlist
+
+    def enttheoryfirstsell(self, klineType='D') -> list:
+        '''
+         依据传入的级别，产品在快出现一卖
+        :param self:
+        :param klineType:
+        :return: 符合条件的产品列表
+        '''
+
+        firstsellprodlist = []
+        return firstsellprodlist
+
+    def enttheorysecondsell(self, klineType='D') -> list:
+        '''
+         依据传入的级别，产品在快出现二卖
+        :param self:
+        :param klineType:
+        :return: 符合条件的产品列表
+        '''
+
+        secondsellprodlist = []
+        return secondsellprodlist
 
 from multiprocessing import Pool
 from finance.servicelib.public import public as pb

@@ -31,7 +31,7 @@ DELIMITER $$
 DELIMITER; 
 CALL sp_db_mysql(); 
 
--- INSERT INTO productdatabaserule(min_product_code,max_product_code,logic_name,pooltype,work_flag) VALUES("******","******","dbbase",0,1),("000000","159999","trade1",1,0),("300000","599999","trade2",1,0),("600000","999999","trade3",1,0),("160000","299999","trade4",1,0)
+-- INSERT INTO productdatabaserule(min_product_code,max_product_code,logic_name,pooltype,work_flag) VALUES("******","******","dbbase",0,0),("000000","001599","trade1",1,0),("300000","599999","trade2",1,0),("600000","602000","trade3",1,0),("001600","299999","trade4",1,0),("602000","999999","trade5",1,0)
 
 DROP PROCEDURE IF EXISTS sp_db_mysql; 
 DELIMITER $$ 

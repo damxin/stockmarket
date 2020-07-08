@@ -1,3 +1,10 @@
+CREATE TABLE stocktrade4.company_balance_sheet AS
+  SELECT a.*
+    FROM stocktrade2.company_balance_sheet a, stocktrade4.productdatabaserule b
+    WHERE a.product_code BETWEEN b.min_product_code AND b.max_product_code
+     AND b.work_flag = '1';
+
+
 INSERT INTO stocktrade3.producttradedata(product_code,trade_date,open_price,high_price,close_price,low_price,product_volume,product_amount)
 SELECT product_code,trade_date,open_price,high_price,close_price,low_price,product_volume,product_amount
    FROM stockmarket.producttradedata a, stockmarket.productdatabaserule b
