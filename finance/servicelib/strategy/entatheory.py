@@ -30,7 +30,7 @@ class EntangLingTheory():
         firstTradeDataFlag = True
         trendUpOrDown = gc.TRENDFLAG_UP
 
-        logging.info("inclusionrRelotionDeal productcode(%s) begin"%self.prod_code)
+        logging.info("inclusionrRelotionDeal productcode(%s) begin" % self.prod_code)
         srcTable = "entdaytradedata"
         realTblName = pb.getRealTableName(srcTable, self.prod_code)
         dbCntInfo = dbcnt.getDBCntInfoByTableName(srcTable, self.prod_code)
@@ -127,11 +127,11 @@ class EntangLingTheory():
         :return:
         '''
         realTblName = pb.getRealTableName(srcTable, prod_code)
-        updatetblsql = sc.ENTDAYTRADEDATA_UPDATETBL%realTblName
+        updatetblsql = sc.ENTDAYTRADEDATA_UPDATETBL % realTblName
         updateupdownflagsql = updatetblsql + sc.ENTDAYTRADEDATA_UPDATEUUPDOWNFLAG
         dbCntInfo = dbcnt.getDBCntInfoByTableName(srcTable, prod_code)
         # product_code, trade_date,open_price,high_price,close_price,low_price,merge_flag,updown_flag
-        selectSql = sc.ENTDAYTRADEDATA_GET % (realTblName, prod_code, beginDate)
+        selectSql = sc.ENTDAYTRADEDATA_GET % (realTblName, prod_code, beginDate, 0)
         entdayTrDataList = dbCntInfo.execSelectAllSql(selectSql)
         if len(entdayTrDataList) == 0:
             return None
@@ -152,7 +152,7 @@ class EntangLingTheory():
         lastCloseDiff = 0
         updownFlag = ""
         updownflaglist = []
-        listnumcnt  = 0
+        listnumcnt = 0
         for curTradeDate, curDiffCloseData in resultSeries.items():
             # lastStatus = curTradeData
             # print(curDiffCloseData)
@@ -186,7 +186,7 @@ class EntangLingTheory():
                     listnumcnt = 0
                     updownflaglist.clear()
                 listnumcnt = listnumcnt + 1
-                updownflaglist.append((updownFlag,prod_code,lastTradeDate))
+                updownflaglist.append((updownFlag, prod_code, lastTradeDate))
 
             firstIndex = firstIndex + 1
             updownFlag = gc.NORMALTYPING
@@ -295,7 +295,7 @@ class EntangLingTheory():
             # print("%d这条暂时不能认为是顶或者底" % (realApicalBasicFlagIndex + 1))
         # print(realApicalBasicFlagList)
         # 根据realApicalBasicFlagList进行顶或者底的更新
-        updatetblsql = sc.ENTDAYTRADEDATA_UPDATETBL%realTblName
+        updatetblsql = sc.ENTDAYTRADEDATA_UPDATETBL % realTblName
         updateabflagsql = updatetblsql + sc.ENTDAYTRADEDATA_UPDATEUUPDOWNFLAG
         updateablist = []
         for tmpTradeIndex in range(len(realApicalBasicFlagList)):
@@ -357,6 +357,7 @@ class EntangLingTheory():
         # 画k线图，可以暂时不实现。
         return None
 
+
 def futureKLine(logicname):
     '''
     进程并发，每个进程都有自己的数据库连接
@@ -365,7 +366,6 @@ def futureKLine(logicname):
     '''
     stocklog.initLogging(logicname)
     try:
-        xmlfile = "G:\\nfx\\Python\\stockmarket\\finance\\resource\\finance.xml"
         dbCntInfo = dbcnt.createDbConnect(dbpool=False)
         productBasicInfodf = pb.getAllProductBasicInfo(dbCntInfo, ipostatus='A')
         for rowIndex in productBasicInfodf.index:
@@ -385,71 +385,127 @@ def futureKLine(logicname):
         dbCntInfo.closeAllDBConnect()
     return None
 
-    def enttheoryfirbuy(self, klineType='D') -> list:
-        '''
-         依据传入的级别，寻找一买
-        :param self:
-        :param klineType:
-        :return:
-        '''
 
-        firstbuyprodlist = []
-        return firstbuyprodlist
+def enttheoryfirbuy(logicname, klineType='D') -> list:
+    '''
+     依据传入的级别，寻找一买
+     下跌过程中，至少存在一个中枢(可以是一段时间在较窄的区间震荡，一直不形成中枢)
+    :param self:
+    :param klineType:
+    :return:
+    '''
 
-    def enttheorysecbuy(self, klineType='D') -> list:
-        '''
-         依据传入的级别，寻找二买
-        :param self:
-        :param klineType:
-        :return:
-        '''
+    firstbuyprodlist = []
+    stocklog.initLogging(logicname)
+    try:
+        dbCntInfo = dbcnt.createDbConnect(dbpool=False)
+        productBasicInfodf = pb.getAllProductBasicInfo(dbCntInfo, ipostatus='A')
+        for rowIndex in productBasicInfodf.index:
+            oneProductTuple = productBasicInfodf.iloc[rowIndex]
+            productcode = oneProductTuple["product_code"]  ## 产品代码
+            tradelogicname = dbCntInfo.getTradeLogicNameByProductCodeAndTradeDate(productcode, 0)
+            if logicname not in tradelogicname:
+                continue
+            logging.info("logic(%s) %d productcode(%s) begin to deal" % (logicname, rowIndex, productcode))
 
-        secbuyprodlist = []
-        return secbuyprodlist
+            lastyeartoday = 0
+            lastyeartime = 0
+            curtblname = gc.SOURCETABLEDICT[klineType]
+            if klineType in gc.K_DAY:
+                # 读取近一年数据，一个股票不可能一年一直再跌，如果是的话则可关注
+                lastyeartoday = pb.getlastyear()
 
-    def enttheorysecbuy(self, klineType='D') -> list:
-        '''
-         依据传入的级别，寻找三买
-        :param self:
-        :param klineType:
-        :return: 符合条件的产品列表
-        '''
+            realtablaname = pb.getRealTableName(curtblname, productcode)
+            selectSql = sc.ENTDAYTRADEDATA_GET % (realtablaname, productcode, lastyeartoday, lastyeartime)
+            dbtradecnt = dbcnt.getDBCntInfoByTableName(curtblname, productcode)
+            entdayTrDataList = dbtradecnt.execSelectAllSql(selectSql)
+            if len(entdayTrDataList) == 0:
+                return firstbuyprodlist
+            # 逆序
+            entdayTrDataDf = pd.DataFrame(entdayTrDataList)
+            entdayTrDataDf = entdayTrDataDf.set_index([gc.TRADEDATEKEY, gc.TRADETIMEKEY])
+            curEntdayTrDataDf = entdayTrDataDf.iloc[::-1]
+            # tuple (20190710, 0) Series
+            for tradedatetupleIndex, curapcialbasicserialdata in curEntdayTrDataDf.iterrows():
+                # print(type(tradedatetupleIndex))
+                # print(tradedatetupleIndex)
+                # print(type(curapcialbasicserialdata))
+                # print(curapcialbasicserialdata)
+                # 想要出现一买，必须首先找到的是顶分型，之后如果做出底分型才能是一买，如果先找到底分型则跳过。
+                if curapcialbasicserialdata[gc.UPDOWNFLAGKEY] in gc.APICALTYPING:
+                    break
 
-        thirbuyprodlist = []
-        return thirbuyprodlist
 
-    def enttheoryincentral(self, klineType='D') -> list:
-        '''
-         依据传入的级别，产品在中枢中
-        :param self:
-        :param klineType:
-        :return: 符合条件的产品列表
-        '''
 
-        centralprodlist = []
-        return centralprodlist
+                # 1. 下跌趋势,  两个中枢
+            logging.info("productcode(%s) finish!" % productcode)
+        print("future all finished!")
+    finally:
+        logging.info(logicname + " close all dbconnect!")
+        dbCntInfo.closeAllDBConnect()
+    return firstbuyprodlist
 
-    def enttheoryfirstsell(self, klineType='D') -> list:
-        '''
-         依据传入的级别，产品在快出现一卖
-        :param self:
-        :param klineType:
-        :return: 符合条件的产品列表
-        '''
 
-        firstsellprodlist = []
-        return firstsellprodlist
+def enttheorysecbuy(logicname, klineType='D') -> list:
+    '''
+     依据传入的级别，寻找二买
+    :param self:
+    :param logicname:比如trade1，trade2等
+    :param klineType:
+    :return:
+    '''
 
-    def enttheorysecondsell(self, klineType='D') -> list:
-        '''
-         依据传入的级别，产品在快出现二卖
-        :param self:
-        :param klineType:
-        :return: 符合条件的产品列表
-        '''
+    secbuyprodlist = []
+    return secbuyprodlist
 
-        secondsellprodlist = []
-        return secondsellprodlist
+
+def enttheorysecbuy(logicname, klineType='D') -> list:
+    '''
+     依据传入的级别，寻找三买
+    :param self:
+    :param klineType:
+    :return: 符合条件的产品列表
+    '''
+
+    thirbuyprodlist = []
+    return thirbuyprodlist
+
+
+def enttheoryincentral(logicname, klineType='D') -> list:
+    '''
+     依据传入的级别，产品在中枢中
+    :param self:
+    :param klineType:
+    :return: 符合条件的产品列表
+    '''
+
+    centralprodlist = []
+    return centralprodlist
+
+
+def enttheoryfirstsell(logicname, klineType='D') -> list:
+    '''
+     依据传入的级别，产品在快出现一卖
+    :param self:
+    :param klineType:
+    :return: 符合条件的产品列表
+    '''
+
+    firstsellprodlist = []
+    return firstsellprodlist
+
+
+def enttheorysecondsell(logicname, klineType='D') -> list:
+    '''
+     依据传入的级别，产品在快出现二卖
+    :param self:
+    :param klineType:
+    :return: 符合条件的产品列表
+    '''
+
+    secondsellprodlist = []
+    return secondsellprodlist
+
 
 from multiprocessing import Pool
 from finance.servicelib.public import public as pb
@@ -457,9 +513,7 @@ from finance.servicelib.public import public as pb
 if __name__ == "__main__":
     path = 'D:/software/new_haitong'
 
-
     # 按分库进行并发
-    with Pool(3) as p:
-        print(p.map(futureKLine, ["trade1", "trade2", "trade3"]))
-
-
+    # with Pool(len(gc.DBTRADELOGNAMELIST)) as p:
+    #     print(p.map(futureKLine, gc.DBTRADELOGNAMELIST))
+    enttheoryfirbuy(gc.DBTRADELOGNAMELIST[0])

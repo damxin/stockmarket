@@ -574,7 +574,7 @@ ENTDAYTRADEDATA_INSERTDATA = "('%s',%d,%f,%f,%f,%f,'%s','%s'),"
 # 日交易包含关系处理后的数据插入 end
 
 # 日entdaytradedata表中数据获取 begin
-ENTDAYTRADEDATA_GET="select product_code, trade_date,open_price,high_price,close_price,low_price,merge_flag,updown_flag from %s a where a.product_code = '%s' and a.trade_date > %d order by a.trade_date "
+ENTDAYTRADEDATA_GET="select product_code, trade_date,open_price,high_price,close_price,low_price,merge_flag,updown_flag,trade_time from %s a where a.product_code = '%s' and a.trade_date >= %d and a.trade_time >= %d order by a.trade_date,a.trade_time "
 ENTDAYTRADEDATA_UPDATETBL = "update %s "
 ENTDAYTRADEDATA_UPDATEUUPDOWNFLAG = "set updown_flag = %s where product_code = %s and trade_date = %s"
 ENTDAYTRADEDATA_REALUPDATEUUPDOWNFLAG = "update %s set updown_flag = '%s' where product_code = '%s' and trade_date = %s"

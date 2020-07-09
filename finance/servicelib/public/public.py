@@ -137,6 +137,16 @@ def getTodayDate():
     return todayday
 
 
+def getlastyear():
+    '''
+    返回去年日期，比如现在20191010，则返回20181010
+    int :return:
+    '''
+    todayday = int((date.today()).strftime("%Y%m%d"))
+    lastday = (int(todayday / 10000) - 1) * 10000 + todayday % 10000
+    return lastday
+
+
 def listdictTypeChangeToDataFrame(datalistdict):
     '''
     list[dict]数据转换为dataframe，同时类型要正确转换
@@ -237,6 +247,7 @@ def downloadloginsorupd(dbcnt, productcode, eventtype, dealstatus, sourcetype):
     :param sourcetype: 0.各自下载 1.批量下载
     :return: True：成功，False：失败
     '''
+    import time
     if productcode is None:
         raise ValueError("productcode do not valid value!")
         return False
@@ -288,3 +299,4 @@ def getRealTableName(tableName, productCode):
     realtablename = tableName + strresult.zfill(2)
 
     return realtablename
+
