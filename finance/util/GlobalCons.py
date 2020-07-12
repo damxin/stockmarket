@@ -71,6 +71,10 @@ TRENDFLAG_DOWN = "DOWN"
 # 多少笔回一次数据库
 COUNTNUM = 50
 
+# 价格最高值，价格最低值
+MAXPRICE = 9999999999.99
+MINPRICE = 0
+
 
 # 主库的逻辑名
 DBBASELOGICNAME = "dbbase"

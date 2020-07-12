@@ -95,7 +95,7 @@ class EntangLingTheory():
                     self.prod_code, lastTradeData[gc.TRADEDATEKEY], lastTradeData[gc.OPENPRICEKEY],
                     lastTradeData[gc.HIGHPRICEKEY], lastTradeData[gc.CLOSEPRICEKEY],
                     lastTradeData[gc.LOWPRICEKEY], lastTradeData[gc.MERGEFLAGKKEY],
-                    "N")
+                    "N", 0)
                 # 这边需要调整为每200条插入一次
                 # 趋势判断
                 if lastTradeData[gc.HIGHPRICEKEY] > curOneTradeData[gc.HIGHPRICEKEY]:
@@ -127,11 +127,21 @@ class EntangLingTheory():
         :return:
         '''
         realTblName = pb.getRealTableName(srcTable, prod_code)
+        tradeDataSql = sc.ENTDAYTRADEDATA_LASTAORBDATEGET % (realTblName, prod_code)
+        souceDbTrade = dbcnt.getDBCntInfoByTableName(srcTable, prod_code)
+        destRetList = souceDbTrade.execSelectSmallSql(tradeDataSql)
+        maxtradedate = 0
+        if len(destRetList) > 0:
+            maxtradedate = destRetList[0]['maxtradedate']
+            maxtradedate = maxtradedate - 1
+        # update语句准备
         updatetblsql = sc.ENTDAYTRADEDATA_UPDATETBL % realTblName
         updateupdownflagsql = updatetblsql + sc.ENTDAYTRADEDATA_UPDATEUUPDOWNFLAG
+
+        # 获取需要处理的数据
         dbCntInfo = dbcnt.getDBCntInfoByTableName(srcTable, prod_code)
         # product_code, trade_date,open_price,high_price,close_price,low_price,merge_flag,updown_flag
-        selectSql = sc.ENTDAYTRADEDATA_GET % (realTblName, prod_code, beginDate, 0)
+        selectSql = sc.ENTDAYTRADEDATA_GET % (realTblName, prod_code, maxtradedate, 0)
         entdayTrDataList = dbCntInfo.execSelectAllSql(selectSql)
         if len(entdayTrDataList) == 0:
             return None
@@ -146,7 +156,7 @@ class EntangLingTheory():
 
         # 一维数组
         resultSeries = curEntdayTrDataDf.close_price.diff()
-        print(type(resultSeries))
+        # print(type(resultSeries))
         firstIndex = 0
         lastTradeDate = 0
         lastCloseDiff = 0
@@ -210,9 +220,16 @@ class EntangLingTheory():
         logging.info("apicalOrBasicGet productcode(%s) begin" % prod_code)
         realTblName = pb.getRealTableName(srcTable, prod_code)
         dbCntInfo = dbcnt.getDBCntInfoByTableName(srcTable, prod_code)
+        tradeDataSql = sc.ENTDAYTRADEDATA_LASTAORBDATEGET % (realTblName, prod_code)
+        destRetList = dbCntInfo.execSelectSmallSql(tradeDataSql)
+        maxtradedate = 0
+        if len(destRetList) > 0:
+            maxtradedate = destRetList[0]['maxtradedate']
+            maxtradedate = maxtradedate - 1
+
         # product_code, trade_date,open_price,high_price,close_price,low_price,merge_flag,updown_flag
         # 获取最近的A或者B的交易日期数据。
-        selectSql = sc.ENTDAYTRADEDATA_LASTAORBGET % (realTblName, prod_code, realTblName, prod_code)
+        selectSql = sc.ENTDAYTRADEDATA_GET % (realTblName, prod_code, maxtradedate, 0)
         entdayTrDataList = dbCntInfo.execSelectAllSql(selectSql)
         if len(entdayTrDataList) == 0:
             print("no data will be deal!")
@@ -227,7 +244,12 @@ class EntangLingTheory():
         realApicalBasicFlagIndex = -1
         highOrLowPrice = 0
         realApicalBasicFlagList = []
+        statusmodifyflag = False
+        newhighprice = 0
+        newlowprice = 0
         for tradeDateIndex, curUpDownData in curEntdayTrDataDf.iterrows():
+            newhighprice = curUpDownData[gc.HIGHPRICEKEY]
+            newlowprice = curUpDownData[gc.LOWPRICEKEY]
             # 不存在Apical/Basic，或者数据的首条记录就是Apical/Basic
             if curUpDownData[gc.UPDOWNFLAGKEY] == gc.UPTYPING and lastStatus != curUpDownData[gc.UPDOWNFLAGKEY]:
                 # 不存在Apical/Basic
@@ -242,16 +264,22 @@ class EntangLingTheory():
                     realApicalBasicFlagList.append({tradeDateIndex: gc.APICALTYPING})
                     lastStatus = gc.APICALTYPING
                     curMiddleCount = 0
+                    # statusmodifyflag = False
                     realApicalBasicFlagIndex = realApicalBasicFlagIndex + 1
                     highOrLowPrice = curUpDownData[gc.HIGHPRICEKEY]
-                    # print("%d的日期%d为顶，金额为%f" % (realApicalBasicFlagIndex, tradeDateIndex, highOrLowPrice))
+                    logging.debug(
+                        "%d is apical %d, price(%f)" % (realApicalBasicFlagIndex, tradeDateIndex, highOrLowPrice))
                 # 存在更高的顶
                 elif lastStatus in gc.APICALTYPING and highOrLowPrice < curUpDownData[gc.HIGHPRICEKEY]:
                     realApicalBasicFlagList.pop(realApicalBasicFlagIndex)
                     realApicalBasicFlagList.append({tradeDateIndex: gc.APICALTYPING})
                     curMiddleCount = 0
+                    # statusmodifyflag = True
                     highOrLowPrice = curUpDownData[gc.HIGHPRICEKEY]
-                    # print("%d的日期%d修正为更高的顶，金额为%f" % (realApicalBasicFlagIndex, tradeDateIndex, highOrLowPrice))
+                    logging.debug("%d change apical date %d higher apical,price(%f)" % (
+                        realApicalBasicFlagIndex, tradeDateIndex, highOrLowPrice))
+                else:
+                    curMiddleCount = curMiddleCount + 1
 
             elif curUpDownData[gc.UPDOWNFLAGKEY] == gc.DOWNTYPING and lastStatus != curUpDownData[gc.UPDOWNFLAGKEY]:
                 # 不存在Apical/Basic
@@ -266,16 +294,23 @@ class EntangLingTheory():
                     realApicalBasicFlagList.append({tradeDateIndex: gc.BASETYPING})
                     lastStatus = gc.BASETYPING
                     curMiddleCount = 0
+                    # statusmodifyflag = False
                     realApicalBasicFlagIndex = realApicalBasicFlagIndex + 1
                     highOrLowPrice = curUpDownData[gc.LOWPRICEKEY]
-                    # print("%d的日期%d为底，金额为%f" % (realApicalBasicFlagIndex, tradeDateIndex, highOrLowPrice))
+                    logging.debug("%d index date %d is basing,price(%f)" % (
+                        realApicalBasicFlagIndex, tradeDateIndex, highOrLowPrice))
+
                 # 存在更低的D
                 elif lastStatus in gc.BASETYPING and highOrLowPrice > curUpDownData[gc.LOWPRICEKEY]:
                     realApicalBasicFlagList.pop(realApicalBasicFlagIndex)
                     realApicalBasicFlagList.append({tradeDateIndex: gc.BASETYPING})
                     curMiddleCount = 0
+                    # statusmodifyflag = True
                     highOrLowPrice = curUpDownData[gc.LOWPRICEKEY]
-                    # print("%d的日期%d修正为更低的底，金额为%f" % (realApicalBasicFlagIndex, tradeDateIndex, highOrLowPrice))
+                    logging.debug("%d index date %d change to lower basing,price(%f)" % (
+                        realApicalBasicFlagIndex, tradeDateIndex, highOrLowPrice))
+                else:
+                    curMiddleCount = curMiddleCount + 1
             elif curUpDownData[gc.UPDOWNFLAGKEY] == gc.APICALTYPING and lastStatus != curUpDownData[gc.UPDOWNFLAGKEY]:
                 lastStatus = gc.APICALTYPING
 
@@ -289,9 +324,19 @@ class EntangLingTheory():
             else:
                 curMiddleCount = curMiddleCount + 1
         # 最后一笔由于还未经过后面的验证，不能认为是顶或者底
+        # 但是如果最后一个后续已经存在处理后5根，那么就依然成立。
         if realApicalBasicFlagIndex >= 0:
-            realApicalBasicFlagList.pop(realApicalBasicFlagIndex)
-            realApicalBasicFlagIndex = realApicalBasicFlagIndex - 1
+            if lastStatus in gc.BASETYPING and newlowprice > highOrLowPrice and curMiddleCount >= 4:
+                curMiddleCount = 0
+            elif lastStatus in gc.APICALTYPING and newhighprice < highOrLowPrice and curMiddleCount >= 4:
+                curMiddleCount = 0
+            else:
+                logging.info(
+                    "because of laststatus is %s and newprice(high(%f),low(%f)) highorlowprice(%f),curmidelecount(%d),should pop" % (
+                        lastStatus, newhighprice, newlowprice, highOrLowPrice, curMiddleCount))
+                realApicalBasicFlagList.pop(realApicalBasicFlagIndex)
+                realApicalBasicFlagIndex = realApicalBasicFlagIndex - 1
+
             # print("%d这条暂时不能认为是顶或者底" % (realApicalBasicFlagIndex + 1))
         # print(realApicalBasicFlagList)
         # 根据realApicalBasicFlagList进行顶或者底的更新
@@ -313,6 +358,7 @@ class EntangLingTheory():
             updateResult = dbCntInfo.execupdatemanysql(updateabflagsql, updateablist)
             if updateResult is not None:
                 print("异常语句:" + updateabflagsql)
+                logging.error("数据库更新异常:" + updateabflagsql)
                 raise Exception("数据库更新异常!")  # 异常被抛出，print函数无法执行
 
         logging.info("apicalOrBasicGet productcode(%s) finish " % prod_code)
@@ -332,13 +378,21 @@ class EntangLingTheory():
         # 从producttradedata读取数据
         if klineType == gc.K_DAY:
             # 获取已经插入的最大tradedate
+            srcTable = "entdaytradedata"
+            realTblName = pb.getRealTableName(srcTable, self.prod_code)
+            tradeDataSql = sc.ENTDAYTRADEDATA_MAXTRADEDATEGET % (realTblName, self.prod_code)
+            souceDbTrade = dbcnt.getDBCntInfoByTableName(srcTable, self.prod_code)
+            destRetList = souceDbTrade.execSelectSmallSql(tradeDataSql)
+            maxtradedate = 0
+            if len(destRetList) > 0:
+                maxtradedate = destRetList[0]['maxtradedate']
 
             srcTable = "producttradedata"
             souceDbTrade = dbcnt.getDBCntInfoByTableName(srcTable, self.prod_code)
-            tradeDataSql = sc.DAYTRADEDATA_GET % (self.prod_code, 0)
+            tradeDataSql = sc.DAYTRADEDATA_GET % (self.prod_code, maxtradedate)
 
         tradeDataList = souceDbTrade.execSelectAllSql(tradeDataSql)
-        print(type(tradeDataList))
+        # print(type(tradeDataList))
         if len(tradeDataList) > 0:
             # 包含关系处理
             incResult = self.inclusionrRelotionDeal(tradeDataList)
@@ -374,13 +428,15 @@ def futureKLine(logicname):
             tradelogicname = dbCntInfo.getTradeLogicNameByProductCodeAndTradeDate(productCode, 0)
             if logicname not in tradelogicname:
                 continue
+            if productCode not in ("002236", "002167"):
+                continue
             logging.info("%d productcode(%s) begin to deal" % (rowIndex, productCode))
             entangLingTheory = EntangLingTheory(productCode)
             resultret = entangLingTheory.kLineMerge(gc.K_DAY)
             if resultret is not None:
                 break
             logging.info("productcode(%s) finish!" % productCode)
-        print("future all finished!")
+        logging.info("future all finished!")
     finally:
         dbCntInfo.closeAllDBConnect()
     return None
@@ -390,10 +446,17 @@ def enttheoryfirbuy(logicname, klineType='D') -> list:
     '''
      依据传入的级别，寻找一买
      下跌过程中，至少存在一个中枢(可以是一段时间在较窄的区间震荡，一直不形成中枢)
+     apicalbasiclist 这个格式是list[list],内部的list记录内容[起始日期，起始时间,价格，终止日期，终止时间, 价格，'Z/U/D',第几个中枢],
+     U:上涨一笔，D下跌一笔，Z中枢中的笔,如果为Z，则第几个中枢需要输入，为1,2,3， 从1开始，如果是U或者D，则都填写为0
+     由于要找的是将有机会出现一买，因此对应的特征序列是找向上的笔。向上笔有重叠区间，那么就是一个中枢
+
+     先通过中枢来终结，再通过1+1来终结
+
     :param self:
     :param klineType:
     :return:
     '''
+    import copy
 
     firstbuyprodlist = []
     stocklog.initLogging(logicname)
@@ -406,39 +469,191 @@ def enttheoryfirbuy(logicname, klineType='D') -> list:
             tradelogicname = dbCntInfo.getTradeLogicNameByProductCodeAndTradeDate(productcode, 0)
             if logicname not in tradelogicname:
                 continue
-            logging.info("logic(%s) %d productcode(%s) begin to deal" % (logicname, rowIndex, productcode))
+            if productcode not in "002042":
+                continue
+            logging.info("logic(%s) %d productcode(%s) begin to find first buy" % (logicname, rowIndex, productcode))
 
             lastyeartoday = 0
             lastyeartime = 0
             curtblname = gc.SOURCETABLEDICT[klineType]
+            # lastworkday = 0
+            # todayhighprice = 0
+            # todaylowprice = 0
             if klineType in gc.K_DAY:
                 # 读取近一年数据，一个股票不可能一年一直再跌，如果是的话则可关注
                 lastyeartoday = pb.getlastyear()
+                # lastworkday = pb.getlastworkday()
+                # selectSql = sc.DAYTRADEDATA_ONEDATEGET % (productcode, lastworkday)
+                # dbtradecnt = dbcnt.getDBCntInfoByTableName(curtblname, productcode)
+                # entdayTrDataList = dbtradecnt.execSelectAllSql(selectSql)
+                # todayhighprice = entdayTrDataList[gc.HIGHPRICEKEY]
+                # todaylowprice = entdayTrDataList[gc.LOWPRICEKEY]
+                # logging.debug("%d productcode(%s) highprice(%f),lowprice(%f)" % (
+                # lastworkday, productcode, todayhighprice, todaylowprice))
 
             realtablaname = pb.getRealTableName(curtblname, productcode)
-            selectSql = sc.ENTDAYTRADEDATA_GET % (realtablaname, productcode, lastyeartoday, lastyeartime)
+            selectSql = sc.ENTDAYTRADEDATA_ABTYPINGGET % (realtablaname, productcode, lastyeartoday, lastyeartime)
             dbtradecnt = dbcnt.getDBCntInfoByTableName(curtblname, productcode)
             entdayTrDataList = dbtradecnt.execSelectAllSql(selectSql)
             if len(entdayTrDataList) == 0:
-                return firstbuyprodlist
-            # 逆序
+                logging.info("productcode(%s) no data be found,selectSql(%s)" % (productcode, selectSql))
+                continue
+            # 逆序, df中的值都是顶和底的笔表示
             entdayTrDataDf = pd.DataFrame(entdayTrDataList)
             entdayTrDataDf = entdayTrDataDf.set_index([gc.TRADEDATEKEY, gc.TRADETIMEKEY])
             curEntdayTrDataDf = entdayTrDataDf.iloc[::-1]
             # tuple (20190710, 0) Series
+            firsttime = 0
+            nextprodcodeflag = False
+            apicalbasiclist = []
+            curinnerlist = []
             for tradedatetupleIndex, curapcialbasicserialdata in curEntdayTrDataDf.iterrows():
                 # print(type(tradedatetupleIndex))
                 # print(tradedatetupleIndex)
                 # print(type(curapcialbasicserialdata))
                 # print(curapcialbasicserialdata)
                 # 想要出现一买，必须首先找到的是顶分型，之后如果做出底分型才能是一买，如果先找到底分型则跳过。
-                if curapcialbasicserialdata[gc.UPDOWNFLAGKEY] in gc.APICALTYPING:
+                updownstatus = curapcialbasicserialdata[gc.UPDOWNFLAGKEY]
+                if firsttime == 0 and updownstatus in gc.BASETYPING:
+                    nextprodcodeflag = True
+                    firsttime = firsttime + 1
+                    logging.info(
+                        "%d productcode(%s) first type not apicaltyping!" % (tradedatetupleIndex[0], productcode))
                     break
+                # 1. 出现中枢，或者平台整理, 找到一个底比之前的顶都高,图形参考下跌的图形.png，超过这个图形的再说
+                # 中枢开始的顶，需要满足1.1 顶之前的底
+                if updownstatus in gc.APICALTYPING:
+                    firsttime = firsttime + 1
+                    # 日期
+                    curinnerlist.append(tradedatetupleIndex[0])
+                    # 时间
+                    curinnerlist.append(tradedatetupleIndex[1])
+                    curinnerlist.append(curapcialbasicserialdata[gc.HIGHPRICEKEY])
+                    if len(curinnerlist) >= 6:
+                        curinnerlist.append(gc.DOWNTYPING)
+                        curinnerlist.append(0)
+                        apicalbasiclist.append(copy.deepcopy(curinnerlist))
+                        curinnerlist.clear()
+                        # 日期
+                        curinnerlist.append(tradedatetupleIndex[0])
+                        # 时间
+                        curinnerlist.append(tradedatetupleIndex[1])
+                        curinnerlist.append(curapcialbasicserialdata[gc.HIGHPRICEKEY])
+                    # apicalbasiclist.append((updownstatus, curapcialbasicserialdata[gc.HIGHPRICEKEY]))
+                    # maxapicalprice = max(maxapicalprice, curapcialbasicserialdata[gc.HIGHPRICEKEY])
+                    # zcfirst = zcfirst + 1
+                    # firsttime = firsttime + 1
+                    logging.info("%d productcode(%s) is apicaltyping!" % (tradedatetupleIndex[0], productcode))
+                elif updownstatus in gc.BASETYPING:
+                    logging.info("%d productcode(%s) is basetyping!" % (tradedatetupleIndex[0], productcode))
+                    # 日期
+                    curinnerlist.append(tradedatetupleIndex[0])
+                    # 时间
+                    curinnerlist.append(tradedatetupleIndex[1])
+                    curinnerlist.append(curapcialbasicserialdata[gc.LOWPRICEKEY])
+                    if len(curinnerlist) >= 6:
+                        curinnerlist.append(gc.UPTYPING)
+                        curinnerlist.append(0)
+                        apicalbasiclist.append(copy.deepcopy(curinnerlist))
+                        curinnerlist.clear()
+                        # 日期
+                        curinnerlist.append(tradedatetupleIndex[0])
+                        # 时间
+                        curinnerlist.append(tradedatetupleIndex[1])
+                        curinnerlist.append(curapcialbasicserialdata[gc.LOWPRICEKEY])
+            logging.info("productcode(%s) bi merge finish!" % productcode)
+            print(apicalbasiclist)
+            # 由于要找的是将有机会出现一买，因此对应的特征序列是找向上的笔。向上笔有重叠区间，那么就是一个中枢
+            zcgdpricelist = []
+            ggprice = gc.MINPRICE
+            glprice = gc.MAXPRICE
+            ddprice = gc.MAXPRICE
+            dlprice = gc.MINPRICE
+            firsttime = 0
+            zsstartdate = 0
+            zsstarttime = 0
+            zsenddate = 0
+            zsendtime = 0
+            lastddprice = 0
+            # 记录第一次脱离中枢的位置
+            curendzsindex = 0
+            for curlistindex in range(len(apicalbasiclist)):
+                curinnerlist = apicalbasiclist[curlistindex]
+                if curinnerlist[6] not in gc.UPTYPING:
+                    continue
 
+                if firsttime == 0:
+                    ggprice = curinnerlist[2]
+                    glprice = curinnerlist[2]
+                    ddprice = curinnerlist[5]
+                    dlprice = curinnerlist[5]
+                    firsttime = firsttime + 1
+                    zsstartdate = curinnerlist[0]
+                    zsstarttime = curinnerlist[1]
+                else:
+                    # 形成中枢了。
+                    if curinnerlist[5] < glprice:
+                        ggprice = max(ggprice, curinnerlist[2])
+                        glprice = min(glprice, curinnerlist[2])
+                        ddprice = min(ddprice, curinnerlist[5])
+                        dlprice = max(dlprice, curinnerlist[5])
+                        zsenddate = curinnerlist[3]
+                        zsendtime = curinnerlist[4]
+                    else:
+                        # 存在某一笔在中枢下方，不合理，已经结束
+                        if curinnerlist[2] < dlprice:
+                            nextprodcodeflag = True
+                            break
+                        if ggprice != gc.MAXPRICE:
+                            zcgdpricelist.append([zsenddate, zsendtime, zsstartdate, zsstarttime, dlprice, glprice])
+                            # 此时需要判断是否1+1终结,这个时候需要判断是向下的两笔是否满足1+1终结的条件, 这里不能这么简单的判断，
+                            # 因为如果是多个中枢的情况就没办法判断了。
+                            # curendzsindex = curlistindex
+                            afterlistindex = curlistindex - 1
+                            beforelistindex = curlistindex + 1
+                            befbeforelistindex = beforelistindex + 2
+                            if befbeforelistindex < len(apicalbasiclist):
+                                befbeforedatalist = apicalbasiclist[befbeforelistindex]
+                                beforedatalist = apicalbasiclist[beforelistindex]
+                                afterdatalist = apicalbasiclist[afterlistindex]
+                                if befbeforedatalist[2] < beforedatalist[2] and beforedatalist[2] > afterdatalist[2] and \
+                                        beforedatalist[5] > afterdatalist[5]:
+                                    nextprodcodeflag = True
+                                    logging.info(
+                                        "date(%d,%d)productcode(%s)  1+1 three k end, the highest price(%f)!" % (
+                                            beforedatalist[3], beforedatalist[4], productcode, beforedatalist[5]))
+                                    break
+                            elif beforelistindex < len(apicalbasiclist):
+                                beforedatalist = apicalbasiclist[beforelistindex]
+                                afterdatalist = apicalbasiclist[afterlistindex]
+                                # 1 + 1终结
+                                if beforedatalist[2] > afterdatalist[2] and beforedatalist[5] > afterdatalist[5]:
+                                    nextprodcodeflag = True
+                                    logging.info(
+                                        "date(%d,%d)productcode(%s)  1+1 two k end, the highest price(%f)!" % (
+                                            beforedatalist[3], beforedatalist[4], productcode, beforedatalist[5]))
+                                    break
 
+                        firsttime = 0
+                        ggprice = curinnerlist[2]
+                        glprice = curinnerlist[2]
+                        ddprice = curinnerlist[5]
+                        dlprice = curinnerlist[5]
+                        firsttime = firsttime + 1
+                        zsstartdate = curinnerlist[0]
+                        zsstarttime = curinnerlist[1]
+            if nextprodcodeflag is True:
+                if len(zcgdpricelist) == 0:
+                    logging.info("productcode(%s) first type not apicaltyping!" % productcode)
+                    continue
+                else:
+                    firstbuyprodlist.append(productcode)
+                    logging.info("productcode(%s) be found exist first buy!" % productcode)
+                    print("productcode(%s) begin to found exist first buy!" % productcode)
+                    print(zcgdpricelist)
+                    print("productcode(%s) end to found exist first buy!" % productcode)
 
-                # 1. 下跌趋势,  两个中枢
-            logging.info("productcode(%s) finish!" % productcode)
+            logging.info("productcode(%s) finish finding first buy!" % productcode)
         print("future all finished!")
     finally:
         logging.info(logicname + " close all dbconnect!")
@@ -516,4 +731,6 @@ if __name__ == "__main__":
     # 按分库进行并发
     # with Pool(len(gc.DBTRADELOGNAMELIST)) as p:
     #     print(p.map(futureKLine, gc.DBTRADELOGNAMELIST))
-    enttheoryfirbuy(gc.DBTRADELOGNAMELIST[0])
+    futureKLine(gc.DBTRADELOGNAMELIST[3])
+    # firstbuyprodlist = enttheoryfirbuy(gc.DBTRADELOGNAMELIST[3])
+    # print(firstbuyprodlist)

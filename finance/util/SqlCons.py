@@ -566,11 +566,13 @@ TDXDATAINSERTDATABASE="INSERT INTO producttradedata(product_code, trade_date,ope
 # 日交易数据获取 begin
 DAYTRADEDATA_GET="select product_code, trade_date,open_price,high_price,close_price,low_price,product_volume,product_amount from \
  producttradedata where product_code = '%s' and trade_date > %d order by trade_date "
+DAYTRADEDATA_ONEDATEGET="select product_code, trade_date,open_price,high_price,close_price,low_price,product_volume,product_amount from \
+ producttradedata where product_code = '%s' and trade_date = %d "
 # 日交易数据获取 end
 
 # 日交易包含关系处理后的数据插入 begin
-ENTDAYTRADEDATA_INSERT = "INSERT INTO %s (product_code, trade_date,open_price,high_price,close_price,low_price,merge_flag,updown_flag) VALUES"
-ENTDAYTRADEDATA_INSERTDATA = "('%s',%d,%f,%f,%f,%f,'%s','%s'),"
+ENTDAYTRADEDATA_INSERT = "INSERT INTO %s (product_code, trade_date,open_price,high_price,close_price,low_price,merge_flag,updown_flag, trade_time) VALUES"
+ENTDAYTRADEDATA_INSERTDATA = "('%s',%d,%f,%f,%f,%f,'%s','%s', %d),"
 # 日交易包含关系处理后的数据插入 end
 
 # 日entdaytradedata表中数据获取 begin
@@ -578,9 +580,10 @@ ENTDAYTRADEDATA_GET="select product_code, trade_date,open_price,high_price,close
 ENTDAYTRADEDATA_UPDATETBL = "update %s "
 ENTDAYTRADEDATA_UPDATEUUPDOWNFLAG = "set updown_flag = %s where product_code = %s and trade_date = %s"
 ENTDAYTRADEDATA_REALUPDATEUUPDOWNFLAG = "update %s set updown_flag = '%s' where product_code = '%s' and trade_date = %s"
-# 最近A或者B交易日数据
-ENTDAYTRADEDATA_LASTAORBGET = "select product_code, trade_date,open_price,high_price,close_price,low_price,merge_flag,updown_flag \
- from %s a where a.product_code = '%s' and a.trade_date >= (SELECT IFNULL(MAX(trade_date),0) FROM %s a WHERE a.product_code = '%s' AND a.updown_flag IN ('A','B')) \
- order by a.trade_date "
+ENTDAYTRADEDATA_ABTYPINGGET="select product_code, trade_date,open_price,high_price,close_price,low_price,merge_flag,updown_flag,trade_time from %s a \
+ where a.product_code = '%s' and a.trade_date >= %d and updown_flag in ('A','B') and a.trade_time >= %d order by a.trade_date,a.trade_time "
+ENTDAYTRADEDATA_MAXTRADEDATEGET="select ifnull(max(trade_date),0) maxtradedate from %s a where a.product_code = '%s' "
+# 最近A或者B交易日获取
+ENTDAYTRADEDATA_LASTAORBDATEGET = "select ifnull(max(trade_date),0) maxtradedate from %s a where a.product_code = '%s' and a.updown_flag IN ('A','B')"
 # 日entdaytradedata表中数据获取 end
 

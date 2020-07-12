@@ -136,6 +136,22 @@ def getTodayDate():
     todayday = int((date.today()).strftime("%Y%m%d"))
     return todayday
 
+def getlastworkday():
+    '''
+    获取最近的工作日
+    :return:
+    '''
+    import time
+
+    finanalWorkDate = getTodayDate()
+    curHour = time.localtime().tm_hour
+    if curHour < 17:
+        finanalWorkDate = getYesterday()
+    # select max(trade_date) from openday where trade_date < %d
+    selectsql = "select ifnull(max(trade_date),0) maxworkdate from openday where trade_flag = '1' and trade_date <= %d"% finanalWorkDate
+    dbopenday = dbcnt.getDBCntInfoByTableName("openday")
+    retresult = dbopenday.execSelectSmallSql(selectsql)
+    return retresult[0]['maxworkdate']
 
 def getlastyear():
     '''
