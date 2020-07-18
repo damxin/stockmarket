@@ -1,10 +1,10 @@
-# import tushare as ts
+import tushare as ts
 # from sqlalchemy import create_engine
 # from selenium import webdriver  # 导入Selenium的webdriver
 # from selenium.webdriver.common.keys import Keys  # 导入Keys
 # import pymysql
 # import win32gui as win32gui
-from finance.servicelib.processinit import dbcnt
+# from finance.servicelib.processinit import dbcnt
 from pyecharts import options as opts
 from pyecharts.charts import Kline
 from finance.servicelib.public import public as pb
@@ -119,114 +119,46 @@ def stock_csv(softpath, filepath, name):
             file_object.writelines(list)
         file_object.close()
 
-def tdxShLdayToStock(softPath,dbCntInfo, dataType="sh", relativePath=None):
-    '''
-    tdx数据读取到数据库中
-    参考网站:https://www.jianshu.com/p/9dd3ef74fe96
-    tdx目录结构：https://www.cnblogs.com/ftrako/p/3800687.html
-    :param softpath:
-    :param dataType:
-    :return:
-    '''
-
-    import os
-    import struct
-    from finance.util import DictCons as dictcons
-    from finance.util import SqlCons as sqlcons
-
-    relativePath = "/vipdoc/"+dataType+"/lday/" if relativePath is None else relativePath
-    absolutePath = softPath+relativePath
-
-    sourcetable = "producttradedata"
-    listTradeFile = os.listdir(absolutePath)
-    for productTradeFile in listTradeFile:
-        print("正在处理产品代码为的文件:" + productTradeFile)
-        productCode = productTradeFile[2:-4]
-        # SELECT subleft3 FROM (SELECT  LEFT(a.`product_code`,3) subleft3,a.product_code FROM producttradedata a GROUP BY a.product_code) a GROUP BY subleft3;
-        # 000,001,002,003,300,600,601,603,688
-        subleft3 = productCode[:3]
-        marketType=""
-        if subleft3 in dictcons.DICTCONS_CODETOMARKETTYPE:
-            marketType = dictcons.DICTCONS_CODETOMARKETTYPE[subleft3]
-            print("正在处理产品代码为(" + productCode + ")的markettype:" + str(marketType))
-        else :
-            print("正在处理产品代码为(" + productCode + ")的文件:" + subleft3)
-            continue
-        # sh000001是上证指数，而000001是平安银行是深圳A股，因此这里要过滤
-        if dataType == "sz":
-            if (marketType==2 or marketType == 4 or marketType == 3) is False:
-                continue
-        else :
-            if (marketType == 1 or marketType == 8) is False:
-                continue
-
-        filepath = absolutePath + productTradeFile
-
-        # 获取该股票的最大日期
-        maxTradeDate = pb.getMaxTradeDateFromCurProductCode(dbCntInfo, productCode)
-        if maxTradeDate == 190000101:
-            print("当前产品%s没有在productbaseinfo表中,请添加!"%productCode)
-        print("正在处理产品代码为(" + productCode + ")的文件:" + filepath+"("+str(maxTradeDate)+")")
-        tableDbBase = dbCntInfo.getDBCntInfoByTableName(tablename=sourcetable, productcode=productCode)
-        with open(filepath, 'rb') as fname:
-            while True:
-                stock_date = fname.read(4)
-                stock_open = fname.read(4)
-                stock_high = fname.read(4)
-                stock_low = fname.read(4)
-                stock_close = fname.read(4)
-                stock_amount = fname.read(4)
-                stock_vol = fname.read(4)
-                stock_reservation = fname.read(4)
-
-                # date,open,high,low,close,amount,vol,reservation
-
-                if not stock_date:
-                    break
-                stock_date = struct.unpack("l", stock_date)  # 4字节 如20091229
-
-                tradedate = stock_date[0]
-                if tradedate<=maxTradeDate:
-                    continue
-                stock_open = struct.unpack("l", stock_open)  # 开盘价*100
-                openPrice = stock_open[0]/100.0
-                stock_high = struct.unpack("l", stock_high)  # 最高价*100
-                highPrice = stock_high[0]/100.0
-                stock_low = struct.unpack("l", stock_low)  # 最低价*100
-                lowPrice = stock_low[0]/100.0
-                stock_close = struct.unpack("l", stock_close)  # 收盘价*100
-                closePrice = stock_close[0] / 100.0
-                stock_amount = struct.unpack("f", stock_amount)  # 成交额
-                productAmount = stock_amount[0]
-                stock_vol = struct.unpack("l", stock_vol)  # 成交量
-                productVolumn = stock_vol[0]
-                # stock_reservation = struct.unpack("l", stock_reservation)  # 保留值
-                # print("%d,%f"%(tradedate,openPrice))
-                # 数据插入到数据库中
-                # product_code, trade_date,open_price,high_price,close_price,low_price,product_volume,product_amount
-                execlSql = sqlcons.TDXDATAINSERTDATABASE%(productCode,tradedate,openPrice,highPrice,closePrice,lowPrice,productVolumn,productAmount)
-                excepte = tableDbBase.execNotSelectSql(execlSql)
-                if excepte is not None :
-                    print(excepte)
-                    print("productVolumn(%f),productAmount(%f)"%(productVolumn,productAmount))
-                    print("执行异常，程序终止!")
-                    return excepte
-        print("产品代码为(" + productCode + ")的文件处理完毕!")
-    return None
 
 if __name__ == "__main__":
-    path = 'D:/software/new_haitong'
-    xmlfile = "G:\\nfx\\Python\\stockmarket\\finance\\resource\\finance.xml"
-    dbCntInfo = dbcnt.DbCnt(xmlfile)
-    resultexpt = tdxShLdayToStock(path,dbCntInfo,"sz")
-    if resultexpt is None:
-        tdxShLdayToStock(path, dbCntInfo, "sh")
-    dbCntInfo.closeAllDBConnect()
+    # path = 'D:/software/new_haitong'
+    # xmlfile = "G:\\nfx\\Python\\stockmarket\\finance\\resource\\finance.xml"
+    # dbCntInfo = dbcnt.DbCnt(xmlfile)
+    # resultexpt = tdxShLdayToStock(path,dbCntInfo,"sz")
+    # if resultexpt is None:
+    #     tdxShLdayToStock(path, dbCntInfo, "sh")
+    # dbCntInfo.closeAllDBConnect()
     # return
 # loginichat()
 # import sys;sys.argv = ['', 'Test.testName']
-# df = ts.get_hist_data("000001", start='2019-08-22', end='2019-08-31')
-# print(df)
+#     df = ts.get_hist_data("000001", start='2020-04-22', end='2020-04-25',ktype='30')
+    import os
+    import time
+    df = ts.get_stock_basics()
+    codelist = list(df.index)
+    filename = 'E:\\pydevproj\\stockproj\\stockmarket\\finance\\test'
+    for oneindex in range(len(codelist)):
+        print(codelist[oneindex]+ " begin")
+        df = ts.get_hist_data(codelist[oneindex], ktype='30')
+        if df is None:
+            continue
+        realfilename = filename + "\\"+codelist[oneindex]+".csv"
+        if os.path.exists(realfilename):
+            df.to_csv(realfilename, mode='a', header=None)
+        else:
+            df.to_csv(realfilename)
+        print(codelist[oneindex]+ " end")
+        time.sleep(1)
+
+    # df = ts.get_hist_data("000001", start='2020-04-22', end='2020-04-25',ktype='30')
+    # filename = 'c:/day/bigfile.csv'
+    # if os.path.exists(filename):
+    #     df.to_csv(filename, mode='a', header=None)
+    # else:
+    #     df.to_csv(filename)
+
+    # df = ts.get_index()
+    # print(df)
 # df = ts.get_stock_basics()
 # engine = create_engine('mysql+pymysql://root:root@127.0.0.1/stockmarket?charset=utf8')
 # df.to_sql('stock_basics', engine, if_exists="replace", index=False)
