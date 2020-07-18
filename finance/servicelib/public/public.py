@@ -136,6 +136,32 @@ def getTodayDate():
     todayday = int((date.today()).strftime("%Y%m%d"))
     return todayday
 
+def getlastworkday():
+    '''
+    获取最近的工作日
+    :return:
+    '''
+    import time
+
+    finanalWorkDate = getTodayDate()
+    curHour = time.localtime().tm_hour
+    if curHour < 17:
+        finanalWorkDate = getYesterday()
+    # select max(trade_date) from openday where trade_date < %d
+    selectsql = "select ifnull(max(trade_date),0) maxworkdate from openday where trade_flag = '1' and trade_date <= %d"% finanalWorkDate
+    dbopenday = dbcnt.getDBCntInfoByTableName("openday")
+    retresult = dbopenday.execSelectSmallSql(selectsql)
+    return retresult[0]['maxworkdate']
+
+def getlastyear():
+    '''
+    返回去年日期，比如现在20191010，则返回20181010
+    int :return:
+    '''
+    todayday = int((date.today()).strftime("%Y%m%d"))
+    lastday = (int(todayday / 10000) - 1) * 10000 + todayday % 10000
+    return lastday
+
 
 def listdictTypeChangeToDataFrame(datalistdict):
     '''
@@ -237,6 +263,7 @@ def downloadloginsorupd(dbcnt, productcode, eventtype, dealstatus, sourcetype):
     :param sourcetype: 0.各自下载 1.批量下载
     :return: True：成功，False：失败
     '''
+    import time
     if productcode is None:
         raise ValueError("productcode do not valid value!")
         return False
@@ -288,3 +315,4 @@ def getRealTableName(tableName, productCode):
     realtablename = tableName + strresult.zfill(2)
 
     return realtablename
+

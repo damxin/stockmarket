@@ -32,9 +32,18 @@ K_60MIN = 'S'
 K_30MIN = 'T'
 K_5MIN = 'F'
 
+SOURCETABLEDICT={K_YEAR:"entyeartradedata",
+                 K_MONTH:"entmonthtradedata",
+                 K_WEEK:"entweektradedata",
+                 K_DAY:"entdaytradedata",
+                 K_60MIN:"ent60mintradedata",
+                 K_30MIN:"ent30mintradedata",
+                 K_5MIN:"ent5mintradedata"}
+
 # producttradedata对应的常量
 PRODCODEKEY = "product_code"
 TRADEDATEKEY = "trade_date"
+TRADETIMEKEY = "trade_time"
 OPENPRICEKEY = "open_price"
 HIGHPRICEKEY = "high_price"
 CLOSEPRICEKEY = "close_price"
@@ -62,9 +71,15 @@ TRENDFLAG_DOWN = "DOWN"
 # 多少笔回一次数据库
 COUNTNUM = 50
 
+# 价格最高值，价格最低值
+MAXPRICE = 9999999999.99
+MINPRICE = 0
+
 
 # 主库的逻辑名
 DBBASELOGICNAME = "dbbase"
+# 分库的逻辑名
+DBTRADELOGNAMELIST=["trade1", "trade2", "trade3", "trade4", "trade5"]
 
 INDEX_LABELS = ['sh', 'sz', 'hs300', 'sz50', 'cyb', 'zxb', 'zx300', 'zh500']
 INDEX_SYMBOL = {'399990': 'sz399990', '000006': 'sh000006', '399998': 'sz399998',

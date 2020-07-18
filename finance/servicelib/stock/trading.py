@@ -12,7 +12,6 @@ import time
 import pandas as pd
 import logging
 
-
 from finance.dbsql import mysqldatabase
 from finance.servicelib.processinit import dbcnt
 from finance.servicelib.processinit import stocklog
@@ -20,6 +19,8 @@ from finance.util import SqlCons as sc
 from finance.util import GlobalCons as gc
 from finance.util import DictCons as dc
 from finance.servicelib.public import public as pb
+
+
 # from finance.util.formula import MA
 
 
@@ -30,6 +31,7 @@ def getStockBasics(dbCntInfo):
     engine = dbCntInfo.getEngineByTableName(tablename)
     basicdf.to_sql(tablename, engine, if_exists="replace", index=False)
     print("basic finish")
+
 
 def getProductBasicInfo(dbCntInfo):
     '''
@@ -61,7 +63,8 @@ def getProductBasicInfo(dbCntInfo):
     souceDbBase.closeDBConnect()
     destDbBase.closeDBConnect()
 
-def insertIntoNormalDbFromNotDealDBData(dbCntInfo,startdate,pcodeDataUpdateDict):
+
+def insertIntoNormalDbFromNotDealDBData(dbCntInfo, startdate, pcodeDataUpdateDict):
     '''
     从临时库的交易数据插入到正式库中
     :param dbCntInfo:
@@ -79,7 +82,7 @@ def insertIntoNormalDbFromNotDealDBData(dbCntInfo,startdate,pcodeDataUpdateDict)
             continue
         destDbBase = dbCntInfo.getDBCntInfoByTableName(tablename=destTable, productcode=productCode)
         if startdate == 0:
-            realDataSql = sc.PRODUCTHISTTRADEDATATUSHAREPRO_SQL % (sourceTable+productCode)
+            realDataSql = sc.PRODUCTHISTTRADEDATATUSHAREPRO_SQL % (sourceTable + productCode)
             while (True):
                 sourceRetList = sourceDbBase.execSelectManySql(realDataSql, ordercause)
                 if len(sourceRetList) == 0:
@@ -89,12 +92,13 @@ def insertIntoNormalDbFromNotDealDBData(dbCntInfo,startdate,pcodeDataUpdateDict)
                 for oneList in sourceRetList:
                     sourceList.append(tuple(oneList.values()))
                 destDbBase.execInsertManySql(sc.PRODUCTTRADEDATA_INSERTSQL, sourceList)
-        else :
+        else:
             realDataSql = sc.PRODUCTHISTTRADEDATATUSHAREPRO_SQL % (sourceTable + str(startdate))
 
     print("all productcode data insert success!")
 
-def getalltradeproductdate(dbCntInfo) -> pd.DataFrame :
+
+def getalltradeproductdate(dbCntInfo) -> pd.DataFrame:
     '''
     获取需要获取交易数据的产品的数据
     :param dbCntInfo:
@@ -121,33 +125,34 @@ def getalltradeproductdate(dbCntInfo) -> pd.DataFrame :
         listedDate = oneProductTuple["listed_date"]  ## 上市日期
         # 获取产品的起始日期,产品可能已经存在部分行情
         maxTradeDateSql = sc.PRODUCTMAXTRADEDATE_SQL % productCode
-        destDbBase = dbCntInfo.getDBCntInfoByTableName(tablename=destTable,productcode=productCode)
+        destDbBase = dbCntInfo.getDBCntInfoByTableName(tablename=destTable, productcode=productCode)
         destRetList = destDbBase.execSelectSmallSql(maxTradeDateSql)
         maxTradeDate = destRetList[0]['maxtradedate']
         print(rowIndex)
-        print(productCode+maxTradeDateSql)
+        print(productCode + maxTradeDateSql)
         startDate = listedDate
         if maxTradeDate > listedDate:
-            startDate = pb.getnextnday(maxTradeDate,1)
-        endDate = ((int(startDate / 10000))+10) * 10000 + 1231
+            startDate = pb.getnextnday(maxTradeDate, 1)
+        endDate = ((int(startDate / 10000)) + 10) * 10000 + 1231
         if int(listedDate / 10000) == int(finanalWorkDate / 10000):
             endDate = finanalWorkDate
         if endDate > finanalWorkDate:
             endDate = finanalWorkDate
         if startDate > finanalWorkDate:
             continue
-        print("startdate(%d),enddate(%d)"%(startDate,endDate))
+        print("startdate(%d),enddate(%d)" % (startDate, endDate))
         productcodelist.append(productCode)
         startdatelist.append(startDate)
         enddatelist.append(endDate)
     if len(productcodelist) > 0:
-        dfdict = {"productcode":productcodelist,"startdate":startdatelist,"enddate":enddatelist}
+        dfdict = {"productcode": productcodelist, "startdate": startdatelist, "enddate": enddatelist}
         df = pd.DataFrame(dfdict)
         df = df.set_index("productcode")
         return df
     return
 
-def getCurProductTradeData(productcode,dbCntInfo,engine):
+
+def getCurProductTradeData(productcode, dbCntInfo, engine):
     '''
     通过单一产品代码获取该产品的所有交易数据
     :param dbCntInfo:
@@ -166,7 +171,7 @@ def getCurProductTradeData(productcode,dbCntInfo,engine):
     # 建立连接与tusharepro
     pro = ts.pro_api('00f0c017db5d284d992f78f0971c73c9ecba4aa03dee2f38e71e4d9c')
 
-    oneProductTuple = pb.getCurProductBasicInfoByProductCode(dbCntInfo,productcode)
+    oneProductTuple = pb.getCurProductBasicInfoByProductCode(dbCntInfo, productcode)
     productCode = oneProductTuple["product_code"]  ## 产品代码
     listedDate = oneProductTuple["listed_date"]  ## 上市日期
     # 获取产品的起始日期,产品可能已经存在部分行情
@@ -242,7 +247,7 @@ def getAllNoneSubscriptionTradePriceFromTusharePro(dbCntInfo):
         enddate = oneproductdate["enddate"]
         onecntstartdate = countstartdate.loc[startdate]
         if onecntstartdate < 100 and startdate < enddate:
-            getCurProductTradeData(productcode,dbCntInfo,engine)
+            getCurProductTradeData(productcode, dbCntInfo, engine)
 
     sourceTable = "histtradedata"
     destTable = "producttradedata"
@@ -254,8 +259,8 @@ def getAllNoneSubscriptionTradePriceFromTusharePro(dbCntInfo):
         if onecntstartdate < 100 and startdate < enddate:
             selectsql = sc.PRODUCTHISTTRADEDATATUSHAREPRO_SQL % (sourceTable + productcode)
             insertsql = sc.PRODUCTTRADEDATA_INSERTSQL
-            print(productcode+" trade data insert begin")
-            pb.insertNormalDbByCurProductCode(dbCntInfo, sourceTable, destTable, selectsql, insertsql,productcode)
+            print(productcode + " trade data insert begin")
+            pb.insertNormalDbByCurProductCode(dbCntInfo, sourceTable, destTable, selectsql, insertsql, productcode)
             print(productcode + " trade data insert finish")
 
     minstartdate = 20991231
@@ -272,13 +277,13 @@ def getAllNoneSubscriptionTradePriceFromTusharePro(dbCntInfo):
     # 建立连接与tusharepro
     pro = ts.pro_api('00f0c017db5d284d992f78f0971c73c9ecba4aa03dee2f38e71e4d9c')
     while tradedate <= maxenddate:
-        print("begin to get all data on %d ..." %tradedate)
+        print("begin to get all data on %d ..." % tradedate)
         df = pro.daily(trade_date=str(tradedate))
         time.sleep(1)
         basicdf = df.reset_index(drop=True)
         realsourcetable = sourceTable + str(tradedate)
         basicdf.to_sql(realsourcetable, engine, if_exists="replace", index=False)
-        tradedate = pb.getnextnday(tradedate,1)
+        tradedate = pb.getnextnday(tradedate, 1)
 
     insertsql = sc.PRODUCTTRADEDATA_INSERTSQL
     for productcode in productdf.index:
@@ -286,17 +291,19 @@ def getAllNoneSubscriptionTradePriceFromTusharePro(dbCntInfo):
         startdate = oneproductdate["startdate"]
         enddate = oneproductdate["enddate"]
         cntstartdate = countstartdate.loc[startdate]
-        if cntstartdate < 100 :
+        if cntstartdate < 100:
             continue
         tradedate = minstartdate
-        print(productcode+" trade data insert begin from %d to %d"%(startdate,enddate))
+        print(productcode + " trade data insert begin from %d to %d" % (startdate, enddate))
         while tradedate <= maxenddate and startdate <= tradedate and tradedate <= enddate:
-            selectsql = sc.PRODUCTHISTTRADEDATATUSHAREPRO_SQL % (sourceTable + str(tradedate)) + " where left(a.ts_code,6) = '%s'"%productcode
+            selectsql = sc.PRODUCTHISTTRADEDATATUSHAREPRO_SQL % (
+                        sourceTable + str(tradedate)) + " where left(a.ts_code,6) = '%s'" % productcode
             pb.insertNormalDbByCurProductCode(dbCntInfo, sourceTable, destTable, selectsql, insertsql, productcode)
             tradedate = pb.getnextnday(tradedate, 1)
         print(productcode + " trade data insert finish")
 
     dbCntInfo.closeAllDBConnect()
+
 
 def getProfitData(dbCntInfo):
     '''
@@ -331,7 +338,7 @@ def getProfitData(dbCntInfo):
     # 获取当日日期
     # finanalWorkDate = pb.getTodayDate()
 
-    sourceTable = "histprofitdata" # 分红数据
+    sourceTable = "histprofitdata"  # 分红数据
     # destTable = "profitschema" # 产品分红方案
 
     # 建立连接与tusharepro
@@ -341,7 +348,7 @@ def getProfitData(dbCntInfo):
         oneProductTuple = productBasicInfodf.iloc[rowIndex]
         productCode = oneProductTuple["product_code"]  ## 产品代码
 
-        print("%d %s begin to get prifit data ..." % (rowIndex,productCode))
+        print("%d %s begin to get prifit data ..." % (rowIndex, productCode))
         symbolProcuctCode = pb.code_to_symbol(productCode)
         try:
             df = pro.dividend(ts_code=symbolProcuctCode)
@@ -363,6 +370,7 @@ def getProfitData(dbCntInfo):
 
     print("all productcode profitschema finish download!")
     dbCntInfo.closeAllDBConnect()
+
 
 # def getTradeDataFromDataBase(product_code, ma=None, autotype=None):
 #     '''
@@ -430,7 +438,7 @@ def getSuspendProduct(dbCntInfo):
     return
 
 
-def getmaxreportdate(dbCntInfo, destTable) -> dict :
+def getmaxreportdate(dbCntInfo, destTable) -> dict:
     '''
     获取每个产品最大的reportdate
     :param dbCntInfo:
@@ -447,18 +455,19 @@ def getmaxreportdate(dbCntInfo, destTable) -> dict :
         oneProductTuple = productBasicInfodf.iloc[rowIndex]
         productCode = oneProductTuple["product_code"]  ## 产品代码
 
-        maxReportDateSql = sc.COMPANYMAXREPORTDATE_SQL%(destTable, productCode)
-        destDbBase = dbCntInfo.getDBCntInfoByTableName(tablename=destTable,productcode=productCode)
+        maxReportDateSql = sc.COMPANYMAXREPORTDATE_SQL % (destTable, productCode)
+        destDbBase = dbCntInfo.getDBCntInfoByTableName(tablename=destTable, productcode=productCode)
         destRetList = destDbBase.execSelectSmallSql(maxReportDateSql)
         maxReportDate = destRetList[0]['maxreportdate']
         print(rowIndex)
-        print(productCode+maxReportDateSql)
+        print(productCode + maxReportDateSql)
         maxreportdatedict[productCode] = maxReportDate
     if len(maxreportdatedict) == 0:
         raise Exception("getmaxreportdate return value is empty!")
     return maxreportdatedict
 
-def getProductFinanceInfo(dbCntInfo,sourcetable,desctable):
+
+def getProductFinanceInfo(dbCntInfo, sourcetable, desctable):
     '''
     获取产品的公司财务基础数据
     :param dbCntInfo:
@@ -472,8 +481,8 @@ def getProductFinanceInfo(dbCntInfo,sourcetable,desctable):
         return
 
     pro = ts.pro_api('00f0c017db5d284d992f78f0971c73c9ecba4aa03dee2f38e71e4d9c')
-    sourceTable = sourcetable # 比如"histincome"
-    destTable = desctable # 比如"company_income"
+    sourceTable = sourcetable  # 比如"histincome"
+    destTable = desctable  # 比如"company_income"
 
     # 获取每个产品已经获取到的最大reportdate
     productReportDateDict = getmaxreportdate(dbCntInfo, destTable)
@@ -489,26 +498,26 @@ def getProductFinanceInfo(dbCntInfo,sourcetable,desctable):
         productCode = oneProductInfo["product_code"]
         maxreportdate = productReportDateDict[productCode]
         maxreportdate = maxreportdate + 1
-        print("%d %s begin to get %s data from intenert..."%(rowIndex, productCode,destTable))
+        print("%d %s begin to get %s data from intenert..." % (rowIndex, productCode, destTable))
         symbolProcuctCode = pb.code_to_symbol(productCode)
         df = pd.DataFrame()
-        try :
+        try:
             if destTable in "company_income":
                 if maxreportdate == 1:
                     df = pro.income(ts_code=symbolProcuctCode)
-                else :
+                else:
                     df = pro.income(ts_code=symbolProcuctCode, start_date=str(maxreportdate))
             elif destTable in "company_balance_sheet":
                 if maxreportdate == 1:
                     df = pro.balancesheet(ts_code=symbolProcuctCode)
-                else :
+                else:
                     df = pro.balancesheet(ts_code=symbolProcuctCode, start_date=str(maxreportdate))
             elif destTable in "company_cashflow":
                 if maxreportdate == 1:
                     df = pro.cashflow(ts_code=symbolProcuctCode)
-                else :
+                else:
                     df = pro.cashflow(ts_code=symbolProcuctCode, start_date=str(maxreportdate))
-            else :
+            else:
                 raise Exception("destTable is exception!")
         except Exception as e:
             print(symbolProcuctCode + " connect time out!")
@@ -523,7 +532,7 @@ def getProductFinanceInfo(dbCntInfo,sourcetable,desctable):
                 raise Exception("destTable is exception!")
         # 数据去重
         # 数据相同删除重复的数据保留第一个数据
-        dfdup = df.drop_duplicates(subset=["ts_code","end_date"], keep='first', inplace=False)
+        dfdup = df.drop_duplicates(subset=["ts_code", "end_date"], keep='first', inplace=False)
 
         realSourTable = sourceTable + productCode
         basicdf = dfdup.reset_index(drop=True)
@@ -538,15 +547,16 @@ def getProductFinanceInfo(dbCntInfo,sourcetable,desctable):
         maxreportdate = productReportDateDict[productCode]
         realSourTable = sourceTable + productCode
         print("%d %s begin to insert  table %s data..." % (rowIndex, realSourTable, destTable))
-        selectsql = sc.COMPANYFINANCE_SELECTSQL[destTable]%(realSourTable,maxreportdate)
+        selectsql = sc.COMPANYFINANCE_SELECTSQL[destTable] % (realSourTable, maxreportdate)
         print(selectsql)
         insertsql = sc.COMPANYFINANCE_INSERTSQL[destTable]
-        pb.insertNormalDbByCurProductCode(dbCntInfo, sourceTable, destTable, selectsql, insertsql,productCode)
+        pb.insertNormalDbByCurProductCode(dbCntInfo, sourceTable, destTable, selectsql, insertsql, productCode)
         print("%s insert table %s finish!" % (realSourTable, destTable))
 
     return
 
-def tdxProductTradeData2Database(dbCntInfo, productCode,absolutePath,productTradeFile):
+
+def tdxProductTradeData2Database(dbCntInfo, productCode, absolutePath, productTradeFile):
     '''
     单个产品的通达信数据解析后插入到数据库中
     :param dbCntInfo:
@@ -606,7 +616,7 @@ def tdxProductTradeData2Database(dbCntInfo, productCode,absolutePath,productTrad
             # 数据插入到数据库中
             # product_code, trade_date,open_price,high_price,close_price,low_price,product_volume,product_amount
             execlSql = sqlcons.TDXDATAINSERTDATABASE % (
-            productCode, tradedate, openPrice, highPrice, closePrice, lowPrice, productVolumn, productAmount)
+                productCode, tradedate, openPrice, highPrice, closePrice, lowPrice, productVolumn, productAmount)
             excepte = tableDbBase.execNotSelectSql(execlSql)
             if excepte is not None:
                 print(excepte)
@@ -616,6 +626,7 @@ def tdxProductTradeData2Database(dbCntInfo, productCode,absolutePath,productTrad
     print("线程处理产品代码为(" + productCode + ")的文件处理完毕!")
     logging.info("线程处理产品代码为(" + productCode + ")的文件处理完毕!")
     return None
+
 
 def tdxShLdayToStock(dbCntInfo, dataType="sh", softPath="D:/software/new_haitong", relativePath=None):
     '''
@@ -630,24 +641,24 @@ def tdxShLdayToStock(dbCntInfo, dataType="sh", softPath="D:/software/new_haitong
     import os
     import time
     from finance.util import DictCons as dictcons
-    from finance.servicelib.public import public
-    from concurrent.futures import ThreadPoolExecutor,as_completed
+    # from finance.servicelib.public import public
+    # from concurrent.futures import ThreadPoolExecutor,as_completed
 
-    relativePath = "/vipdoc/"+dataType+"/lday/" if relativePath is None else relativePath
-    absolutePath = softPath+relativePath
+    relativePath = "/vipdoc/" + dataType + "/lday/" if relativePath is None else relativePath
+    absolutePath = softPath + relativePath
 
     startTime = time.time()
     listTradeFile = os.listdir(absolutePath)
     # maxWorkers = public.getCpuCount()*2-1
-    maxWorkers = public.getCpuCount()
-    if maxWorkers > 1:
-        # maxWorkers = maxWorkers -1
-        # 多了貌似数据库也存在问题。
-        maxWorkers = 1
-    print("create maxWorks(%d)"%maxWorkers)
-    logging.info("create maxWorks(%d)"%maxWorkers)
-    threadPool = ThreadPoolExecutor(max_workers=maxWorkers,thread_name_prefix="st_")
-    future_list = []
+    # maxWorkers = public.getCpuCount()
+    # if maxWorkers > 1:
+    #     # maxWorkers = maxWorkers -1
+    #     # 多了貌似数据库也存在问题。
+    #     maxWorkers = 1
+    # print("create maxWorks(%d)"%maxWorkers)
+    # logging.info("create maxWorks(%d)"%maxWorkers)
+    # threadPool = ThreadPoolExecutor(max_workers=maxWorkers,thread_name_prefix="st_")
+    # future_list = []
     futurecount = 0
     for productTradeFile in listTradeFile:
         print("正在处理产品代码为的文件:" + productTradeFile)
@@ -655,25 +666,29 @@ def tdxShLdayToStock(dbCntInfo, dataType="sh", softPath="D:/software/new_haitong
         # SELECT subleft3 FROM (SELECT  LEFT(a.`product_code`,3) subleft3,a.product_code FROM producttradedata a GROUP BY a.product_code) a GROUP BY subleft3;
         # 000,001,002,003,300,600,601,603,688
         subleft3 = productCode[:3]
-        marketType=""
+        marketType = ""
         if subleft3 in dictcons.DICTCONS_CODETOMARKETTYPE:
             marketType = dictcons.DICTCONS_CODETOMARKETTYPE[subleft3]
             print("正在处理产品代码为(" + productCode + ")的markettype:" + str(marketType))
-        else :
+        else:
             print("正在处理产品代码为(" + productCode + ")的文件,跳过该产品:" + subleft3)
             continue
         # sh000001是上证指数，而000001是平安银行是深圳A股，因此这里要过滤
         if dataType == "sz":
             if (marketType == 2 or marketType == 4 or marketType == 3) is False:
                 continue
-        else :
+        else:
             if (marketType == 1 or marketType == 8) is False:
                 continue
-        print("处理第%d的产品代码%s"%(futurecount,productCode))
-        func_var = [dbCntInfo, productCode,absolutePath,productTradeFile]
-        future = threadPool.submit(lambda p: tdxProductTradeData2Database(*p), func_var)
-        future_list.append(future)
-        futurecount = futurecount + 1
+        print("处理第%d的产品代码%s" % (futurecount, productCode))
+        retresult = tdxProductTradeData2Database(dbCntInfo, productCode, absolutePath, productTradeFile)
+        if retresult is not None:
+            print("%s deal throw except!" % productCode)
+            return retresult
+        # func_var = [dbCntInfo, productCode,absolutePath,productTradeFile]
+        # future = threadPool.submit(lambda p: tdxProductTradeData2Database(*p), func_var)
+        # future_list.append(future)
+        # futurecount = futurecount + 1
         # time.sleep(0.02)
         # if futurecount % maxWorkers == 0:
         #     print("now sleep %d"%futurecount)
@@ -684,29 +699,31 @@ def tdxShLdayToStock(dbCntInfo, dataType="sh", softPath="D:/software/new_haitong
     print("当前开始时间： ", time.strftime('%Y.%m.%d %H:%M:%S ', time.localtime(startTime)))
     print("当前结束时间： ", time.strftime('%Y.%m.%d %H:%M:%S ', time.localtime(time.time())))
 
-
-    retfuture = 0
-    # while future in future_list:
-    #     print(future, end='')
-    #     print(future.done())
-    print("while %d futures begin to wait!"%futurecount)
-    logging.info("while %d futures begin to wait!"%futurecount)
-    for future in as_completed(future_list):
-        print("future finish", end = '')
-        print(future.result())
-        retfuture = retfuture + 1
-        print("返回的future数(%d)"%retfuture)
-    print("while future still wait!")
-    threadPool.shutdown(wait=True)
+    # retfuture = 0
+    # # while future in future_list:
+    # #     print(future, end='')
+    # #     print(future.done())
+    # print("while %d futures begin to wait!"%futurecount)
+    # logging.info("while %d futures begin to wait!"%futurecount)
+    # for future in as_completed(future_list):
+    #     print("future finish", end = '')
+    #     print(future.result())
+    #     retfuture = retfuture + 1
+    #     print("返回的future数(%d)"%retfuture)
+    # print("while future still wait!")
+    # threadPool.shutdown(wait=True)
     print("future all finished!")
 
     return None
+
 
 if __name__ == "__main__":
     stocklog.initLogging()
     path = 'D:/software/new_haitong'
     xmlfile = "G:\\nfx\\Python\\stockmarket\\finance\\resource\\finance.xml"
-    dbCntInfo = dbcnt.DbCnt(xmlfile,dbpool=True)
+    # dbCntInfo = dbcnt.DbCnt(xmlfile, dbpool=False)
+    dbCntInfo = dbcnt.createDbConnect(dbpool=False)
+    # 5min可以完成
     resultexpt = tdxShLdayToStock(dbCntInfo, "sz", path)
     if resultexpt is None:
         tdxShLdayToStock(dbCntInfo, "sh", path)
@@ -718,7 +735,7 @@ if __name__ == "__main__":
     # getprofitdata(dbCntInfo)
     # getStockBasicsPro(dbCntInfo)
     # getProductBasicInfo(dbCntInfo)
-    #getAllNoneSubscriptionTradePriceFromTusharePro(dbCntInfo)
+    # getAllNoneSubscriptionTradePriceFromTusharePro(dbCntInfo)
     # getProductFinanceInfo(dbCntInfo, "histincome", "company_income")
     # getProductFinanceInfo(dbCntInfo, "histcastflow", "company_cashflow")
     # getProductFinanceInfo(dbCntInfo, "histbalance", "company_balance_sheet")
@@ -755,4 +772,3 @@ if __name__ == "__main__":
     # insertNormalDbByCurProductCode(productCode, dbCntInfo, sourceTable, destTable, selectsql, insertsql)
     # dbCntInfo.closeAllDBConnect()
     # filedata.close()
-

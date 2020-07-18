@@ -67,7 +67,8 @@ def getaddtradecalendar(dbCntInfo, exchange_code=None):
 if __name__ == "__main__":
 
     # xmlfile = "E:\\pydevproj\\stockmarket\\finance\\resource\\finance.xml"
-    xmlfile = "F:\\nfx\\Python\\stockmarket\\finance\\resource\\finance.xml"
-    dbCntInfo = dbcnt.DbCnt(xmlfile)
+    # xmlfile = "F:\\nfx\\Python\\stockmarket\\finance\\resource\\finance.xml"
+    # dbCntInfo = dbcnt.DbCnt(xmlfile)
+    dbCntInfo = dbcnt.createDbConnect(dbpool=False)
     # getProductBasicInfo(dbCntInfo)
     getaddtradecalendar(dbCntInfo)
