@@ -53,6 +53,8 @@ PRODAMOUNTKEY = "product_amount"
 MERGEFLAGKKEY = "merge_flag"
 UPDOWNFLAGKEY = "updown_flag"
 
+ENTPRICE_COL=[OPENPRICEKEY, HIGHPRICEKEY, CLOSEPRICEKEY, LOWPRICEKEY]
+
 # 笔的顶分型
 APICALTYPING = "A"
 # 笔的底分型
@@ -82,6 +84,9 @@ DBBASELOGICNAME = "dbbase"
 DBTRADELOGNAMELIST=["trade1", "trade2", "trade3", "trade4", "trade5"]
 
 INDEX_LABELS = ['sh', 'sz', 'hs300', 'sz50', 'cyb', 'zxb', 'zx300', 'zh500']
+INDEX_LIST = {'sh': 'sh000001', 'sz': 'sz399001', 'hs300': 'sh000300',
+              'sz50': 'sh000016', 'zxb': 'sz399005', 'cyb': 'sz399006',
+              'zx300': 'sz399008', 'zh500':'sh000905'}
 INDEX_SYMBOL = {'399990': 'sz399990', '000006': 'sh000006', '399998': 'sz399998',
                 '399436': 'sz399436', '399678': 'sz399678', '399804': 'sz399804',
                 '000104': 'sh000104', '000070': 'sh000070', '399613': 'sz399613',

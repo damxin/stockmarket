@@ -28,10 +28,11 @@ TABLEDICT = {
              "histbalance":LOGICNAME_TMPBASE,
              "company_balance_sheet":LOGICNAME_TRADE,
              "datadownloadlog":LOGICNAME_TRADE,
-             "entdaytradedata":LOGICNAME_TRADE
+             "entdaytradedata":LOGICNAME_TRADE,
+             "prod30tradedata":LOGICNAME_TRADE
             }
 # 表名:单表拆分的表个数
-SPLITTBLDICT = {"entdaytradedata":32}
+SPLITTBLDICT = {"entdaytradedata":32, "ent30tradedata":32}
 
 ## 工作日begin
 WORKDAY_MAXDATESQL = "select max(trade_date) maxtradedate, exchange_code exchangecode from openday group by exchange_code"
@@ -558,10 +559,16 @@ DATADOWNLOG_INSERTDATA="INSERT INTO datadownloadlog(product_code,eventtype,deals
 DATADOWNLOG_UPDATEDATA="update datadownloadlog set dealstatus='%s' where product_code='%s' and eventtype='%s' and sourcetype='%s' and logdate=%d"
 # datadownloadlog 日志文件end
 
-# 通达信数据插入数据库语句 begin
+# 通达信数据插入日线数据库语句 begin
 TDXDATAINSERTDATABASE="INSERT INTO producttradedata(product_code, trade_date,open_price,high_price,close_price,low_price,product_volume,product_amount)\
         VALUES('%s',%d,%f,%f,%f,%f,%f,%f)"
-# 通达信数据插入数据库语句 end
+# 通达信数据插入日线数据库语句 end
+# 通达信数据插入30min线数据库语句 begin
+TDX30DATAINSERTDATABASE="INSERT INTO prod30tradedata(product_code,symbol_code, trade_date,trade_time,open_price,high_price,close_price,low_price,product_volume,product_amount)\
+        VALUES('%s','%s',%d,%d,%f,%f,%f,%f,%f,%f)"
+CSV30DATAINSERTDB = "INSERT INTO prod30tradedata(product_code,symbol_code, trade_date,trade_time,open_price,high_price,close_price,low_price,product_volume,product_amount) VALUES"
+CSV30INSERTVAR = "('%s','%s',%d,%d,%f,%f,%f,%f,%f,%f),"
+# 通达信数据插入30min线数据库语句 end
 
 # 日交易数据获取 begin
 DAYTRADEDATA_GET="select product_code, trade_date,open_price,high_price,close_price,low_price,product_volume,product_amount from \

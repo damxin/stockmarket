@@ -16,6 +16,36 @@ from finance.util import GlobalCons as gc
 import pandas as pd
 from datetime import date, timedelta
 
+def getMaxTradeTimeFromCurProdCode(dbCntInfo, productCode, kType = gc.K_DAY):
+    '''
+    获取已经存储在数据库中的最大值，如果是日以上级别则tradetime返回填写235959
+    :param dbCntInfo:
+    :param productCode:
+    :param kType:gc.K_DAY 等
+    :return: (tradeDate, tradeTime)
+    '''
+
+    tradeDate = 0
+
+    sourceTable = ""
+    if kType in gc.K_DAY:
+        sourceTable = "producttradedata"
+    elif kType in gc.K_30MIN:
+        sourceTable = "prod30tradedata"
+    else:
+        tradeDate = 20991231
+
+    tableDbBase = dbCntInfo.getDBCntInfoByTableName(tablename=sourceTable, productcode=productCode)
+    execlsql = "select max(trade_date) maxtradedate from %s where product_code = '%s' " % (sourceTable, productCode)
+    tableRetTuple = tableDbBase.execSelectSmallSql(execlsql)
+    print(productCode, end='')
+    print(type(tableRetTuple))
+    print(productCode, end='')
+    print(tableRetTuple)
+    # print(tableRetTuple[0]['maxtradedate'])
+    tradeDate = 19000101 if tableRetTuple[0]['maxtradedate'] is None else tableRetTuple[0]['maxtradedate']
+
+    return (tradeDate, 235959)
 
 def getMaxTradeDateFromCurProductCode(dbCntInfo, productCode) -> int:
     '''
@@ -161,6 +191,31 @@ def getlastyear():
     todayday = int((date.today()).strftime("%Y%m%d"))
     lastday = (int(todayday / 10000) - 1) * 10000 + todayday % 10000
     return lastday
+
+def gettimediff(srcdate, srctime, destdate, destime, kline='D'):
+    '''
+
+    :param srcdate: 20100901
+    :param srctime: 1209   001209
+    :param destdate:  20110902
+    :param destime:  0900 000900
+    :param kline:  日线级别，60分钟级别
+    :return:
+    '''
+    import time
+    import datetime
+
+    dttm1 = datetime.datetime(int(srcdate/10000), (int(srcdate/100))%100, int(srcdate%100), int(srctime/10000), (int(srctime/100))%100, int(srcdate%100))
+    dttm2 = datetime.datetime(int(destdate/10000), (int(destdate/100))%100, int(destdate%100), int(destime/10000), (int(destime/100))%100, int(destime%100))
+
+
+    tm1 = time.mktime(dttm1.timetuple())
+    tm2 = time.mktime(dttm2.timetuple())
+    if kline in 'D':
+        return int(tm2 - tm1)/3600
+    else :
+        return int(tm2 - tm1)
+
 
 
 def listdictTypeChangeToDataFrame(datalistdict):
@@ -315,4 +370,20 @@ def getRealTableName(tableName, productCode):
     realtablename = tableName + strresult.zfill(2)
 
     return realtablename
+
+def code_to_symbol(productcode):
+    '''
+    返回symbol标志
+    :param productcode:
+    :return:
+    '''
+    from finance.util import GlobalCons as gc
+
+    if productcode in gc.INDEX_LABELS:
+        return gc.INDEX_LIST[productcode]
+    else:
+        if len(productcode) != 6 :
+            return productcode
+        else:
+            return 'sh%s'%productcode if productcode[:1] in ['5', '6', '9'] or productcode[:2] in ['11', '13'] else 'sz%s'%productcode
 
