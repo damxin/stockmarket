@@ -441,6 +441,7 @@ def futureKLine(logicname):
         dbCntInfo.closeAllDBConnect()
     return None
 
+
 # def centraljudge(linelist, startindex, centralqj):
 #     '''
 #     判断linelist[startindex],linelist[startindex+2],linelist[startindex+4]三者是否存在中枢，
@@ -470,6 +471,8 @@ def enttheoryfirbuy(logicname, klineType='D') -> list:
      由于要找的是将有机会出现一买，因此对应的特征序列是找向上的笔。向上笔有重叠区间，那么就是一个中枢
 
      先通过中枢来终结，再通过1+1来终结
+
+     就花时间把一买写写好，二买也是一买后的
 
     :param self:
     :param klineType:
@@ -639,7 +642,7 @@ def enttheoryfirbuy(logicname, klineType='D') -> list:
             # 现在如果是通过特征序列进行判断， 特征序列的笔是来判断是否中枢截止了。
             # 进入下笔和下、下的三笔决定了这段区间一定存在中枢
             curendzsindex = 0
-            centralqj=(9999999.99,0)
+            centralqj = (9999999.99, 0)
             for curlistindex in range(len(apicalbasiclist)):
                 curinnerlist = apicalbasiclist[curlistindex]
                 if curinnerlist[6] in gc.DOWNTYPING:
@@ -724,310 +727,321 @@ def enttheoryfirbuy(logicname, klineType='D') -> list:
     return firstbuyprodlist
 
 
-def enttheorysecbuy(logicname, klineType='D') -> list:
-    '''
-     依据传入的级别，寻找二买
-     1. 已经出现一买
-
-     下跌过程中，至少存在一个中枢(可以是一段时间在较窄的区间震荡，一直不形成中枢)
-     apicalbasiclist 这个格式是list[list],内部的list记录内容[起始日期，起始时间,价格，终止日期，终止时间, 价格，'Z/U/D',第几个中枢],
-     U:上涨一笔，D下跌一笔，Z中枢中的笔,如果为Z，则第几个中枢需要输入，为1,2,3， 从1开始，如果是U或者D，则都填写为0
-     由于要找的是将有机会出现一买，因此对应的特征序列是找向上的笔。向上笔有重叠区间，那么就是一个中枢
-
-     先通过中枢来终结，再通过1+1来终结
-
-    :param self:
-    :param klineType:
-    :return:
-    '''
-    import copy
-
-    secbuyprodlist = []
-    stocklog.initLogging(logicname)
-    try:
-        dbCntInfo = dbcnt.createDbConnect(dbpool=False)
-        productBasicInfodf = pb.getAllProductBasicInfo(dbCntInfo, ipostatus='A')
-        for rowIndex in productBasicInfodf.index:
-            oneProductTuple = productBasicInfodf.iloc[rowIndex]
-            productcode = oneProductTuple["product_code"]  ## 产品代码
-            tradelogicname = dbCntInfo.getTradeLogicNameByProductCodeAndTradeDate(productcode, 0)
-            if logicname not in tradelogicname:
-                continue
-            # if productcode not in ("002236", "002167", '002039', '002209'):
-            #     continue
-            logging.info("logic(%s) %d productcode(%s) begin to find second buy" % (logicname, rowIndex, productcode))
-
-            lastyeartoday = 0
-            lastyeartime = 0
-            curtblname = gc.SOURCETABLEDICT[klineType]
-            lastworkday = 0
-            todayhighprice = 0
-            todaylowprice = 0
-            if klineType in gc.K_DAY:
-                # 读取近一年数据，一个股票不可能一年一直再跌，如果是的话则可关注
-                lastyeartoday = pb.getlastyear()
-                lastworkday = pb.getlastworkday()
-                # lastworkday = 20200713
-                selectSql = sc.DAYTRADEDATA_ONEDATEGET % (productcode, lastworkday)
-                dbtradecnt = dbcnt.getDBCntInfoByTableName(curtblname, productcode)
-                entdayTrDataList = dbtradecnt.execSelectAllSql(selectSql)
-                # 最近这些股票可能停牌了导致股价没有今日的
-                if len(entdayTrDataList) == 0:
-                    logging.debug("%d productcode(%s) do stop now? " % (lastworkday, productcode))
-                    continue
-                todayhighprice = float(entdayTrDataList[0][gc.HIGHPRICEKEY])
-                todaylowprice = float(entdayTrDataList[0][gc.LOWPRICEKEY])
-                logging.debug("%d productcode(%s),lowprice(%f)" % (
-                    lastworkday, productcode, todaylowprice))
-
-            realtablaname = pb.getRealTableName(curtblname, productcode)
-            selectSql = sc.ENTDAYTRADEDATA_ABTYPINGGET % (realtablaname, productcode, lastyeartoday, lastyeartime)
-            dbtradecnt = dbcnt.getDBCntInfoByTableName(curtblname, productcode)
-            entdayTrDataList = dbtradecnt.execSelectAllSql(selectSql)
-            if len(entdayTrDataList) == 0:
-                logging.info("productcode(%s) no data be found,selectSql(%s)" % (productcode, selectSql))
-                continue
-            # 逆序, df中的值都是顶和底的笔表示
-            entdayTrDataDf = pd.DataFrame(entdayTrDataList)
-            entdayTrDataDf = entdayTrDataDf.set_index([gc.TRADEDATEKEY, gc.TRADETIMEKEY])
-            for col in gc.ENTPRICE_COL:
-                entdayTrDataDf[col] = entdayTrDataDf[col].astype(float)
-
-            # 获取最高点，获取最高点右侧最低点，当前lowprice；最低点和lowprice
-            # 如果lowprice比ddprice还高，那么可以不用考虑
-            maxtradeindex = entdayTrDataDf[gc.HIGHPRICEKEY].idxmax(axis=0)
-            # print(maxtradeindex)
-            mintradeindex = entdayTrDataDf.loc[maxtradeindex[0]:].loc[maxtradeindex[1]:][gc.LOWPRICEKEY].idxmin(axis=0)
-            # 查找比索引大的日期的最小值
-            # print(mintradeindex)
-            # print(productcode + " end")
-            logging.debug(
-                "from maxdate(%d),maxtime(%d) to mindate(%d), mintime(%d) productcode(%s) maxprice and minprice is the same!" % (
-                maxtradeindex[0], maxtradeindex[1], productcode, mintradeindex[0], mintradeindex[1]))
-            if maxtradeindex[0] == mintradeindex[0] and maxtradeindex[1] == mintradeindex[1]:
-                logging.info(
-                    "productcode(%s) maxprice and minprice is the same!" % productcode)
-                continue
-            minlowprice = entdayTrDataDf.loc[mintradeindex][gc.LOWPRICEKEY]
-            if todaylowprice < minlowprice:
-                logging.info(
-                    "productcode(%s) todayprice(%f) bigger than minlowprice(%f)!" % (productcode, todaylowprice, minlowprice))
-                continue
-
-            curEntdayTrDataDf = entdayTrDataDf.iloc[::-1]
-            # tuple (20190710, 0) Series
-            firsttime = 0
-            nextprodcodeflag = False
-            apicalbasiclist = []
-            curinnerlist = []
-            for tradedatetupleIndex, curapcialbasicserialdata in curEntdayTrDataDf.iterrows():
-                # 想要出现二买，必须首先找到的是顶分型，之后如果做出底分型才能是二买，如果先找到底分型则跳过。
-                updownstatus = curapcialbasicserialdata[gc.UPDOWNFLAGKEY]
-                if firsttime == 0 and updownstatus in gc.BASETYPING:
-                    nextprodcodeflag = True
-                    logging.info(
-                        "%d productcode(%s) second type not apicaltyping!" % (tradedatetupleIndex[0], productcode))
-                    break
-                # 顶分型还未结束，一般不会出现这种误判
-                if firsttime == 0 and updownstatus in gc.APICALTYPING:
-                    if todayhighprice > curapcialbasicserialdata[gc.HIGHPRICEKEY]:
-                        nextprodcodeflag = True
-                        logging.info(
-                            "%d productcode(%s) todayhighprice(%f) bigger apicaltyping price(%f)!" % (
-                                tradedatetupleIndex[0], productcode, todayhighprice,
-                                curapcialbasicserialdata[gc.HIGHPRICEKEY]))
-                        break
-                # 1. 出现中枢，或者平台整理, 找到一个底比之前的顶都高,图形参考下跌的图形.png，超过这个图形的再说
-                # 中枢开始的顶，需要满足1.1 顶之前的底
-                if updownstatus in gc.APICALTYPING:
-                    firsttime = firsttime + 1
-                    # 日期
-                    curinnerlist.append(tradedatetupleIndex[0])
-                    # 时间
-                    curinnerlist.append(tradedatetupleIndex[1])
-                    curinnerlist.append(curapcialbasicserialdata[gc.HIGHPRICEKEY])
-                    if len(curinnerlist) >= 6:
-                        curinnerlist.append(gc.DOWNTYPING)
-                        curinnerlist.append(0)
-                        apicalbasiclist.append(copy.deepcopy(curinnerlist))
-                        curinnerlist.clear()
-                        # 日期
-                        curinnerlist.append(tradedatetupleIndex[0])
-                        # 时间
-                        curinnerlist.append(tradedatetupleIndex[1])
-                        curinnerlist.append(curapcialbasicserialdata[gc.HIGHPRICEKEY])
-                    # apicalbasiclist.append((updownstatus, curapcialbasicserialdata[gc.HIGHPRICEKEY]))
-                    # maxapicalprice = max(maxapicalprice, curapcialbasicserialdata[gc.HIGHPRICEKEY])
-                    # zcfirst = zcfirst + 1
-                    # firsttime = firsttime + 1
-                    logging.info("%d productcode(%s) is apicaltyping!" % (tradedatetupleIndex[0], productcode))
-                elif updownstatus in gc.BASETYPING:
-                    logging.info("%d productcode(%s) is basetyping!" % (tradedatetupleIndex[0], productcode))
-                    # 日期
-                    curinnerlist.append(tradedatetupleIndex[0])
-                    # 时间
-                    curinnerlist.append(tradedatetupleIndex[1])
-                    curinnerlist.append(curapcialbasicserialdata[gc.LOWPRICEKEY])
-                    if len(curinnerlist) >= 6:
-                        curinnerlist.append(gc.UPTYPING)
-                        curinnerlist.append(0)
-                        apicalbasiclist.append(copy.deepcopy(curinnerlist))
-                        curinnerlist.clear()
-                        # 日期
-                        curinnerlist.append(tradedatetupleIndex[0])
-                        # 时间
-                        curinnerlist.append(tradedatetupleIndex[1])
-                        curinnerlist.append(curapcialbasicserialdata[gc.LOWPRICEKEY])
-            logging.info("productcode(%s) bi merge finish!" % productcode)
-            # print(apicalbasiclist)
-            # 由于要找的是将有机会出现一买，因此对应的特征序列是找向上的笔。向上笔有重叠区间，那么就是一个中枢
-            zcgdpricelist = []
-            ggprice = gc.MINPRICE
-            glprice = gc.MAXPRICE
-            ddprice = gc.MAXPRICE
-            dlprice = gc.MINPRICE
-            firsttime = 0
-            zsstartdate = 0
-            zsstarttime = 0
-            zsenddate = 0
-            zsendtime = 0
-            lastddprice = 0
-            # 记录第一次脱离中枢的位置
-            # 中枢实际上有4段重叠的区域，进入笔，然后是上下上三笔，此四笔是存在重叠区域。
-            # 现在如果是通过特征序列进行判断， 特征序列的笔是来判断是否中枢截止了。
-            # 进入下笔和下、下的三笔决定了这段区间一定存在中枢
-            curendzsindex = 0
-            for curlistindex in range(len(apicalbasiclist)):
-                curinnerlist = apicalbasiclist[curlistindex]
-                if curinnerlist[6] not in gc.UPTYPING:
-                    continue
-
-                if firsttime == 0:
-                    ggprice = curinnerlist[2]
-                    glprice = curinnerlist[2]
-                    ddprice = curinnerlist[5]
-                    dlprice = curinnerlist[5]
-                    firsttime = firsttime + 1
-                    zsstartdate = curinnerlist[0]
-                    zsstarttime = curinnerlist[1]
-                else:
-                    # 形成中枢了。
-                    if curinnerlist[5] < glprice:
-                        ggprice = max(ggprice, curinnerlist[2])
-                        glprice = min(glprice, curinnerlist[2])
-                        ddprice = min(ddprice, curinnerlist[5])
-                        dlprice = max(dlprice, curinnerlist[5])
-                        zsenddate = curinnerlist[3]
-                        zsendtime = curinnerlist[4]
-                    else:
-                        # 存在某一笔在中枢下方，不合理，已经结束
-                        if curinnerlist[2] < dlprice:
-                            nextprodcodeflag = True
-                            break
-                        if ggprice != gc.MAXPRICE:
-                            zcgdpricelist.append([zsenddate, zsendtime, zsstartdate, zsstarttime, dlprice, glprice])
-                            # 此时需要判断是否1+1终结,这个时候需要判断是向下的两笔是否满足1+1终结的条件, 这里不能这么简单的判断，
-                            # 因为如果是多个中枢的情况就没办法判断了。
-                            # curendzsindex = curlistindex
-                            afterlistindex = curlistindex - 1
-                            beforelistindex = curlistindex + 1
-                            befbeforelistindex = beforelistindex + 2
-                            if befbeforelistindex < len(apicalbasiclist):
-                                befbeforedatalist = apicalbasiclist[befbeforelistindex]
-                                beforedatalist = apicalbasiclist[beforelistindex]
-                                afterdatalist = apicalbasiclist[afterlistindex]
-                                if befbeforedatalist[2] < beforedatalist[2] and beforedatalist[2] > afterdatalist[2] and \
-                                        beforedatalist[5] > afterdatalist[5]:
-                                    nextprodcodeflag = True
-                                    logging.info(
-                                        "date(%d,%d)productcode(%s)  1+1 three k end, the highest price(%f)!" % (
-                                            beforedatalist[3], beforedatalist[4], productcode, beforedatalist[5]))
-                                    break
-                            elif beforelistindex < len(apicalbasiclist):
-                                beforedatalist = apicalbasiclist[beforelistindex]
-                                afterdatalist = apicalbasiclist[afterlistindex]
-                                # 1 + 1终结
-                                if beforedatalist[2] > afterdatalist[2] and beforedatalist[5] > afterdatalist[5]:
-                                    nextprodcodeflag = True
-                                    logging.info(
-                                        "date(%d,%d)productcode(%s)  1+1 two k end, the highest price(%f)!" % (
-                                            beforedatalist[3], beforedatalist[4], productcode, beforedatalist[5]))
-                                    break
-
-                        firsttime = 0
-                        ggprice = curinnerlist[2]
-                        glprice = curinnerlist[2]
-                        ddprice = curinnerlist[5]
-                        dlprice = curinnerlist[5]
-                        firsttime = firsttime + 1
-                        zsstartdate = curinnerlist[0]
-                        zsstarttime = curinnerlist[1]
-            if nextprodcodeflag is True:
-                if len(zcgdpricelist) == 0:
-                    logging.info("productcode(%s) first type not apicaltyping!" % productcode)
-                    continue
-                else:
-                    secbuyprodlist.append(productcode)
-                    logging.info("productcode(%s) be found exist first buy!" % productcode)
-                    print("productcode(%s) begin to found exist first buy!" % productcode)
-                    print(zcgdpricelist)
-                    print("productcode(%s) end to found exist first buy!" % productcode)
-
-            logging.info("productcode(%s) finish finding first buy!" % productcode)
-        print("future all finished!")
-    finally:
-        logging.info(logicname + " close all dbconnect!")
-        dbCntInfo.closeAllDBConnect()
-
-    return secbuyprodlist
-
-
-def enttheorythirdbuy(logicname, klineType='D') -> list:
-    '''
-     依据传入的级别，寻找三买
-    :param self:
-    :param klineType:
-    :return: 符合条件的产品列表
-    '''
-
-    thirbuyprodlist = []
-    return thirbuyprodlist
-
-
-def enttheoryincentral(logicname, klineType='D') -> list:
-    '''
-     依据传入的级别，产品在中枢中
-    :param self:
-    :param klineType:
-    :return: 符合条件的产品列表
-    '''
-
-    centralprodlist = []
-    return centralprodlist
-
-
-def enttheoryfirstsell(logicname, klineType='D') -> list:
-    '''
-     依据传入的级别，产品在快出现一卖
-    :param self:
-    :param klineType:
-    :return: 符合条件的产品列表
-    '''
-
-    firstsellprodlist = []
-    return firstsellprodlist
-
-
-def enttheorysecondsell(logicname, klineType='D') -> list:
-    '''
-     依据传入的级别，产品在快出现二卖
-    :param self:
-    :param klineType:
-    :return: 符合条件的产品列表
-    '''
-
-    secondsellprodlist = []
-    return secondsellprodlist
+# def enttheorysecbuy(logicname, klineType=gc.K_DAY) -> list:
+#     '''
+#      依据传入的级别，寻找二买
+#      1. 已经出现一买
+#
+#      下跌过程中，至少存在一个中枢(可以是一段时间在较窄的区间震荡，一直不形成中枢)
+#      apicalbasiclist 这个格式是list[list],内部的list记录内容[起始日期，起始时间,价格，终止日期，终止时间, 价格，'Z/U/D',第几个中枢],
+#      U:上涨一笔，D下跌一笔，Z中枢中的笔,如果为Z，则第几个中枢需要输入，为1,2,3， 从1开始，如果是U或者D，则都填写为0
+#      由于要找的是将有机会出现一买，因此对应的特征序列是找向上的笔。向上笔有重叠区间，那么就是一个中枢
+#
+#      先通过中枢来终结，再通过1+1来终结
+#
+#     :param self:
+#     :param klineType:
+#     :return:
+#     '''
+#     import copy
+#
+#     secbuyprodlist = []
+#     stocklog.initLogging(logicname)
+#     try:
+#         dbCntInfo = dbcnt.createDbConnect(dbpool=False)
+#         productBasicInfodf = pb.getAllProductBasicInfo(dbCntInfo, ipostatus='A')
+#         for rowIndex in productBasicInfodf.index:
+#             oneProductTuple = productBasicInfodf.iloc[rowIndex]
+#             productcode = oneProductTuple["product_code"]  ## 产品代码
+#             tradelogicname = dbCntInfo.getTradeLogicNameByProductCodeAndTradeDate(productcode, 0)
+#             if logicname not in tradelogicname:
+#                 continue
+#             # if productcode not in ("002236", "002167", '002039', '002209'):
+#             #     continue
+#             logging.info("logic(%s) %d productcode(%s) begin to find second buy" % (logicname, rowIndex, productcode))
+#
+#             lastyeartoday = 0
+#             lastyeartime = 0
+#             curtblname = gc.SOURCETABLEDICT[klineType]
+#             lastworkday = 0
+#             todayhighprice = 0
+#             todaylowprice = 0
+#             if klineType in gc.K_DAY:
+#                 # 读取近一年数据，一个股票不可能一年一直再跌，如果是的话则可关注
+#                 lastyeartoday = pb.getlastyear()
+#                 lastworkday = pb.getlastworkday()
+#                 # lastworkday = 20200713
+#                 selectSql = sc.DAYTRADEDATA_ONEDATEGET % (productcode, lastworkday)
+#                 dbtradecnt = dbcnt.getDBCntInfoByTableName(curtblname, productcode)
+#                 entdayTrDataList = dbtradecnt.execSelectAllSql(selectSql)
+#                 # 最近这些股票可能停牌了导致股价没有今日的
+#                 if len(entdayTrDataList) == 0:
+#                     logging.debug("%d productcode(%s) do stop now! " % (lastworkday, productcode))
+#                     continue
+#                 todayhighprice = float(entdayTrDataList[0][gc.HIGHPRICEKEY])
+#                 todaylowprice = float(entdayTrDataList[0][gc.LOWPRICEKEY])
+#                 logging.debug("%d productcode(%s),lowprice(%f)" % (
+#                     lastworkday, productcode, todaylowprice))
+#
+#             realtablaname = pb.getRealTableName(curtblname, productcode)
+#             selectSql = sc.ENTDAYTRADEDATA_ABTYPINGGET % (realtablaname, productcode, lastyeartoday, lastyeartime)
+#             dbtradecnt = dbcnt.getDBCntInfoByTableName(curtblname, productcode)
+#             entdayTrDataList = dbtradecnt.execSelectAllSql(selectSql)
+#             if len(entdayTrDataList) == 0:
+#                 logging.info("productcode(%s) no data be found,selectSql(%s)" % (productcode, selectSql))
+#                 continue
+#             # 逆序, df中的值都是顶和底的笔表示
+#             entdayTrDataDf = pd.DataFrame(entdayTrDataList)
+#             entdayTrDataDf = entdayTrDataDf.set_index([gc.TRADEDATEKEY, gc.TRADETIMEKEY])
+#             for col in gc.ENTPRICE_COL:
+#                 entdayTrDataDf[col] = entdayTrDataDf[col].astype(float)
+#
+#             # 获取最高点，获取最高点右侧最低点，当前lowprice；最低点和lowprice
+#             # 如果lowprice比ddprice还高，那么可以不用考虑
+#             maxtradeindex = entdayTrDataDf[gc.HIGHPRICEKEY].idxmax(axis=0)
+#             # print(maxtradeindex)
+#             mintradeindex = entdayTrDataDf.loc[maxtradeindex[0]:].loc[maxtradeindex[1]:][gc.LOWPRICEKEY].idxmin(axis=0)
+#             # 查找比索引大的日期的最小值
+#             # print(mintradeindex)
+#             # print(productcode + " end")
+#             logging.debug(
+#                 "productcode(%s) from maxdate(%d),maxtime(%d) to mindate(%d), mintime(%d)  maxprice and minprice is the same!" % (
+#                     productcode, maxtradeindex[0], maxtradeindex[1], mintradeindex[0], mintradeindex[1]))
+#             if maxtradeindex[0] == mintradeindex[0] and maxtradeindex[1] == mintradeindex[1]:
+#                 logging.info(
+#                     "productcode(%s) maxprice and minprice is the same!" % productcode)
+#                 continue
+#             minlowprice = entdayTrDataDf.loc[mintradeindex][gc.LOWPRICEKEY]
+#             if todaylowprice < minlowprice:
+#                 logging.info(
+#                     "productcode(%s) todayprice(%f) bigger than minlowprice(%f)!" % (
+#                     productcode, todaylowprice, minlowprice))
+#                 continue
+#
+#             curEntdayTrDataDf = entdayTrDataDf.iloc[::-1]
+#             # tuple (20190710, 0) Series
+#             firsttime = 0
+#             nextprodcodeflag = False
+#             apicalbasiclist = []
+#             curinnerlist = []
+#             for tradedatetupleIndex, curapcialbasicserialdata in curEntdayTrDataDf.iterrows():
+#                 # 想要出现二买，必须首先找到的是顶分型，之后如果做出底分型才能是二买，如果先找到底分型则跳过。
+#                 updownstatus = curapcialbasicserialdata[gc.UPDOWNFLAGKEY]
+#                 if firsttime == 0 and updownstatus in gc.BASETYPING:
+#                     nextprodcodeflag = True
+#                     logging.info(
+#                         "%d productcode(%s) second type not apicaltyping!" % (tradedatetupleIndex[0], productcode))
+#                     break
+#                 # 顶分型还未结束，一般不会出现这种误判
+#                 if firsttime == 0 and updownstatus in gc.APICALTYPING:
+#                     if todayhighprice > curapcialbasicserialdata[gc.HIGHPRICEKEY]:
+#                         nextprodcodeflag = True
+#                         logging.info(
+#                             "%d productcode(%s) todayhighprice(%f) bigger apicaltyping price(%f)!" % (
+#                                 tradedatetupleIndex[0], productcode, todayhighprice,
+#                                 curapcialbasicserialdata[gc.HIGHPRICEKEY]))
+#                         break
+#                 # 1. 出现中枢，或者平台整理, 找到一个底比之前的顶都高,图形参考下跌的图形.png，超过这个图形的再说
+#                 # 中枢开始的顶，需要满足1.1 顶之前的底
+#                 if updownstatus in gc.APICALTYPING:
+#                     firsttime = firsttime + 1
+#                     # 日期
+#                     curinnerlist.append(tradedatetupleIndex[0])
+#                     # 时间
+#                     curinnerlist.append(tradedatetupleIndex[1])
+#                     curinnerlist.append(curapcialbasicserialdata[gc.HIGHPRICEKEY])
+#                     if len(curinnerlist) >= 6:
+#                         curinnerlist.append(gc.DOWNTYPING)
+#                         curinnerlist.append(0)
+#                         apicalbasiclist.append(copy.deepcopy(curinnerlist))
+#                         curinnerlist.clear()
+#                         # 日期
+#                         curinnerlist.append(tradedatetupleIndex[0])
+#                         # 时间
+#                         curinnerlist.append(tradedatetupleIndex[1])
+#                         curinnerlist.append(curapcialbasicserialdata[gc.HIGHPRICEKEY])
+#                     # apicalbasiclist.append((updownstatus, curapcialbasicserialdata[gc.HIGHPRICEKEY]))
+#                     # maxapicalprice = max(maxapicalprice, curapcialbasicserialdata[gc.HIGHPRICEKEY])
+#                     # zcfirst = zcfirst + 1
+#                     # firsttime = firsttime + 1
+#                     logging.info("%d productcode(%s) is apicaltyping!" % (tradedatetupleIndex[0], productcode))
+#                 elif updownstatus in gc.BASETYPING:
+#                     logging.info("%d productcode(%s) is basetyping!" % (tradedatetupleIndex[0], productcode))
+#                     # 日期
+#                     curinnerlist.append(tradedatetupleIndex[0])
+#                     # 时间
+#                     curinnerlist.append(tradedatetupleIndex[1])
+#                     curinnerlist.append(curapcialbasicserialdata[gc.LOWPRICEKEY])
+#                     if len(curinnerlist) >= 6:
+#                         curinnerlist.append(gc.UPTYPING)
+#                         curinnerlist.append(0)
+#                         apicalbasiclist.append(copy.deepcopy(curinnerlist))
+#                         curinnerlist.clear()
+#                         # 日期
+#                         curinnerlist.append(tradedatetupleIndex[0])
+#                         # 时间
+#                         curinnerlist.append(tradedatetupleIndex[1])
+#                         curinnerlist.append(curapcialbasicserialdata[gc.LOWPRICEKEY])
+#             logging.info("productcode(%s) bi merge finish!" % productcode)
+#             # print(apicalbasiclist)
+#             # 由于要找的是将有机会出现二买，因此对应的特征序列是找向上的笔。向上笔有重叠区间，那么就是一个中枢
+#             zcgdpricelist = []
+#             ggprice = gc.MINPRICE
+#             glprice = gc.MAXPRICE
+#             ddprice = gc.MAXPRICE
+#             dlprice = gc.MINPRICE
+#             firsttime = 0
+#             zsstartdate = 0
+#             zsstarttime = 0
+#             zsenddate = 0
+#             zsendtime = 0
+#             lastddprice = 0
+#             # 记录第一次脱离中枢的位置
+#             # 中枢实际上有4段重叠的区域，进入笔，然后是上下上三笔，此四笔是存在重叠区域。
+#             # 现在如果是通过特征序列进行判断， 特征序列的笔是来判断是否中枢截止了。
+#             # 进入下笔和下、下的三笔决定了这段区间一定存在中枢
+#             curendzsindex = 0
+#             for curlistindex in range(len(apicalbasiclist)):
+#                 curinnerlist = apicalbasiclist[curlistindex]
+#                 if curinnerlist[6] not in gc.UPTYPING:
+#                     continue
+#
+#                 if firsttime == 0:
+#                     ggprice = curinnerlist[2]
+#                     glprice = curinnerlist[2]
+#                     ddprice = curinnerlist[5]
+#                     dlprice = curinnerlist[5]
+#                     firsttime = firsttime + 1
+#                     zsstartdate = curinnerlist[0]
+#                     zsstarttime = curinnerlist[1]
+#                 else:
+#                     if curinnerlist[5] < glprice:
+#                         # 一买后的反弹有进入中枢的可能，比较强势；没进入中枢的场景就直接pass，反弹弱就是形成3卖了。
+#                         if firsttime == 1:
+#                             ggprice = curinnerlist[2]
+#                             glprice = curinnerlist[2]
+#                             ddprice = curinnerlist[5]
+#                             dlprice = curinnerlist[5]
+#                             firsttime = firsttime + 1
+#                             zsstartdate = curinnerlist[0]
+#                             zsstarttime = curinnerlist[1]
+#                         else:
+#                             firsttime = firsttime + 1
+#                             ggprice = max(ggprice, curinnerlist[2])
+#                             glprice = min(glprice, curinnerlist[2])
+#                             ddprice = min(ddprice, curinnerlist[5])
+#                             dlprice = max(dlprice, curinnerlist[5])
+#                             zsenddate = curinnerlist[3]
+#                             zsendtime = curinnerlist[4]
+#                     else:
+#                         # 存在某一笔在中枢下方，不合理，已经结束
+#                         if curinnerlist[2] < dlprice:
+#                             nextprodcodeflag = True
+#                             break
+#                         if ggprice != gc.MAXPRICE:
+#                             zcgdpricelist.append([zsenddate, zsendtime, zsstartdate, zsstarttime, dlprice, glprice])
+#                             # 此时需要判断是否1+1终结,这个时候需要判断是向下的两笔是否满足1+1终结的条件, 这里不能这么简单的判断，
+#                             # 因为如果是多个中枢的情况就没办法判断了。
+#                             # curendzsindex = curlistindex
+#                             afterlistindex = curlistindex - 1
+#                             beforelistindex = curlistindex + 1
+#                             befbeforelistindex = beforelistindex + 2
+#                             if befbeforelistindex < len(apicalbasiclist):
+#                                 befbeforedatalist = apicalbasiclist[befbeforelistindex]
+#                                 beforedatalist = apicalbasiclist[beforelistindex]
+#                                 afterdatalist = apicalbasiclist[afterlistindex]
+#                                 if befbeforedatalist[2] < beforedatalist[2] and beforedatalist[2] > afterdatalist[2] and \
+#                                         beforedatalist[5] > afterdatalist[5]:
+#                                     nextprodcodeflag = True
+#                                     logging.info(
+#                                         "date(%d,%d)productcode(%s)  1+1 three k end, the highest price(%f)!" % (
+#                                             beforedatalist[3], beforedatalist[4], productcode, beforedatalist[5]))
+#                                     break
+#                             elif beforelistindex < len(apicalbasiclist):
+#                                 beforedatalist = apicalbasiclist[beforelistindex]
+#                                 afterdatalist = apicalbasiclist[afterlistindex]
+#                                 # 1 + 1终结
+#                                 if beforedatalist[2] > afterdatalist[2] and beforedatalist[5] > afterdatalist[5]:
+#                                     nextprodcodeflag = True
+#                                     logging.info(
+#                                         "date(%d,%d)productcode(%s)  1+1 two k end, the highest price(%f)!" % (
+#                                             beforedatalist[3], beforedatalist[4], productcode, beforedatalist[5]))
+#                                     break
+#
+#                         firsttime = 0
+#                         ggprice = curinnerlist[2]
+#                         glprice = curinnerlist[2]
+#                         ddprice = curinnerlist[5]
+#                         dlprice = curinnerlist[5]
+#                         firsttime = firsttime + 1
+#                         zsstartdate = curinnerlist[0]
+#                         zsstarttime = curinnerlist[1]
+#             if nextprodcodeflag is True:
+#                 if len(zcgdpricelist) == 0:
+#                     logging.info("productcode(%s) first type not apicaltyping!" % productcode)
+#                     continue
+#                 else:
+#                     secbuyprodlist.append(productcode)
+#                     logging.info("productcode(%s) be found exist first buy!" % productcode)
+#                     print("productcode(%s) begin to found exist first buy!" % productcode)
+#                     print(zcgdpricelist)
+#                     print("productcode(%s) end to found exist first buy!" % productcode)
+#
+#             logging.info("productcode(%s) finish finding first buy!" % productcode)
+#         print("future all finished!")
+#     finally:
+#         logging.info(logicname + " close all dbconnect!")
+#         dbCntInfo.closeAllDBConnect()
+#
+#     return secbuyprodlist
+#
+#
+# def enttheorythirdbuy(logicname, klineType='D') -> list:
+#     '''
+#      依据传入的级别，寻找三买
+#     :param self:
+#     :param klineType:
+#     :return: 符合条件的产品列表
+#     '''
+#
+#     thirbuyprodlist = []
+#     return thirbuyprodlist
+#
+#
+# def enttheoryincentral(logicname, klineType='D') -> list:
+#     '''
+#      依据传入的级别，产品在中枢中
+#     :param self:
+#     :param klineType:
+#     :return: 符合条件的产品列表
+#     '''
+#
+#     centralprodlist = []
+#     return centralprodlist
+#
+#
+# def enttheoryfirstsell(logicname, klineType='D') -> list:
+#     '''
+#      依据传入的级别，产品在快出现一卖
+#     :param self:
+#     :param klineType:
+#     :return: 符合条件的产品列表
+#     '''
+#
+#     firstsellprodlist = []
+#     return firstsellprodlist
+#
+#
+# def enttheorysecondsell(logicname, klineType='D') -> list:
+#     '''
+#      依据传入的级别，产品在快出现二卖
+#     :param self:
+#     :param klineType:
+#     :return: 符合条件的产品列表
+#     '''
+#
+#     secondsellprodlist = []
+#     return secondsellprodlist
 
 
 from multiprocessing import Pool

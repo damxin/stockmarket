@@ -28,22 +28,35 @@ def getMaxTradeTimeFromCurProdCode(dbCntInfo, productCode, kType = gc.K_DAY):
     tradeDate = 0
 
     sourceTable = ""
+    execlsql = ""
     if kType in gc.K_DAY:
         sourceTable = "producttradedata"
+        execlsql = "select max(trade_date) maxtradedate from %s where product_code = '%s' " % (sourceTable, productCode)
     elif kType in gc.K_30MIN:
         sourceTable = "prod30tradedata"
+        symbolcode = code_to_symbol(productCode)
+        execlsql = "select max(trade_date) maxtradedate from %s where symbol_code = '%s' " % (sourceTable, symbolcode)
     else:
         tradeDate = 20991231
 
     tableDbBase = dbCntInfo.getDBCntInfoByTableName(tablename=sourceTable, productcode=productCode)
-    execlsql = "select max(trade_date) maxtradedate from %s where product_code = '%s' " % (sourceTable, productCode)
-    tableRetTuple = tableDbBase.execSelectSmallSql(execlsql)
-    print(productCode, end='')
-    print(type(tableRetTuple))
-    print(productCode, end='')
-    print(tableRetTuple)
-    # print(tableRetTuple[0]['maxtradedate'])
-    tradeDate = 19000101 if tableRetTuple[0]['maxtradedate'] is None else tableRetTuple[0]['maxtradedate']
+
+    tableRetListTuple = tableDbBase.execSelectSmallSql(execlsql)
+
+    try :
+        if tableRetListTuple is None:
+            tradeDate = 19000101
+        else:
+            tradeDate = tableRetListTuple[0]['maxtradedate']
+    except Exception as e:
+        print(execlsql)
+        # print(productCode, end='')
+        print(type(tableRetListTuple))
+        # print(productCode, end='')
+        print(tableRetListTuple)
+        # print(tableRetTuple[0]['maxtradedate'])
+        print(e)
+
 
     return (tradeDate, 235959)
 

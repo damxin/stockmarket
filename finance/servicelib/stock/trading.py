@@ -555,6 +555,7 @@ def getProductFinanceInfo(dbCntInfo, sourcetable, desctable):
 
     return
 
+
 def tdxProductTradeData2Database(dbCntInfo, productCode, absolutePath, productTradeFile):
     '''
     单个产品的通达信数据解析后插入到数据库中
@@ -658,7 +659,7 @@ def tdxShLdayToStock(dbCntInfo, dataType="sh", softPath="D:/software/new_haitong
             marketType = dictcons.DICTCONS_CODETOMARKETTYPE[subleft3]
             print("正在处理产品代码为(" + productCode + ")的markettype:" + str(marketType))
         else:
-            print("正在处理产品代码为(" + productCode + ")的文件,跳过该产品:" + subleft3)
+            # print("正在处理产品代码为(" + productCode + ")的文件,跳过该产品:" + subleft3)
             continue
         # sh000001是上证指数，而000001是平安银行是深圳A股，因此这里要过滤
         if dataType == "sz":
@@ -695,15 +696,17 @@ def tdxProd30TradeData2Database(dbCntInfo, productCode, absolutePath, productTra
     from finance.util import SqlCons as sqlcons
 
     filename = absolutePath + productTradeFile
+    logging.info("start to deal product(" + productCode + ")filepath:" + filename )
 
     # 获取该股票的最大日期
     (maxTradeDate, maxtradetime) = pb.getMaxTradeTimeFromCurProdCode(dbCntInfo, productCode, kType=gc.K_30MIN)
     if maxTradeDate == 190000101:
         logging.info("current product(" + productCode + ") is not in productbaseinfo, please add!")
-    logging.info("start to deal product(" + productCode + ")filepath:" + filename + "(" + str(maxTradeDate) + ")")
+    logging.info("product(" + productCode + ") maxtradedate:" + str(maxTradeDate) )
     sourcetable = "prod30tradedata"
     tableDbBase = dbCntInfo.getDBCntInfoByTableName(tablename=sourcetable, productcode=productCode)
     symbolcode = pb.code_to_symbol(productCode)
+    execlSql = sqlcons.CSV30DATAINSERTDB
     with open(filename, 'rb') as fname:
         open30price = 0
         high30price = 0
@@ -748,15 +751,17 @@ def tdxProd30TradeData2Database(dbCntInfo, productCode, absolutePath, productTra
                 # product_code,symbol_code, trade_date,trade_time,open_price,high_price,close_price,low_price,product_volume,product_amount
                 # trade30datalist.append((productCode, symbolcode, tradedate, tradetime, open30price, high30price,
                 #                         close30price, low30price, prod30volumn, prod30amount))
-                execlSql = sqlcons.TDX30DATAINSERTDATABASE % (
+                execlSql = execlSql + sqlcons.CSV30INSERTVAR % (
                     productCode, symbolcode, tradedate, tradetime, open30price, high30price,
                     close30price, low30price, prod30volumn, prod30amount)
-                excepte = tableDbBase.execNotSelectSql(execlSql)
-                if excepte is not None:
-                    print(excepte)
-                    print("productVolumn(%f),productAmount(%f)" % (productVolumn, productAmount))
-                    print("执行异常，程序终止!")
-                    return excepte
+                if tradetime == 150000:
+                    excepte = tableDbBase.execNotSelectSql(execlSql[:-1])
+                    if excepte is not None:
+                        print(excepte)
+                        print("productVolumn(%f),productAmount(%f)" % (productVolumn, productAmount))
+                        print("执行异常，程序终止!")
+                        return excepte
+                    selectSql = sqlcons.CSV30DATAINSERTDB
 
                 open30price = 0
                 high30price = 0
@@ -768,7 +773,7 @@ def tdxProd30TradeData2Database(dbCntInfo, productCode, absolutePath, productTra
     return None
 
 
-def tdxSh30minToStock(dbCntInfo, dataType="sh", softPath="D:/software/new_haitong", relativePath=None):
+def tdxSh30minToStock(dbCntInfo,dataType='sz',softPath='D:/software/new_haitong'):
     '''
     tdx数据读取到数据库中
     参考网站:https://www.jianshu.com/p/9dd3ef74fe96
@@ -782,14 +787,13 @@ def tdxSh30minToStock(dbCntInfo, dataType="sh", softPath="D:/software/new_haiton
     import time
     from finance.util import DictCons as dictcons
 
-    relativePath = "/vipdoc/" + dataType + "/fzline/" if relativePath is None else relativePath
+    relativePath = "/vipdoc/" + dataType + "/fzline/"
     absolutePath = softPath + relativePath
 
     startTime = time.time()
     listTradeFile = os.listdir(absolutePath)
-    futurecount = 0
+
     for productTradeFile in listTradeFile:
-        print("正在处理产品代码为的文件:" + productTradeFile)
         productCode = productTradeFile[2:-4]
         # SELECT subleft3 FROM (SELECT  LEFT(a.`product_code`,3) subleft3,a.product_code FROM producttradedata a GROUP BY a.product_code) a GROUP BY subleft3;
         # 000,001,002,003,300,600,601,603,688
@@ -797,9 +801,9 @@ def tdxSh30minToStock(dbCntInfo, dataType="sh", softPath="D:/software/new_haiton
         marketType = ""
         if subleft3 in dictcons.DICTCONS_CODETOMARKETTYPE:
             marketType = dictcons.DICTCONS_CODETOMARKETTYPE[subleft3]
-            print("正在处理产品代码为(" + productCode + ")的markettype:" + str(marketType))
+            # print("正在处理产品代码为(" + productCode + ")的markettype:" + str(marketType))
         else:
-            print("正在处理产品代码为(" + productCode + ")的文件,跳过该产品:" + subleft3)
+            # print("正在处理产品代码为(" + productCode + ")的文件,跳过该产品:" + subleft3)
             continue
         # sh000001是上证指数，而000001是平安银行是深圳A股，因此这里要过滤
         if dataType == "sz":
@@ -808,9 +812,9 @@ def tdxSh30minToStock(dbCntInfo, dataType="sh", softPath="D:/software/new_haiton
         else:
             if (marketType == 1 or marketType == 8) is False:
                 continue
-        print("处理第%d的产品代码%s" % (futurecount, productCode))
-        retresult = tdxProductTradeData2Database(dbCntInfo, productCode, absolutePath, productTradeFile)
-        retresult = tdxProd30TradeData2Database(dbCntInfo, productCode)
+
+        # print("处理第%d的产品代码%s" % (futurecount, productCode))
+        retresult = tdxProd30TradeData2Database(dbCntInfo, productCode, absolutePath, productTradeFile)
         if retresult is not None:
             print("%s deal throw except!" % productCode)
             return retresult
@@ -821,6 +825,7 @@ def tdxSh30minToStock(dbCntInfo, dataType="sh", softPath="D:/software/new_haiton
     print("future all finished!")
 
     return None
+
 
 def get30tradedata():
     '''
@@ -929,6 +934,7 @@ def dailyDataTdxInsertDb():
     日线数据从通达信填写到数据库中
     :return:
     '''
+    stocklog.initLogging()
     path = 'D:/software/new_haitong'
     xmlfile = "G:\\nfx\\Python\\stockmarket\\finance\\resource\\finance.xml"
     # dbCntInfo = dbcnt.DbCnt(xmlfile, dbpool=False)
@@ -939,14 +945,20 @@ def dailyDataTdxInsertDb():
         tdxShLdayToStock(dbCntInfo, "sh", path)
     dbCntInfo.closeAllDBConnect()
 
+
 def daily30DataTdxInsertDb():
     '''
     30min数据从通达信填写到数据库中
     :return:
     '''
+    # 5min可以完成
+    # resultexpt = tdxSh30minToStock(dbCntInfo, "sz", path)
+    # if resultexpt is None:
+    #     tdxSh30minToStock(dbCntInfo, "sh", path)
+
+    stocklog.initLogging()
     path = 'D:/software/new_haitong'
     xmlfile = "G:\\nfx\\Python\\stockmarket\\finance\\resource\\finance.xml"
-    # dbCntInfo = dbcnt.DbCnt(xmlfile, dbpool=False)
     dbCntInfo = dbcnt.createDbConnect(dbpool=False)
     # 5min可以完成
     resultexpt = tdxSh30minToStock(dbCntInfo, "sz", path)
@@ -954,12 +966,11 @@ def daily30DataTdxInsertDb():
         tdxSh30minToStock(dbCntInfo, "sh", path)
     dbCntInfo.closeAllDBConnect()
 
-
 if __name__ == "__main__":
-    stocklog.initLogging()
-    dailyDataTdxInsertDb()
+
+    # dailyDataTdxInsertDb()
     daily30DataTdxInsertDb()
-    
+
     # filedata = open(".\stock_basics.txt", 'w+')
     # xmlfile = "E:\\pydevproj\\stockmarket\\finance\\resource\\finance.xml"
     # xmlfile = "F:\\nfx\\Python\\stockmarket\\finance\\resource\\finance.xml"
