@@ -14,11 +14,19 @@ import logging
 # logging.error("This is a error log.")
 # logging.critical("This is a critical log.")
 
+globalstockflag = False
+
 def initLogging(logicname=None):
     '''
     日志初始化
     :return:
     '''
+
+    global globalstockflag
+
+    if globalstockflag is True:
+        return
+
     logicname = "" if logicname is None else logicname
     LOG_FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
     # DATE_FORMAT = "%Y-%m-%d,%H:%M:%S"
@@ -28,6 +36,7 @@ def initLogging(logicname=None):
     if os.path.exists(logpath):
         os.remove(logpath)
     logging.basicConfig(filename=logpath, level=logging.DEBUG, format=LOG_FORMAT)
+    globalstockflag = True
 
 if __name__ == "__main__":
     initLogging()

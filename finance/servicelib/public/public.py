@@ -16,11 +16,11 @@ from finance.util import GlobalCons as gc
 import pandas as pd
 from datetime import date, timedelta
 
-def getMaxTradeTimeFromCurProdCode(dbCntInfo, productCode, kType = gc.K_DAY):
+def getMaxTradeTimeFromCurProdCode(dbCntInfo, symbolCode, kType = gc.K_DAY):
     '''
     获取已经存储在数据库中的最大值，如果是日以上级别则tradetime返回填写235959
     :param dbCntInfo:
-    :param productCode:
+    :param symbolCode:
     :param kType:gc.K_DAY 等
     :return: (tradeDate, tradeTime)
     '''
@@ -31,15 +31,14 @@ def getMaxTradeTimeFromCurProdCode(dbCntInfo, productCode, kType = gc.K_DAY):
     execlsql = ""
     if kType in gc.K_DAY:
         sourceTable = "producttradedata"
-        execlsql = "select max(trade_date) maxtradedate from %s where product_code = '%s' " % (sourceTable, productCode)
+        execlsql = "select max(trade_date) maxtradedate from %s where symbol_code = '%s' " % (sourceTable, symbolCode)
     elif kType in gc.K_30MIN:
         sourceTable = "prod30tradedata"
-        symbolcode = code_to_symbol(productCode)
-        execlsql = "select max(trade_date) maxtradedate from %s where symbol_code = '%s' " % (sourceTable, symbolcode)
+        execlsql = "select max(trade_date) maxtradedate from %s where symbol_code = '%s' " % (sourceTable, symbolCode)
     else:
         tradeDate = 20991231
 
-    tableDbBase = dbCntInfo.getDBCntInfoByTableName(tablename=sourceTable, productcode=productCode)
+    tableDbBase = dbCntInfo.getDBCntInfoByTableName(tablename=sourceTable, symbolcode=symbolCode)
 
     tableRetListTuple = tableDbBase.execSelectSmallSql(execlsql)
 
@@ -56,25 +55,26 @@ def getMaxTradeTimeFromCurProdCode(dbCntInfo, productCode, kType = gc.K_DAY):
         print(tableRetListTuple)
         # print(tableRetTuple[0]['maxtradedate'])
         print(e)
-
+    if tradeDate is None:
+        tradeDate = 19000101
 
     return (tradeDate, 235959)
 
-def getMaxTradeDateFromCurProductCode(dbCntInfo, productCode) -> int:
+def getMaxTradeDateFromCurProductCode(dbCntInfo, symbolCode) -> int:
     '''
     获取产品代码在数据库中存储的最大交易日期
     :param dbCntInfo:
-    :param productCode:
+    :param symbolCode:
     :return:
     '''
 
     sourcetable = "producttradedata"
-    tableDbBase = dbCntInfo.getDBCntInfoByTableName(tablename=sourcetable, productcode=productCode)
-    execlsql = "select max(trade_date) maxtradedate from producttradedata where product_code = '%s' " % productCode
+    tableDbBase = dbCntInfo.getDBCntInfoByTableName(tablename=sourcetable, symbolcode=symbolCode)
+    execlsql = "select max(trade_date) maxtradedate from producttradedata where product_code = '%s' " % symbolCode
     tableRetTuple = tableDbBase.execSelectSmallSql(execlsql)
-    print(productCode, end='')
+    print(symbolCode, end='')
     print(type(tableRetTuple))
-    print(productCode, end='')
+    print(symbolCode, end='')
     print(tableRetTuple)
     # print(tableRetTuple[0]['maxtradedate'])
     maxDate = 19000101 if tableRetTuple[0]['maxtradedate'] is None else tableRetTuple[0]['maxtradedate']
@@ -250,10 +250,10 @@ def listdictTypeChangeToDataFrame(datalistdict):
     return datadf
 
 
-def insertNormalDbByCurProductCode(dbCntInfo, sourcetable, desttable, selectsql, insertsql, productcode=None):
+def insertNormalDbByCurProductCode(dbCntInfo, sourcetable, desttable, selectsql, insertsql, symbolcode=None):
     '''
     source表中数据批量插入到正式库中
-    :param productcode:可为None
+    :param symbolcode:可为None
     :param dbCntInfo:
     :param sourcetable:
     :param desttable:
@@ -261,8 +261,8 @@ def insertNormalDbByCurProductCode(dbCntInfo, sourcetable, desttable, selectsql,
     :param insertsql:
     :return:
     '''
-    sourceDbBase = dbCntInfo.getDBCntInfoByTableName(tablename=sourcetable, productcode=productcode)
-    destDbBase = dbCntInfo.getDBCntInfoByTableName(tablename=desttable, productcode=productcode)
+    sourceDbBase = dbCntInfo.getDBCntInfoByTableName(tablename=sourcetable, symbolcode=symbolcode)
+    destDbBase = dbCntInfo.getDBCntInfoByTableName(tablename=desttable, symbolcode=symbolcode)
     while (True):
         sourceRetList = sourceDbBase.execSelectManySql(selectsql)
         if len(sourceRetList) == 0:
@@ -274,33 +274,33 @@ def insertNormalDbByCurProductCode(dbCntInfo, sourcetable, desttable, selectsql,
         destDbBase.execInsertManySql(insertsql, sourceList)
 
 
-def getcompanyfinancedata(dbcntinfo, product_code, compfinancetblname, datatype, datalength=5) -> pd.DataFrame:
+def getcompanyfinancedata(dbcntinfo, symbolcode, compfinancetblname, datatype, datalength=5) -> pd.DataFrame:
     '''
     company_income,company_cashflow,company_balance_sheet数据获取
     :param dbcntinfo 数据库连接
     :param compfinancetblname:company_income,company_cashflow,company_balance_sheet
-    :param product_code: None则报错，只支持单一产品数据获取
+    :param symbolcode: None则报错，只支持单一产品数据获取
     :param datatype:Y:年，Q:季度
     :param datalength默认值为5，显示5年，季度就没有日期了。
-    :return:DataFrame (product_code,......)
+    :return:DataFrame (symbolcode,......)
     '''
 
-    if product_code is None or datatype is None:
+    if symbolcode is None or datatype is None:
         raise ValueError(
             "the param of function getcompanyfinancedata(%s) is error!\n please check!" % compfinancetblname)
     if datatype is not "Y" and datatype is not "Q":
         raise ValueError(
             "the param of function getcompanyfinancedata datatype(%s) is error!\n please check!" % datatype)
 
-    dbSqlSession = dbcntinfo.getDBCntInfoByTableName(compfinancetblname, product_code)
+    dbSqlSession = dbcntinfo.getDBCntInfoByTableName(compfinancetblname, symbolcode)
     allDataGetSql = ""
     if datatype is "Y":
         companyfinacepubselsql = sc.COMPANYFINANCE_PUBYEARSELECTSQL[compfinancetblname]
-        allDataGetSql = companyfinacepubselsql % (product_code, product_code, product_code, datalength)
+        allDataGetSql = companyfinacepubselsql % (symbolcode, symbolcode, symbolcode, datalength)
         print("getcompanyfinancedata get sql:" + allDataGetSql)
     elif datatype is "Q":
         companyfinacepubselsql = sc.COMPANYFINANCE_PUBQUARTSELECTSQL[compfinancetblname]
-        allDataGetSql = companyfinacepubselsql % (product_code, product_code, datalength)
+        allDataGetSql = companyfinacepubselsql % (symbolcode, symbolcode, datalength)
         print("getcompanyfinancedata get sql:" + allDataGetSql)
     tradeDataTupleInList = dbSqlSession.execSelectAllSql(allDataGetSql)
     dfdata = listdictTypeChangeToDataFrame(tradeDataTupleInList)
@@ -321,24 +321,24 @@ def getRateNextToByList(dataList) -> list:
     return rateList
 
 
-def downloadloginsorupd(dbcnt, productcode, eventtype, dealstatus, sourcetype):
+def downloadloginsorupd(dbcnt, symbolcode, eventtype, dealstatus, sourcetype):
     '''
     表datadownloadlog日志记录插入或者更新
     :param dbcnt: 数据库的连接
-    :param productcode:
+    :param symbolcode:
     :param eventtype: 1.交易数据 2.Income  3.Balancesheet 4.Cashflow
     :param dealstatus: 0.准备开始 1.下载完成 2.导入正式表完成
     :param sourcetype: 0.各自下载 1.批量下载
     :return: True：成功，False：失败
     '''
     import time
-    if productcode is None:
-        raise ValueError("productcode do not valid value!")
+    if symbolcode is None:
+        raise ValueError("symbolcode do not valid value!")
         return False
-    sqlsession = dbcnt.getDBCntInfoByTableName("datadownloadlog", productcode)
+    sqlsession = dbcnt.getDBCntInfoByTableName("datadownloadlog", symbolcode)
 
     logdate = int((date.today()).strftime("%Y%m%d"))
-    datadownloadlogsql = sc.DATADOWNLOG_GETDATA % (productcode, eventtype, sourcetype, logdate)
+    datadownloadlogsql = sc.DATADOWNLOG_GETDATA % (symbolcode, eventtype, sourcetype, logdate)
     datalogexistlist = sqlsession.execSelectAllSql(datadownloadlogsql)
     keyname = "product_code"
     cntnum = datalogexistlist[0][keyname]

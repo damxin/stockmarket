@@ -36,13 +36,13 @@ def createDbConnect(dbpool=False):
         gDbCntFlag = True
     return gdbCntInfo
 
-def getDBCntInfoByTableName(tableName, productCode = None,tradeDate = None):
+def getDBCntInfoByTableName(tableName, symbolCode = None,tradeDate = None):
     global gDbCntFlag
     global gdbCntInfo
     if gDbCntFlag is not True:
         print("database connect does not create,please call function createDbConnect first!")
         return None
-    connectDb = gdbCntInfo.getDBCntInfoByTableName(tableName, productCode, tradeDate)
+    connectDb = gdbCntInfo.getDBCntInfoByTableName(tableName, symbolCode, tradeDate)
     return connectDb
 
 class DbCnt:
@@ -114,14 +114,14 @@ class DbCnt:
                 else:
                     print("createConnect failed! error!")
 
-    def getTradeLogicNameByProductCodeAndTradeDate(self, productcode, tradedate):
+    def getTradeLogicNameByProductCodeAndTradeDate(self, symbolcode, tradedate):
         '''
         返回分库表的逻辑名称
-        :param productcode:
+        :param symbolcode:
         :return:
         '''
-        if productcode is None:
-            raise RuntimeError("productcode is None! error!!")
+        if symbolcode is None:
+            raise RuntimeError("symbolcode is None! error!!")
         realTradeDate = 0 if tradedate is None else tradedate
         tradeLogicName = ""
         for listIndex in range(len(self.dataBaseRule)):
@@ -130,15 +130,15 @@ class DbCnt:
             maxProductCode = oneBaseRuleTuple["maxproductcode"]
             minTradeDate = oneBaseRuleTuple["mintradedate"]
             maxTradeDate = oneBaseRuleTuple["maxtradedate"]
-            if minProductCode <= productcode <= maxProductCode and minTradeDate <= realTradeDate <= maxTradeDate:
+            if minProductCode <= symbolcode <= maxProductCode and minTradeDate <= realTradeDate <= maxTradeDate:
                 tradeLogicName = oneBaseRuleTuple["logicname"]
                 break
         if len(tradeLogicName) < 1:
-            print("%d 's %s do not get trade logic name! error!" % (realTradeDate, productcode))
+            print("%d 's %s do not get trade logic name! error!" % (realTradeDate, symbolcode))
             raise RuntimeError("trade logic name do not get! error!!")
         return tradeLogicName
 
-    def getDBCntInfoByTableName(self, tablename, productcode=None, tradedate=None):
+    def getDBCntInfoByTableName(self, tablename, symbolcode=None, tradedate=None):
         '''
 
         :param tablename: 表名
@@ -149,7 +149,7 @@ class DbCnt:
         if tablename in sc.TABLEDICT:
             logicname = sc.TABLEDICT[tablename]
             if logicname in "trade":
-                reallogicname = self.getTradeLogicNameByProductCodeAndTradeDate(productcode, tradedate)
+                reallogicname = self.getTradeLogicNameByProductCodeAndTradeDate(symbolcode, tradedate)
             else:
                 reallogicname = logicname
             dbSqlBase = self.getDbBaseByLogicName(reallogicname)

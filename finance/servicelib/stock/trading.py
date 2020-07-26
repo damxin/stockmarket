@@ -72,17 +72,17 @@ def insertIntoNormalDbFromNotDealDBData(dbCntInfo, startdate, pcodeDataUpdateDic
     :param pcodeDataUpdateDict: 记录产品今日是否有数据更新
     :return:
     '''
-    print("all productcode data insert begin!")
+    print("all symbolcode data insert begin!")
     sourceTable = "histtradedata"
     destTable = "producttradedata"
     sourceDbBase = dbCntInfo.getDBCntInfoByTableName(sourceTable)
     ordercause = "order by trade_date"
-    for productCode, updateFlag in pcodeDataUpdateDict.items():
+    for symbolcode, updateFlag in pcodeDataUpdateDict.items():
         if updateFlag in "0":
             continue
-        destDbBase = dbCntInfo.getDBCntInfoByTableName(tablename=destTable, productcode=productCode)
+        destDbBase = dbCntInfo.getDBCntInfoByTableName(tablename=destTable, symbolcode=symbolcode)
         if startdate == 0:
-            realDataSql = sc.PRODUCTHISTTRADEDATATUSHAREPRO_SQL % (sourceTable + productCode)
+            realDataSql = sc.PRODUCTHISTTRADEDATATUSHAREPRO_SQL % (sourceTable + symbolcode)
             while (True):
                 sourceRetList = sourceDbBase.execSelectManySql(realDataSql, ordercause)
                 if len(sourceRetList) == 0:
@@ -556,11 +556,11 @@ def getProductFinanceInfo(dbCntInfo, sourcetable, desctable):
     return
 
 
-def tdxProductTradeData2Database(dbCntInfo, productCode, absolutePath, productTradeFile):
+def tdxProductTradeData2Database(dbCntInfo, symbolCode, absolutePath, productTradeFile):
     '''
     单个产品的通达信数据解析后插入到数据库中
     :param dbCntInfo:
-    :param productCode:
+    :param symbolCode:
     :param absolutePath:
     :param productTradeFile:
     :return:
@@ -572,13 +572,13 @@ def tdxProductTradeData2Database(dbCntInfo, productCode, absolutePath, productTr
     filepath = absolutePath + productTradeFile
 
     # 获取该股票的最大日期
-    maxTradeDate = pb.getMaxTradeDateFromCurProductCode(dbCntInfo, productCode)
+    (maxTradeDate, maxTradeTime) = pb.getMaxTradeTimeFromCurProdCode(dbCntInfo, symbolCode)
     if maxTradeDate == 190000101:
-        print("当前产品%s没有在productbaseinfo表中,请添加!" % productCode)
-    print("线程开始正在处理产品代码为(" + productCode + ")的文件filepath:" + filepath + "(" + str(maxTradeDate) + ")")
-    logging.info("线程开始处理产品代码为(" + productCode + ")的文件filepath:" + filepath + "(" + str(maxTradeDate) + ")")
+        print("当前产品%s没有在productbaseinfo表中,请添加!" % symbolCode)
+    print("线程开始正在处理产品代码为(" + symbolCode + ")的文件filepath:" + filepath + "(" + str(maxTradeDate) + ")")
+    logging.info("线程开始处理产品代码为(" + symbolCode + ")的文件filepath:" + filepath + "(" + str(maxTradeDate) + ")")
     sourcetable = "producttradedata"
-    tableDbBase = dbCntInfo.getDBCntInfoByTableName(tablename=sourcetable, productcode=productCode)
+    tableDbBase = dbCntInfo.getDBCntInfoByTableName(tablename=sourcetable, symbolcode=symbolCode)
     with open(filepath, 'rb') as fname:
         while True:
             stock_date = fname.read(4)
@@ -616,15 +616,15 @@ def tdxProductTradeData2Database(dbCntInfo, productCode, absolutePath, productTr
             # 数据插入到数据库中
             # product_code, trade_date,open_price,high_price,close_price,low_price,product_volume,product_amount
             execlSql = sqlcons.TDXDATAINSERTDATABASE % (
-                productCode, tradedate, openPrice, highPrice, closePrice, lowPrice, productVolumn, productAmount)
+                symbolCode, tradedate, openPrice, highPrice, closePrice, lowPrice, productVolumn, productAmount)
             excepte = tableDbBase.execNotSelectSql(execlSql)
             if excepte is not None:
                 print(excepte)
                 print("productVolumn(%f),productAmount(%f)" % (productVolumn, productAmount))
                 print("执行异常，程序终止!")
                 return excepte
-    print("线程处理产品代码为(" + productCode + ")的文件处理完毕!")
-    logging.info("线程处理产品代码为(" + productCode + ")的文件处理完毕!")
+    print("线程处理产品代码为(" + symbolCode + ")的文件处理完毕!")
+    logging.info("线程处理产品代码为(" + symbolCode + ")的文件处理完毕!")
     return None
 
 
@@ -655,6 +655,7 @@ def tdxShLdayToStock(dbCntInfo, dataType="sh", softPath="D:/software/new_haitong
         # 000,001,002,003,300,600,601,603,688
         subleft3 = productCode[:3]
         marketType = ""
+        symbolcode = productTradeFile[:-4]
         if subleft3 in dictcons.DICTCONS_CODETOMARKETTYPE:
             marketType = dictcons.DICTCONS_CODETOMARKETTYPE[subleft3]
             print("正在处理产品代码为(" + productCode + ")的markettype:" + str(marketType))
@@ -668,10 +669,10 @@ def tdxShLdayToStock(dbCntInfo, dataType="sh", softPath="D:/software/new_haitong
         else:
             if (marketType == 1 or marketType == 8) is False:
                 continue
-        print("处理第%d的产品代码%s" % (futurecount, productCode))
-        retresult = tdxProductTradeData2Database(dbCntInfo, productCode, absolutePath, productTradeFile)
+        print("处理第%d的产品代码%s" % (futurecount, symbolcode))
+        retresult = tdxProductTradeData2Database(dbCntInfo, symbolcode, absolutePath, productTradeFile)
         if retresult is not None:
-            print("%s deal throw except!" % productCode)
+            print("%s deal throw except!" % symbolcode)
             return retresult
 
     print("当前开始时间： ", time.strftime('%Y.%m.%d %H:%M:%S ', time.localtime(startTime)))
@@ -682,12 +683,12 @@ def tdxShLdayToStock(dbCntInfo, dataType="sh", softPath="D:/software/new_haitong
     return None
 
 
-def tdxProd30TradeData2Database(dbCntInfo, productCode, absolutePath, productTradeFile):
+def tdxProd30TradeData2Database(dbCntInfo, symbolCode, absolutePath, productTradeFile):
     '''
     参考:http://www.360doc.com/content/17/0523/19/8392_656548117.shtml
     解析通达信5min数据，组装成30min数据写入数据库表prod30tradedata中
     :param dbCntInfo:
-    :param productCode:
+    :param symbolCode:
     :param path:
     :return:
     '''
@@ -696,16 +697,15 @@ def tdxProd30TradeData2Database(dbCntInfo, productCode, absolutePath, productTra
     from finance.util import SqlCons as sqlcons
 
     filename = absolutePath + productTradeFile
-    logging.info("start to deal product(" + productCode + ")filepath:" + filename )
+    logging.info("start to deal product(" + symbolCode + ")filepath:" + filename)
 
     # 获取该股票的最大日期
-    (maxTradeDate, maxtradetime) = pb.getMaxTradeTimeFromCurProdCode(dbCntInfo, productCode, kType=gc.K_30MIN)
+    (maxTradeDate, maxtradetime) = pb.getMaxTradeTimeFromCurProdCode(dbCntInfo, symbolCode, kType=gc.K_30MIN)
     if maxTradeDate == 190000101:
-        logging.info("current product(" + productCode + ") is not in productbaseinfo, please add!")
-    logging.info("product(" + productCode + ") maxtradedate:" + str(maxTradeDate) )
+        logging.info("current product(" + symbolCode + ") is not in productbaseinfo, please add!")
+    logging.info("product(" + symbolCode + ") maxtradedate:" + str(maxTradeDate) )
     sourcetable = "prod30tradedata"
-    tableDbBase = dbCntInfo.getDBCntInfoByTableName(tablename=sourcetable, productcode=productCode)
-    symbolcode = pb.code_to_symbol(productCode)
+    tableDbBase = dbCntInfo.getDBCntInfoByTableName(tablename=sourcetable, symbolcode=symbolCode)
     execlSql = sqlcons.CSV30DATAINSERTDB
     with open(filename, 'rb') as fname:
         open30price = 0
@@ -752,7 +752,7 @@ def tdxProd30TradeData2Database(dbCntInfo, productCode, absolutePath, productTra
                 # trade30datalist.append((productCode, symbolcode, tradedate, tradetime, open30price, high30price,
                 #                         close30price, low30price, prod30volumn, prod30amount))
                 execlSql = execlSql + sqlcons.CSV30INSERTVAR % (
-                    productCode, symbolcode, tradedate, tradetime, open30price, high30price,
+                    symbolCode, tradedate, tradetime, open30price, high30price,
                     close30price, low30price, prod30volumn, prod30amount)
                 if tradetime == 150000:
                     excepte = tableDbBase.execNotSelectSql(execlSql[:-1])
@@ -761,7 +761,7 @@ def tdxProd30TradeData2Database(dbCntInfo, productCode, absolutePath, productTra
                         print("productVolumn(%f),productAmount(%f)" % (productVolumn, productAmount))
                         print("执行异常，程序终止!")
                         return excepte
-                    selectSql = sqlcons.CSV30DATAINSERTDB
+                    execlSql = sqlcons.CSV30DATAINSERTDB
 
                 open30price = 0
                 high30price = 0
@@ -769,7 +769,7 @@ def tdxProd30TradeData2Database(dbCntInfo, productCode, absolutePath, productTra
                 close30price = 0
                 prod30volumn = 0
                 prod30amount = 0
-    logging.info("deal product(" + productCode + ")filepath:" + filename + "finish")
+    logging.info("deal product(" + symbolCode + ")filepath:" + filename + "finish")
     return None
 
 
@@ -795,6 +795,7 @@ def tdxSh30minToStock(dbCntInfo,dataType='sz',softPath='D:/software/new_haitong'
 
     for productTradeFile in listTradeFile:
         productCode = productTradeFile[2:-4]
+        symbolCode = productTradeFile[:-4]
         # SELECT subleft3 FROM (SELECT  LEFT(a.`product_code`,3) subleft3,a.product_code FROM producttradedata a GROUP BY a.product_code) a GROUP BY subleft3;
         # 000,001,002,003,300,600,601,603,688
         subleft3 = productCode[:3]
@@ -814,14 +815,14 @@ def tdxSh30minToStock(dbCntInfo,dataType='sz',softPath='D:/software/new_haitong'
                 continue
 
         # print("处理第%d的产品代码%s" % (futurecount, productCode))
-        retresult = tdxProd30TradeData2Database(dbCntInfo, productCode, absolutePath, productTradeFile)
+        retresult = tdxProd30TradeData2Database(dbCntInfo, symbolCode, absolutePath, productTradeFile)
         if retresult is not None:
-            print("%s deal throw except!" % productCode)
+            print("%s deal throw except!" % symbolCode)
             return retresult
 
     print("当前开始时间： ", time.strftime('%Y.%m.%d %H:%M:%S ', time.localtime(startTime)))
     print("当前结束时间： ", time.strftime('%Y.%m.%d %H:%M:%S ', time.localtime(time.time())))
-
+    logging.info("future all finished!")
     print("future all finished!")
 
     return None
@@ -968,7 +969,8 @@ def daily30DataTdxInsertDb():
 
 if __name__ == "__main__":
 
-    # dailyDataTdxInsertDb()
+    dailyDataTdxInsertDb()
+    os.sleep(2)
     daily30DataTdxInsertDb()
 
     # filedata = open(".\stock_basics.txt", 'w+')

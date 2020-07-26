@@ -17,10 +17,10 @@ from finance.servicelib.processinit import stocklog
 
 class EntangLingTheory():
 
-    def __init__(self, prodCode):
-        self.prod_code = prodCode
+    def __init__(self, symbolCode):
+        self.symbol_code = symbolCode
 
-    def inclusionrRelotionDeal(self, tradeDataList):
+    def inclusionrRelotionDeal(self, tradeDataList, klineType):
         '''
         依据入参，包含关系处理，然后写入数据库分表entdaytradedata中
         :param tradeDataList:
@@ -29,11 +29,15 @@ class EntangLingTheory():
         lastTradeData = {}
         firstTradeDataFlag = True
         trendUpOrDown = gc.TRENDFLAG_UP
-
-        logging.info("inclusionrRelotionDeal productcode(%s) begin" % self.prod_code)
-        srcTable = "entdaytradedata"
-        realTblName = pb.getRealTableName(srcTable, self.prod_code)
-        dbCntInfo = dbcnt.getDBCntInfoByTableName(srcTable, self.prod_code)
+        srcTable = ""
+        if klineType in gc.K_DAY:
+            srcTable = "entdaytradedata"
+        elif klineType in gc.K_30MIN:
+            srcTable = "entthirmtradedata"
+        logging.info("inclusionrRelotionDeal symbolcode(%s) begin" % self.symbol_code)
+        # srcTable = "entdaytradedata"
+        realTblName = pb.getRealTableName(srcTable, self.symbol_code)
+        dbCntInfo = dbcnt.getDBCntInfoByTableName(srcTable, self.symbol_code)
         insertSql = sc.ENTDAYTRADEDATA_INSERT % realTblName
         datainsertsql = insertSql
         insertdatacnt = 0
@@ -41,6 +45,7 @@ class EntangLingTheory():
         for curOneTradeData in tradeDataList:
             if firstTradeDataFlag:
                 lastTradeData[gc.TRADEDATEKEY] = int(curOneTradeData[gc.TRADEDATEKEY])
+                lastTradeData[gc.TRADETIMEKEY] = int(curOneTradeData[gc.TRADETIMEKEY])
                 lastTradeData[gc.OPENPRICEKEY] = curOneTradeData[gc.HIGHPRICEKEY]
                 lastTradeData[gc.HIGHPRICEKEY] = curOneTradeData[gc.HIGHPRICEKEY]
                 lastTradeData[gc.CLOSEPRICEKEY] = curOneTradeData[gc.LOWPRICEKEY]
@@ -63,6 +68,7 @@ class EntangLingTheory():
                     lastTradeData[gc.OPENPRICEKEY] = curOneTradeData[gc.HIGHPRICEKEY]
                 lastTradeData[gc.MERGEFLAGKKEY] = '1'
                 lastTradeData[gc.TRADEDATEKEY] = curOneTradeData[gc.TRADEDATEKEY]
+                lastTradeData[gc.TRADETIMEKEY] = curOneTradeData[gc.TRADETIMEKEY]
 
             elif lastTradeData[gc.HIGHPRICEKEY] <= curOneTradeData[gc.HIGHPRICEKEY] and lastTradeData[gc.LOWPRICEKEY] >= \
                     curOneTradeData[gc.LOWPRICEKEY]:
@@ -76,6 +82,7 @@ class EntangLingTheory():
                     lastTradeData[gc.OPENPRICEKEY] = curOneTradeData[gc.LOWPRICEKEY]
                 lastTradeData[gc.MERGEFLAGKKEY] = '1'
                 lastTradeData[gc.TRADEDATEKEY] = curOneTradeData[gc.TRADEDATEKEY]
+                lastTradeData[gc.TRADETIMEKEY] = curOneTradeData[gc.TRADETIMEKEY]
 
             else:  # 无包含关系
                 if gc.MERGEFLAGKKEY not in lastTradeData:
@@ -92,10 +99,10 @@ class EntangLingTheory():
                 # product_code, trade_date,open_price,high_price,close_price,low_price,merge_flag,updown_flag
                 insertdatacnt = insertdatacnt + 1
                 datainsertsql = datainsertsql + sc.ENTDAYTRADEDATA_INSERTDATA % (
-                    self.prod_code, lastTradeData[gc.TRADEDATEKEY], lastTradeData[gc.OPENPRICEKEY],
+                    self.symbol_code, lastTradeData[gc.TRADEDATEKEY], lastTradeData[gc.OPENPRICEKEY],
                     lastTradeData[gc.HIGHPRICEKEY], lastTradeData[gc.CLOSEPRICEKEY],
                     lastTradeData[gc.LOWPRICEKEY], lastTradeData[gc.MERGEFLAGKKEY],
-                    "N", 0)
+                    "N", lastTradeData[gc.TRADETIMEKEY])
                 # 这边需要调整为每200条插入一次
                 # 趋势判断
                 if lastTradeData[gc.HIGHPRICEKEY] > curOneTradeData[gc.HIGHPRICEKEY]:
@@ -104,6 +111,7 @@ class EntangLingTheory():
                     trendUpOrDown = gc.TRENDFLAG_UP
                 # 数据赋值
                 lastTradeData[gc.TRADEDATEKEY] = int(curOneTradeData[gc.TRADEDATEKEY])
+                lastTradeData[gc.TRADETIMEKEY] = int(curOneTradeData[gc.TRADETIMEKEY])
                 lastTradeData[gc.OPENPRICEKEY] = curOneTradeData[gc.HIGHPRICEKEY]
                 lastTradeData[gc.HIGHPRICEKEY] = curOneTradeData[gc.HIGHPRICEKEY]
                 lastTradeData[gc.CLOSEPRICEKEY] = curOneTradeData[gc.LOWPRICEKEY]
@@ -116,19 +124,26 @@ class EntangLingTheory():
                 print("异常语句:" + datainsertsql[:-1])
                 raise Exception("数据库插入异常!")  # 异常被抛出，print函数无法执行
 
-        logging.info("inclusionrRelotionDeal productcode(%s) finish" % self.prod_code)
+        logging.info("inclusionrRelotionDeal symbolcode(%s) finish" % self.symbol_code)
         return None
 
-    def upDownStatusGet(self, prod_code, srcTable="entdaytradedata", beginDate=0):
+    def upDownStatusGet(self, symbolcode, klinetype=gc.K_DAY, beginDate=0):
         '''
         伪顶底分型初步判断
         :param srcTable: 一般为entdaytradedata
         :param beginDate:一般为0
         :return:
         '''
-        realTblName = pb.getRealTableName(srcTable, prod_code)
-        tradeDataSql = sc.ENTDAYTRADEDATA_LASTAORBDATEGET % (realTblName, prod_code)
-        souceDbTrade = dbcnt.getDBCntInfoByTableName(srcTable, prod_code)
+
+        srcTable = ""
+        if klinetype in gc.K_DAY:
+            srcTable = "entdaytradedata"
+        elif klinetype in gc.K_30MIN:
+            srcTable = "entthirmtradedata"
+
+        realTblName = pb.getRealTableName(srcTable, symbolcode)
+        tradeDataSql = sc.ENTDAYTRADEDATA_LASTAORBDATEGET % (realTblName, symbolcode)
+        souceDbTrade = dbcnt.getDBCntInfoByTableName(srcTable, symbolcode)
         destRetList = souceDbTrade.execSelectSmallSql(tradeDataSql)
         maxtradedate = 0
         if len(destRetList) > 0:
@@ -139,16 +154,16 @@ class EntangLingTheory():
         updateupdownflagsql = updatetblsql + sc.ENTDAYTRADEDATA_UPDATEUUPDOWNFLAG
 
         # 获取需要处理的数据
-        dbCntInfo = dbcnt.getDBCntInfoByTableName(srcTable, prod_code)
+        dbCntInfo = dbcnt.getDBCntInfoByTableName(srcTable, symbolcode)
         # product_code, trade_date,open_price,high_price,close_price,low_price,merge_flag,updown_flag
-        selectSql = sc.ENTDAYTRADEDATA_GET % (realTblName, prod_code, maxtradedate, 0)
+        selectSql = sc.ENTDAYTRADEDATA_GET % (realTblName, symbolcode, maxtradedate, 0)
         entdayTrDataList = dbCntInfo.execSelectAllSql(selectSql)
         if len(entdayTrDataList) == 0:
             return None
-        logging.info("upDownStatusGet productcode(%s) begin" % prod_code)
+        logging.info("upDownStatusGet symbolcode(%s) begin" % symbolcode)
         entdayTrDataDf = pd.DataFrame(entdayTrDataList)
 
-        curEntdayTrDataDf = entdayTrDataDf.set_index("trade_date")
+        curEntdayTrDataDf = entdayTrDataDf.set_index([gc.TRADEDATEKEY, gc.TRADETIMEKEY])
         # print(curEntdayTrDataDf)
         # print(curEntdayTrDataDf.close_price.diff())
         # 按照日期进行升序排序后，从负到正为底分型，从正到负为顶分型。
@@ -158,7 +173,7 @@ class EntangLingTheory():
         resultSeries = curEntdayTrDataDf.close_price.diff()
         # print(type(resultSeries))
         firstIndex = 0
-        lastTradeDate = 0
+        lastTradeDate = ()
         lastCloseDiff = 0
         updownFlag = ""
         updownflaglist = []
@@ -196,7 +211,7 @@ class EntangLingTheory():
                     listnumcnt = 0
                     updownflaglist.clear()
                 listnumcnt = listnumcnt + 1
-                updownflaglist.append((updownFlag, prod_code, lastTradeDate))
+                updownflaglist.append((updownFlag, symbolcode, lastTradeDate[0], lastTradeDate[1]))
 
             firstIndex = firstIndex + 1
             updownFlag = gc.NORMALTYPING
@@ -207,20 +222,27 @@ class EntangLingTheory():
             if updateResult is not None:
                 print("异常语句:" + updateupdownflagsql)
                 raise Exception("数据库更新异常!")  # 异常被抛出，print函数无法执行
-        logging.info("upDownStatusGet productcode(%s) finish" % prod_code)
+        logging.info("upDownStatusGet symbolcode(%s) finish" % symbolcode)
         return None
 
-    def apicalOrBasicGet(self, srcTable, prod_code):
+    def apicalOrBasicGet(self, klineType, symbolcode):
         '''
         笔对应的顶底分型判断
         :param srcTable:
-        :param prod_code:
+        :param symbolcode:
         :return:
         '''
-        logging.info("apicalOrBasicGet productcode(%s) begin" % prod_code)
-        realTblName = pb.getRealTableName(srcTable, prod_code)
-        dbCntInfo = dbcnt.getDBCntInfoByTableName(srcTable, prod_code)
-        tradeDataSql = sc.ENTDAYTRADEDATA_LASTAORBDATEGET % (realTblName, prod_code)
+
+        srcTable = ""
+        if klineType == gc.K_DAY:
+            srcTable = "entdaytradedata"
+        elif klineType == gc.K_30MIN:
+            srcTable = "entthirmtradedata"
+
+        logging.info("apicalOrBasicGet symbolcode(%s) begin" % symbolcode)
+        realTblName = pb.getRealTableName(srcTable, symbolcode)
+        dbCntInfo = dbcnt.getDBCntInfoByTableName(srcTable, symbolcode)
+        tradeDataSql = sc.ENTDAYTRADEDATA_LASTAORBDATEGET % (realTblName, symbolcode)
         destRetList = dbCntInfo.execSelectSmallSql(tradeDataSql)
         maxtradedate = 0
         if len(destRetList) > 0:
@@ -229,14 +251,14 @@ class EntangLingTheory():
 
         # product_code, trade_date,open_price,high_price,close_price,low_price,merge_flag,updown_flag
         # 获取最近的A或者B的交易日期数据。
-        selectSql = sc.ENTDAYTRADEDATA_GET % (realTblName, prod_code, maxtradedate, 0)
+        selectSql = sc.ENTDAYTRADEDATA_GET % (realTblName, symbolcode, maxtradedate, 0)
         entdayTrDataList = dbCntInfo.execSelectAllSql(selectSql)
         if len(entdayTrDataList) == 0:
             print("no data will be deal!")
-            logging.info("apicalOrBasicGet productcode(%s) finish eraly" % prod_code)
+            logging.info("apicalOrBasicGet symbolcode(%s) finish eraly" % symbolcode)
             return
         entdayTrDataDf = pd.DataFrame(entdayTrDataList)
-        curEntdayTrDataDf = entdayTrDataDf.set_index(gc.TRADEDATEKEY)
+        curEntdayTrDataDf = entdayTrDataDf.set_index([gc.TRADEDATEKEY, gc.TRADETIMEKEY])
         # print(curEntdayTrDataDf)
         lastStatus = gc.NORMALTYPING
         # 不算头，不算尾，中间有3条，则即可成笔。
@@ -268,7 +290,8 @@ class EntangLingTheory():
                     realApicalBasicFlagIndex = realApicalBasicFlagIndex + 1
                     highOrLowPrice = curUpDownData[gc.HIGHPRICEKEY]
                     logging.debug(
-                        "%d is apical %d, price(%f)" % (realApicalBasicFlagIndex, tradeDateIndex, highOrLowPrice))
+                        "%d is apical date %d time %d, price(%f)" % (
+                        realApicalBasicFlagIndex, tradeDateIndex[0], tradeDateIndex[1], highOrLowPrice))
                 # 存在更高的顶
                 elif lastStatus in gc.APICALTYPING and highOrLowPrice < curUpDownData[gc.HIGHPRICEKEY]:
                     realApicalBasicFlagList.pop(realApicalBasicFlagIndex)
@@ -276,8 +299,8 @@ class EntangLingTheory():
                     curMiddleCount = 0
                     # statusmodifyflag = True
                     highOrLowPrice = curUpDownData[gc.HIGHPRICEKEY]
-                    logging.debug("%d change apical date %d higher apical,price(%f)" % (
-                        realApicalBasicFlagIndex, tradeDateIndex, highOrLowPrice))
+                    logging.debug("%d change apical date %d time %d higher apical,price(%f)" % (
+                        realApicalBasicFlagIndex, tradeDateIndex[0], tradeDateIndex[1], highOrLowPrice))
                 else:
                     curMiddleCount = curMiddleCount + 1
 
@@ -297,8 +320,8 @@ class EntangLingTheory():
                     # statusmodifyflag = False
                     realApicalBasicFlagIndex = realApicalBasicFlagIndex + 1
                     highOrLowPrice = curUpDownData[gc.LOWPRICEKEY]
-                    logging.debug("%d index date %d is basing,price(%f)" % (
-                        realApicalBasicFlagIndex, tradeDateIndex, highOrLowPrice))
+                    logging.debug("%d index date %d time %d is basing,price(%f)" % (
+                        realApicalBasicFlagIndex, tradeDateIndex[0], tradeDateIndex[1], highOrLowPrice))
 
                 # 存在更低的D
                 elif lastStatus in gc.BASETYPING and highOrLowPrice > curUpDownData[gc.LOWPRICEKEY]:
@@ -307,8 +330,8 @@ class EntangLingTheory():
                     curMiddleCount = 0
                     # statusmodifyflag = True
                     highOrLowPrice = curUpDownData[gc.LOWPRICEKEY]
-                    logging.debug("%d index date %d change to lower basing,price(%f)" % (
-                        realApicalBasicFlagIndex, tradeDateIndex, highOrLowPrice))
+                    logging.debug("%d index date %d time %d change to lower basing,price(%f)" % (
+                        realApicalBasicFlagIndex, tradeDateIndex[0], tradeDateIndex[1], highOrLowPrice))
                 else:
                     curMiddleCount = curMiddleCount + 1
             elif curUpDownData[gc.UPDOWNFLAGKEY] == gc.APICALTYPING and lastStatus != curUpDownData[gc.UPDOWNFLAGKEY]:
@@ -352,7 +375,7 @@ class EntangLingTheory():
                         print("异常语句:" + updateabflagsql)
                         raise Exception("数据库更新异常!")  # 异常被抛出，print函数无法执行
                     updateablist.clear()
-                updateablist.append((upDownFlagValue, self.prod_code, oneTradeDate))
+                updateablist.append((upDownFlagValue, symbolcode, oneTradeDate[0], oneTradeDate[1]))
 
         if len(updateablist) > 0:
             updateResult = dbCntInfo.execupdatemanysql(updateabflagsql, updateablist)
@@ -361,10 +384,10 @@ class EntangLingTheory():
                 logging.error("数据库更新异常:" + updateabflagsql)
                 raise Exception("数据库更新异常!")  # 异常被抛出，print函数无法执行
 
-        logging.info("apicalOrBasicGet productcode(%s) finish " % prod_code)
+        logging.info("apicalOrBasicGet symbolcode(%s) finish " % symbolcode)
         return None
 
-    def kLineMerge(self, klineType='D'):
+    def kLineMerge(self, klineType=gc.K_DAY):
         '''
          k线做合并，就是处理前后的包含关系，同时完成笔的顶分型和底分型判断，但是该判断里面不包含跳空处理。
         处理完毕后需要写入到表entdaytradedata01,entdaytradedata02,...entdaytradedata32
@@ -374,38 +397,55 @@ class EntangLingTheory():
 
         klineType = gc.K_DAY if klineType is None else klineType
         tradeDataSql = ""
-
+        srcTable = ""
+        symbolcode = self.symbol_code
         # 从producttradedata读取数据
         if klineType == gc.K_DAY:
             # 获取已经插入的最大tradedate
             srcTable = "entdaytradedata"
-            realTblName = pb.getRealTableName(srcTable, self.prod_code)
-            tradeDataSql = sc.ENTDAYTRADEDATA_MAXTRADEDATEGET % (realTblName, self.prod_code)
-            souceDbTrade = dbcnt.getDBCntInfoByTableName(srcTable, self.prod_code)
+            realTblName = pb.getRealTableName(srcTable, symbolcode)
+            tradeDataSql = sc.ENTDAYTRADEDATA_MAXTRADEDATEGET % (realTblName, symbolcode)
+            souceDbTrade = dbcnt.getDBCntInfoByTableName(srcTable, symbolcode)
             destRetList = souceDbTrade.execSelectSmallSql(tradeDataSql)
             maxtradedate = 0
             if len(destRetList) > 0:
                 maxtradedate = destRetList[0]['maxtradedate']
 
             srcTable = "producttradedata"
-            souceDbTrade = dbcnt.getDBCntInfoByTableName(srcTable, self.prod_code)
-            tradeDataSql = sc.DAYTRADEDATA_GET % (self.prod_code, maxtradedate)
+            souceDbTrade = dbcnt.getDBCntInfoByTableName(srcTable, symbolcode)
+            tradeDataSql = sc.DAYTRADEDATA_GET % (symbolcode, maxtradedate)
+            srcTable = "entdaytradedata"
+        elif klineType == gc.K_30MIN:
+            # 获取已经插入的最大tradedate,tradetime
+            srcTable = "entthirmtradedata"
+            realTblName = pb.getRealTableName(srcTable, symbolcode)
+            tradeDataSql = sc.ENTDAYTRADEDATA_MAXTRADEDATEGET % (realTblName, symbolcode)
+            souceDbTrade = dbcnt.getDBCntInfoByTableName(srcTable, symbolcode)
+            destRetList = souceDbTrade.execSelectSmallSql(tradeDataSql)
+            maxtradedate = 0
+            if destRetList is not None and len(destRetList) > 0:
+                maxtradedate = destRetList[0]['maxtradedate']
+
+            srcTable = "prod30tradedata"
+            souceDbTrade = dbcnt.getDBCntInfoByTableName(srcTable, symbolcode)
+            tradeDataSql = sc.MIN30TRADEDATA_GET % (symbolcode, maxtradedate)
+
 
         tradeDataList = souceDbTrade.execSelectAllSql(tradeDataSql)
         # print(type(tradeDataList))
         if len(tradeDataList) > 0:
             # 包含关系处理
-            incResult = self.inclusionrRelotionDeal(tradeDataList)
+            incResult = self.inclusionrRelotionDeal(tradeDataList, klineType)
             if incResult is not None:
                 return incResult
 
         # 顶底分型判断,从对应的entdaytradedata表中获取数据。
-        srcTable = "entdaytradedata"
-        incResult = self.upDownStatusGet(self.prod_code, srcTable, 0)
+
+        incResult = self.upDownStatusGet(symbolcode, klineType, 0)
         if incResult is not None:
             return incResult
         # 真实的顶底分型判断
-        incResult = self.apicalOrBasicGet(srcTable, self.prod_code)
+        incResult = self.apicalOrBasicGet(klineType, symbolcode)
         if incResult is not None:
             return incResult
         # 画k线图，可以暂时不实现。
@@ -424,19 +464,50 @@ def futureKLine(logicname):
         productBasicInfodf = pb.getAllProductBasicInfo(dbCntInfo, ipostatus='A')
         for rowIndex in productBasicInfodf.index:
             oneProductTuple = productBasicInfodf.iloc[rowIndex]
-            productCode = oneProductTuple["product_code"]  ## 产品代码
-            tradelogicname = dbCntInfo.getTradeLogicNameByProductCodeAndTradeDate(productCode, 0)
+            symbolCode = oneProductTuple["symbol_code"]  ## 产品代码
+            tradelogicname = dbCntInfo.getTradeLogicNameByProductCodeAndTradeDate(symbolCode, 0)
+            if logicname not in tradelogicname:
+                continue
+            # if symbolCode not in ("sz002236"):
+            #     continue
+            logging.info("%d symbolcode(%s) begin to deal" % (rowIndex, symbolCode))
+            entangLingTheory = EntangLingTheory(symbolCode)
+            resultret = entangLingTheory.kLineMerge(gc.K_DAY)
+            if resultret is not None:
+                break
+            logging.info("symbolcode(%s) finish!" % symbolCode)
+        logging.info("future all finished!")
+    finally:
+        dbCntInfo.closeAllDBConnect()
+    return None
+
+
+def future30KLine(logicname):
+    '''
+    进程并发，每个进程都有自己的数据库连接
+    :param databaseno: productdatabaserule的logicname的trade1,trade2,trade3
+    :return:
+    '''
+    stocklog.initLogging(logicname)
+    try:
+        dbCntInfo = dbcnt.createDbConnect(dbpool=False)
+        productBasicInfodf = pb.getAllProductBasicInfo(dbCntInfo, ipostatus='A')
+        for rowIndex in productBasicInfodf.index:
+            oneProductTuple = productBasicInfodf.iloc[rowIndex]
+            # productCode = oneProductTuple["product_code"]  ## 产品代码
+            symbolCode = oneProductTuple["symbol_code"]  ## 产品代码
+            tradelogicname = dbCntInfo.getTradeLogicNameByProductCodeAndTradeDate(symbolCode, 0)
             if logicname not in tradelogicname:
                 continue
             # if productCode not in ("002236", "002167", '002039', '002209'):
             #     continue
-            logging.info("%d productcode(%s) begin to deal" % (rowIndex, productCode))
-            entangLingTheory = EntangLingTheory(productCode)
-            resultret = entangLingTheory.kLineMerge(gc.K_DAY)
+            logging.info("%d symbolcode(%s) 30min begin to deal" % (rowIndex, symbolCode))
+            entangLingTheory = EntangLingTheory(symbolCode)
+            resultret = entangLingTheory.kLineMerge(gc.K_30MIN)
             if resultret is not None:
                 break
-            logging.info("productcode(%s) finish!" % productCode)
-        logging.info("future all finished!")
+            logging.info("30min symbolcode(%s) finish!" % symbolCode)
+        logging.info(logicname + " future all finished!")
     finally:
         dbCntInfo.closeAllDBConnect()
     return None
@@ -1050,12 +1121,20 @@ from finance.servicelib.public import public as pb
 if __name__ == "__main__":
     path = 'D:/software/new_haitong'
 
-    # 按分库进行并发
-    with Pool(len(gc.DBTRADELOGNAMELIST)) as p:
-        print(p.map(futureKLine, gc.DBTRADELOGNAMELIST))
-
+    # # 按分库进行并发,日线的顶分型和底分型判断
+    # with Pool(len(gc.DBTRADELOGNAMELIST)) as p:
+    #     print(p.map(futureKLine, gc.DBTRADELOGNAMELIST))
+    # print("day apitial base deal finish")
+    # # 获取日线级别的一买
     # with Pool(len(gc.DBTRADELOGNAMELIST)) as p:
     #     print(p.map(enttheoryfirbuy, gc.DBTRADELOGNAMELIST))
+    # print("fist buy deal finish!")
+    #
+    # 30min的顶底分型判断
+    with Pool(len(gc.DBTRADELOGNAMELIST)) as p:
+        print(p.map(future30KLine, gc.DBTRADELOGNAMELIST))
+    print("30min apitial base deal finish")
+
     # futureKLine(gc.DBTRADELOGNAMELIST[3])
     # firstbuyprodlist = enttheoryfirbuy(gc.DBTRADELOGNAMELIST[3])
     # print(firstbuyprodlist)
