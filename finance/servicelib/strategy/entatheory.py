@@ -29,11 +29,8 @@ class EntangLingTheory():
         lastTradeData = {}
         firstTradeDataFlag = True
         trendUpOrDown = gc.TRENDFLAG_UP
-        srcTable = ""
-        if klineType in gc.K_DAY:
-            srcTable = "entdaytradedata"
-        elif klineType in gc.K_30MIN:
-            srcTable = "entthirmtradedata"
+        srcTable = gc.SOURCETABLEDICT[klineType]
+
         logging.info("inclusionrRelotionDeal symbolcode(%s) begin" % self.symbol_code)
         # srcTable = "entdaytradedata"
         realTblName = pb.getRealTableName(srcTable, self.symbol_code)
@@ -135,11 +132,7 @@ class EntangLingTheory():
         :return:
         '''
 
-        srcTable = ""
-        if klinetype in gc.K_DAY:
-            srcTable = "entdaytradedata"
-        elif klinetype in gc.K_30MIN:
-            srcTable = "entthirmtradedata"
+        srcTable = gc.SOURCETABLEDICT[klinetype]
 
         realTblName = pb.getRealTableName(srcTable, symbolcode)
         tradeDataSql = sc.ENTDAYTRADEDATA_LASTAORBDATEGET % (realTblName, symbolcode)
@@ -233,11 +226,7 @@ class EntangLingTheory():
         :return:
         '''
 
-        srcTable = ""
-        if klineType == gc.K_DAY:
-            srcTable = "entdaytradedata"
-        elif klineType == gc.K_30MIN:
-            srcTable = "entthirmtradedata"
+        srcTable = gc.SOURCETABLEDICT[klineType]
 
         logging.info("apicalOrBasicGet symbolcode(%s) begin" % symbolcode)
         realTblName = pb.getRealTableName(srcTable, symbolcode)
@@ -402,7 +391,7 @@ class EntangLingTheory():
         # 从producttradedata读取数据
         if klineType == gc.K_DAY:
             # 获取已经插入的最大tradedate
-            srcTable = "entdaytradedata"
+            srcTable = gc.SOURCETABLEDICT[klineType]
             realTblName = pb.getRealTableName(srcTable, symbolcode)
             tradeDataSql = sc.ENTDAYTRADEDATA_MAXTRADEDATEGET % (realTblName, symbolcode)
             souceDbTrade = dbcnt.getDBCntInfoByTableName(srcTable, symbolcode)
@@ -414,10 +403,10 @@ class EntangLingTheory():
             srcTable = "producttradedata"
             souceDbTrade = dbcnt.getDBCntInfoByTableName(srcTable, symbolcode)
             tradeDataSql = sc.DAYTRADEDATA_GET % (symbolcode, maxtradedate)
-            srcTable = "entdaytradedata"
+
         elif klineType == gc.K_30MIN:
             # 获取已经插入的最大tradedate,tradetime
-            srcTable = "entthirmtradedata"
+            srcTable = gc.SOURCETABLEDICT[klineType]
             realTblName = pb.getRealTableName(srcTable, symbolcode)
             tradeDataSql = sc.ENTDAYTRADEDATA_MAXTRADEDATEGET % (realTblName, symbolcode)
             souceDbTrade = dbcnt.getDBCntInfoByTableName(srcTable, symbolcode)
@@ -461,7 +450,7 @@ def futureKLine(logicname):
     stocklog.initLogging(logicname)
     try:
         dbCntInfo = dbcnt.createDbConnect(dbpool=False)
-        productBasicInfodf = pb.getAllProductBasicInfo(dbCntInfo, ipostatus='A')
+        productBasicInfodf = pb.getAllProductBasicInfo(dbCntInfo, ipostatus='N')
         for rowIndex in productBasicInfodf.index:
             oneProductTuple = productBasicInfodf.iloc[rowIndex]
             symbolCode = oneProductTuple["symbol_code"]  ## 产品代码
@@ -491,7 +480,7 @@ def future30KLine(logicname):
     stocklog.initLogging(logicname)
     try:
         dbCntInfo = dbcnt.createDbConnect(dbpool=False)
-        productBasicInfodf = pb.getAllProductBasicInfo(dbCntInfo, ipostatus='A')
+        productBasicInfodf = pb.getAllProductBasicInfo(dbCntInfo, ipostatus='N')
         for rowIndex in productBasicInfodf.index:
             oneProductTuple = productBasicInfodf.iloc[rowIndex]
             # productCode = oneProductTuple["product_code"]  ## 产品代码
@@ -555,16 +544,16 @@ def enttheoryfirbuy(logicname, klineType='D') -> list:
     stocklog.initLogging(logicname)
     try:
         dbCntInfo = dbcnt.createDbConnect(dbpool=False)
-        productBasicInfodf = pb.getAllProductBasicInfo(dbCntInfo, ipostatus='A')
+        productBasicInfodf = pb.getAllProductBasicInfo(dbCntInfo, ipostatus='N')
         for rowIndex in productBasicInfodf.index:
             oneProductTuple = productBasicInfodf.iloc[rowIndex]
-            productcode = oneProductTuple["product_code"]  ## 产品代码
-            tradelogicname = dbCntInfo.getTradeLogicNameByProductCodeAndTradeDate(productcode, 0)
+            symbolcode = oneProductTuple["symbol_code"]  ## 产品代码
+            tradelogicname = dbCntInfo.getTradeLogicNameByProductCodeAndTradeDate(symbolcode, 0)
             if logicname not in tradelogicname:
                 continue
             # if productcode not in ("002236", "002167", '002039', '002209'):
             #     continue
-            logging.info("logic(%s) %d productcode(%s) begin to find first buy" % (logicname, rowIndex, productcode))
+            logging.info("logic(%s) %d symbolcode(%s) begin to find first buy" % (logicname, rowIndex, symbolcode))
 
             lastyeartoday = 0
             lastyeartime = 0
@@ -577,24 +566,40 @@ def enttheoryfirbuy(logicname, klineType='D') -> list:
                 lastyeartoday = pb.getlastyear()
                 lastworkday = pb.getlastworkday()
                 # lastworkday = 20200713
-                selectSql = sc.DAYTRADEDATA_ONEDATEGET % (productcode, lastworkday)
-                dbtradecnt = dbcnt.getDBCntInfoByTableName(curtblname, productcode)
+                selectSql = sc.DAYTRADEDATA_ONEDATEGET % (symbolcode, lastworkday)
+                dbtradecnt = dbcnt.getDBCntInfoByTableName(curtblname, symbolcode)
                 entdayTrDataList = dbtradecnt.execSelectAllSql(selectSql)
                 # 最近这些股票可能停牌了导致股价没有今日的
                 if len(entdayTrDataList) == 0:
-                    logging.debug("%d productcode(%s) do stop now? " % (lastworkday, productcode))
+                    logging.debug("%d symbolcode(%s) do stop now? " % (lastworkday, symbolcode))
                     continue
                 todayhighprice = float(entdayTrDataList[0][gc.HIGHPRICEKEY])
                 todaylowprice = float(entdayTrDataList[0][gc.LOWPRICEKEY])
-                logging.debug("%d productcode(%s),lowprice(%f)" % (
-                    lastworkday, productcode, todaylowprice))
+                logging.debug("day %d symbolcode(%s),lowprice(%f)" % (
+                    lastworkday, symbolcode, todaylowprice))
+            elif klineType in gc.K_30MIN:
+                # 读取所有30min数据，一个股票不可能一年一直再跌，如果是的话则可关注
+                lastyeartoday = pb.getlastyear()
+                lastworkday = pb.getlastworkday()
+                # lastworkday = 20200713
+                selectSql = sc.MIN30TRADEDATA_ONE30MINGET % (symbolcode, lastworkday, 150000)
+                dbtradecnt = dbcnt.getDBCntInfoByTableName(curtblname, symbolcode)
+                entdayTrDataList = dbtradecnt.execSelectAllSql(selectSql)
+                # 最近这些股票可能停牌了导致股价没有今日的
+                if len(entdayTrDataList) == 0:
+                    logging.debug("30min %d symbolcode(%s) do stop now? " % (lastworkday, symbolcode))
+                    continue
+                todayhighprice = float(entdayTrDataList[0][gc.HIGHPRICEKEY])
+                todaylowprice = float(entdayTrDataList[0][gc.LOWPRICEKEY])
+                logging.debug("30min %d symbolcode(%s),lowprice(%f)" % (
+                    lastworkday, symbolcode, todaylowprice))
 
-            realtablaname = pb.getRealTableName(curtblname, productcode)
-            selectSql = sc.ENTDAYTRADEDATA_ABTYPINGGET % (realtablaname, productcode, lastyeartoday, lastyeartime)
-            dbtradecnt = dbcnt.getDBCntInfoByTableName(curtblname, productcode)
+            realtablaname = pb.getRealTableName(curtblname, symbolcode)
+            selectSql = sc.ENTDAYTRADEDATA_ABTYPINGGET % (realtablaname, symbolcode, lastyeartoday, lastyeartime)
+            dbtradecnt = dbcnt.getDBCntInfoByTableName(curtblname, symbolcode)
             entdayTrDataList = dbtradecnt.execSelectAllSql(selectSql)
             if len(entdayTrDataList) == 0:
-                logging.info("productcode(%s) no data be found,selectSql(%s)" % (productcode, selectSql))
+                logging.info("30min symbolcode(%s) no data be found,selectSql(%s)" % (symbolcode, selectSql))
                 continue
             # 逆序, df中的值都是顶和底的笔表示
             entdayTrDataDf = pd.DataFrame(entdayTrDataList)
@@ -616,14 +621,14 @@ def enttheoryfirbuy(logicname, klineType='D') -> list:
             # print(productcode + " end")
             if maxtradeindex[0] == mintradeindex[0] and maxtradeindex[1] == mintradeindex[1]:
                 logging.info(
-                    "productcode(%s) maxprice and minprice is the same!" % productcode)
+                    "symbolcode(%s) maxprice and minprice is the same!" % symbolcode)
                 continue
             minlowprice = entdayTrDataDf.loc[mintradeindex][gc.LOWPRICEKEY]
             if todaylowprice - minlowprice > 0:
                 timediff = pb.gettimediff(mintradeindex[0], mintradeindex[1], lastworkday, 0)
                 if timediff > 6:
                     logging.info(
-                        "productcode(%s) distince first buy to long!" % productcode)
+                        "symbolcode(%s) distince first buy to long!" % symbolcode)
                     continue
 
             curEntdayTrDataDf = entdayTrDataDf.iloc[::-1]
@@ -642,15 +647,15 @@ def enttheoryfirbuy(logicname, klineType='D') -> list:
                 if firsttime == 0 and updownstatus in gc.BASETYPING:
                     nextprodcodeflag = True
                     logging.info(
-                        "%d productcode(%s) first type not apicaltyping!" % (tradedatetupleIndex[0], productcode))
+                        "%d symbolcode(%s) first type not apicaltyping!" % (tradedatetupleIndex[0], symbolcode))
                     break
                 #
                 if firsttime == 0 and updownstatus in gc.APICALTYPING:
                     if todayhighprice > curapcialbasicserialdata[gc.HIGHPRICEKEY]:
                         nextprodcodeflag = True
                         logging.info(
-                            "%d productcode(%s) todayhighprice(%f) bigger apicaltyping price(%f)!" % (
-                                tradedatetupleIndex[0], productcode, todayhighprice,
+                            "%d symbolcode(%s) todayhighprice(%f) bigger apicaltyping price(%f)!" % (
+                                tradedatetupleIndex[0], symbolcode, todayhighprice,
                                 curapcialbasicserialdata[gc.HIGHPRICEKEY]))
                         break
                 # 1. 出现中枢，或者平台整理, 找到一个底比之前的顶都高,图形参考下跌的图形.png，超过这个图形的再说
@@ -676,9 +681,9 @@ def enttheoryfirbuy(logicname, klineType='D') -> list:
                     # maxapicalprice = max(maxapicalprice, curapcialbasicserialdata[gc.HIGHPRICEKEY])
                     # zcfirst = zcfirst + 1
                     # firsttime = firsttime + 1
-                    logging.info("%d productcode(%s) is apicaltyping!" % (tradedatetupleIndex[0], productcode))
+                    logging.info("%d symbolcode(%s) is apicaltyping!" % (tradedatetupleIndex[0], symbolcode))
                 elif updownstatus in gc.BASETYPING:
-                    logging.info("%d productcode(%s) is basetyping!" % (tradedatetupleIndex[0], productcode))
+                    logging.info("%d symbolcode(%s) is basetyping!" % (tradedatetupleIndex[0], symbolcode))
                     # 日期
                     curinnerlist.append(tradedatetupleIndex[0])
                     # 时间
@@ -694,7 +699,7 @@ def enttheoryfirbuy(logicname, klineType='D') -> list:
                         # 时间
                         curinnerlist.append(tradedatetupleIndex[1])
                         curinnerlist.append(curapcialbasicserialdata[gc.LOWPRICEKEY])
-            logging.info("productcode(%s) bi merge finish!" % productcode)
+            logging.info("symbolcode(%s) bi merge finish!" % symbolcode)
             # print(apicalbasiclist)
             # 由于要找的是将有机会出现一买，因此对应的特征序列是找向上的笔。向上笔有重叠区间，那么就是一个中枢
             zcgdpricelist = []
@@ -757,8 +762,8 @@ def enttheoryfirbuy(logicname, klineType='D') -> list:
                                         beforedatalist[5] > afterdatalist[5]:
                                     nextprodcodeflag = True
                                     logging.info(
-                                        "date(%d,%d)productcode(%s)  1+1 three k end, the highest price(%f)!" % (
-                                            beforedatalist[3], beforedatalist[4], productcode, beforedatalist[5]))
+                                        "date(%d,%d)symbolcode(%s)  1+1 three k end, the highest price(%f)!" % (
+                                            beforedatalist[3], beforedatalist[4], symbolcode, beforedatalist[5]))
                                     break
                             elif beforelistindex < len(apicalbasiclist):
                                 beforedatalist = apicalbasiclist[beforelistindex]
@@ -767,8 +772,8 @@ def enttheoryfirbuy(logicname, klineType='D') -> list:
                                 if beforedatalist[2] > afterdatalist[2] and beforedatalist[5] > afterdatalist[5]:
                                     nextprodcodeflag = True
                                     logging.info(
-                                        "date(%d,%d)productcode(%s)  1+1 two k end, the highest price(%f)!" % (
-                                            beforedatalist[3], beforedatalist[4], productcode, beforedatalist[5]))
+                                        "date(%d,%d)symbolcode(%s)  1+1 two k end, the highest price(%f)!" % (
+                                            beforedatalist[3], beforedatalist[4], symbolcode, beforedatalist[5]))
                                     break
 
                         firsttime = 0
@@ -781,16 +786,16 @@ def enttheoryfirbuy(logicname, klineType='D') -> list:
                         zsstarttime = curinnerlist[1]
             if nextprodcodeflag is True:
                 if len(zcgdpricelist) == 0:
-                    logging.info("productcode(%s) first type not apicaltyping!" % productcode)
+                    logging.info("symbolcode(%s) first type not apicaltyping!" % symbolcode)
                     continue
                 else:
-                    firstbuyprodlist.append(productcode)
-                    logging.info("productcode(%s) be found exist first buy!" % productcode)
-                    print("productcode(%s) begin to found exist first buy!" % productcode)
-                    print(zcgdpricelist)
-                    print("productcode(%s) end to found exist first buy!" % productcode)
+                    firstbuyprodlist.append(symbolcode)
+                    logging.info("symbolcode(%s) be found exist first buy!" % symbolcode)
+                    # print("symbolcode(%s) begin to found exist first buy!" % symbolcode)
+                    # print(zcgdpricelist)
+                    # print("symbolcode(%s) end to found exist first buy!" % symbolcode)
 
-            logging.info("productcode(%s) finish finding first buy!" % productcode)
+            logging.info("symbolcode(%s) finish finding first buy!" % symbolcode)
         print("future all finished!")
     finally:
         logging.info(logicname + " close all dbconnect!")
@@ -1114,6 +1119,12 @@ def enttheoryfirbuy(logicname, klineType='D') -> list:
 #     secondsellprodlist = []
 #     return secondsellprodlist
 
+def finddayfirst(logicname):
+    return enttheoryfirbuy(logicname, klineType=gc.K_DAY)
+
+def find30minfirst(logicname):
+    return enttheoryfirbuy(logicname, klineType=gc.K_30MIN)
+
 
 from multiprocessing import Pool
 from finance.servicelib.public import public as pb
@@ -1125,16 +1136,17 @@ if __name__ == "__main__":
     # with Pool(len(gc.DBTRADELOGNAMELIST)) as p:
     #     print(p.map(futureKLine, gc.DBTRADELOGNAMELIST))
     # print("day apitial base deal finish")
-    # # 获取日线级别的一买
-    # with Pool(len(gc.DBTRADELOGNAMELIST)) as p:
-    #     print(p.map(enttheoryfirbuy, gc.DBTRADELOGNAMELIST))
-    # print("fist buy deal finish!")
-    #
-    # 30min的顶底分型判断
+    # 获取日线级别的一买
     with Pool(len(gc.DBTRADELOGNAMELIST)) as p:
-        print(p.map(future30KLine, gc.DBTRADELOGNAMELIST))
-    print("30min apitial base deal finish")
+        print(p.map(finddayfirst, gc.DBTRADELOGNAMELIST))
+    print("day fist buy deal finish!")
+    #
+    # # 30min的顶底分型判断
+    # with Pool(len(gc.DBTRADELOGNAMELIST)) as p:
+    #     print(p.map(future30KLine, gc.DBTRADELOGNAMELIST))
+    # print("30min apitial base deal finish")
 
-    # futureKLine(gc.DBTRADELOGNAMELIST[3])
-    # firstbuyprodlist = enttheoryfirbuy(gc.DBTRADELOGNAMELIST[3])
-    # print(firstbuyprodlist)
+    # 获取30min级别的一买
+    with Pool(len(gc.DBTRADELOGNAMELIST)) as p:
+        print(p.map(find30minfirst, gc.DBTRADELOGNAMELIST))
+    print("30min fist buy deal finish!")

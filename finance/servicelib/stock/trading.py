@@ -25,6 +25,8 @@ from finance.servicelib.public import public as pb
 
 
 def getStockBasics(dbCntInfo):
+    # pro = ts.pro_api('00f0c017db5d284d992f78f0971c73c9ecba4aa03dee2f38e71e4d9c')
+    # df = pro.stock_basics()
     df = ts.get_stock_basics()
     basicdf = df.reset_index(drop=False)
     tablename = 'stock_basics'
@@ -33,35 +35,87 @@ def getStockBasics(dbCntInfo):
     print("basic finish")
 
 
-def getProductBasicInfo(dbCntInfo):
+def getDelistStockBasics(dbCntInfo):
+    '''
+    获取退市的股票 list
+    :return:
+    '''
+    pro = ts.pro_api('00f0c017db5d284d992f78f0971c73c9ecba4aa03dee2f38e71e4d9c')
+    df = pro.stock_basic(list_status='D', fields='ts_code,symbol,name,area,industry,list_date,delist_date')
+    # basicdf = df.reset_index(drop=False)
+    # tablename = 'deliststock'
+    # engine = dbCntInfo.getEngineByTableName(tablename)
+    # basicdf.to_sql(tablename, engine, if_exists="replace", index=False)
+    print("delist finish")
+    return df
+
+
+def getProductBasicInfo():
     '''
     productbasicinfo表信息更新
     :param dbCntInfo:
     :return:
     '''
+
+    dbCntInfo = dbcnt.getInitDbCntInfo()
     sourceTable = "stock_basics"
     getStockBasics(dbCntInfo)
     destTable = "productbasicinfo"
     souceDbBase = dbCntInfo.getDBCntInfoByTableName(sourceTable)
     destDbBase = dbCntInfo.getDBCntInfoByTableName(destTable)
-    proctBaseInfoDf = pb.getAllProductBasicInfo(dbCntInfo, ipostatus="A")
-    proctBaseInfoDf.set_index("product_code")
+    proctBaseInfoDf = pb.getAllProductBasicInfo(dbCntInfo, ipostatus="N", producttype='1')
+    productcodelist = proctBaseInfoDf["product_code"].tolist()
+
     while (True):
-        sourceRetList = souceDbBase.execSelectManySql(sc.PRODUCTBASICINFO_SQL)
+        sourceRetList = souceDbBase.execSelectManySql(sc.PRODUCTBASICINFO_SQL, " order by code")
         if len(sourceRetList) == 0:
             break
+
+        curworkday = pb.getlastworkday()
         # 数据插入到另外一个库里面
         newsourceListTuple = []
+
         for oneList in sourceRetList:
             productcode = oneList["product_code"]
-            if productcode not in proctBaseInfoDf.index:
+            if productcode not in productcodelist:
                 print(oneList)
                 oneList['market_type'] = dc.DICTCONS_CODETOMARKETTYPE[oneList['market_type']]
+                oneList['symbol_code'] = pb.code_to_symbol(productcode)
                 newsourceListTuple.append(tuple(oneList.values()))
-        destDbBase.execInsertManySql(sc.PRODUCTBASICINFO_INSERTSQL, newsourceListTuple)
 
-    souceDbBase.closeDBConnect()
-    destDbBase.closeDBConnect()
+        if len(newsourceListTuple) != 0:
+            destDbBase.execInsertManySql(sc.PRODUCTBASICINFO_INSERTSQL, newsourceListTuple)
+
+    proctBaseInfoDf = getDelistStockBasics(dbCntInfo)
+    proctBaseInfoDf = proctBaseInfoDf.set_index("symbol")
+    delistListTuple = []
+    for productcode,itemvalue in proctBaseInfoDf.iterrows():
+        if productcode in productcodelist:
+            # print("%s has delisted!" % productcode)
+            # print(itemvalue)
+            delistListTuple.append(
+                (itemvalue["delist_date"], pb.code_to_symbol(productcode)))
+    if len(delistListTuple) != 0:
+        # print(delistListTuple)
+        destDbBase.execupdatemanysql(sc.PRODUCTBASICINFO_UPDATEDELISTSQL, delistListTuple)
+
+    # souceDbBase.closeDBConnect()
+    # destDbBase.closeDBConnect()
+
+def getIndexBasicInfo():
+    '''
+    获取指数数据的基础信息
+    :return:
+    '''
+    dbCntInfo = dbcnt.getInitDbCntInfo()
+    pro = ts.pro_api('00f0c017db5d284d992f78f0971c73c9ecba4aa03dee2f38e71e4d9c')
+    # df = pro.fund_basic(status = 'L')
+    df = pro.fund_daily(trade_date='20200803')
+    basicdf = df.reset_index(drop=False)
+    tablename = 'indextradedata'
+    engine = dbCntInfo.getEngineByTableName(tablename)
+    basicdf.to_sql(tablename, engine, if_exists="replace", index=False)
+    print(df)
 
 
 def insertIntoNormalDbFromNotDealDBData(dbCntInfo, startdate, pcodeDataUpdateDict):
@@ -703,7 +757,7 @@ def tdxProd30TradeData2Database(dbCntInfo, symbolCode, absolutePath, productTrad
     (maxTradeDate, maxtradetime) = pb.getMaxTradeTimeFromCurProdCode(dbCntInfo, symbolCode, kType=gc.K_30MIN)
     if maxTradeDate == 190000101:
         logging.info("current product(" + symbolCode + ") is not in productbaseinfo, please add!")
-    logging.info("product(" + symbolCode + ") maxtradedate:" + str(maxTradeDate) )
+    logging.info("product(" + symbolCode + ") maxtradedate:" + str(maxTradeDate))
     sourcetable = "prod30tradedata"
     tableDbBase = dbCntInfo.getDBCntInfoByTableName(tablename=sourcetable, symbolcode=symbolCode)
     execlSql = sqlcons.CSV30DATAINSERTDB
@@ -773,7 +827,7 @@ def tdxProd30TradeData2Database(dbCntInfo, symbolCode, absolutePath, productTrad
     return None
 
 
-def tdxSh30minToStock(dbCntInfo,dataType='sz',softPath='D:/software/new_haitong'):
+def tdxSh30minToStock(dbCntInfo, dataType='sz', softPath='D:/software/new_haitong'):
     '''
     tdx数据读取到数据库中
     参考网站:https://www.jianshu.com/p/9dd3ef74fe96
@@ -935,16 +989,16 @@ def dailyDataTdxInsertDb():
     日线数据从通达信填写到数据库中
     :return:
     '''
-    stocklog.initLogging()
+    # stocklog.initLogging()
     path = 'D:/software/new_haitong'
-    xmlfile = "G:\\nfx\\Python\\stockmarket\\finance\\resource\\finance.xml"
+    # xmlfile = "G:\\nfx\\Python\\stockmarket\\finance\\resource\\finance.xml"
     # dbCntInfo = dbcnt.DbCnt(xmlfile, dbpool=False)
-    dbCntInfo = dbcnt.createDbConnect(dbpool=False)
+    dbCntInfo = dbcnt.getInitDbCntInfo()
     # 5min可以完成
     resultexpt = tdxShLdayToStock(dbCntInfo, "sz", path)
     if resultexpt is None:
         tdxShLdayToStock(dbCntInfo, "sh", path)
-    dbCntInfo.closeAllDBConnect()
+    # dbCntInfo.closeAllDBConnect()
 
 
 def daily30DataTdxInsertDb():
@@ -957,21 +1011,29 @@ def daily30DataTdxInsertDb():
     # if resultexpt is None:
     #     tdxSh30minToStock(dbCntInfo, "sh", path)
 
-    stocklog.initLogging()
     path = 'D:/software/new_haitong'
-    xmlfile = "G:\\nfx\\Python\\stockmarket\\finance\\resource\\finance.xml"
-    dbCntInfo = dbcnt.createDbConnect(dbpool=False)
+    # xmlfile = "G:\\nfx\\Python\\stockmarket\\finance\\resource\\finance.xml"
+    dbCntInfo = dbcnt.getInitDbCntInfo()
     # 5min可以完成
     resultexpt = tdxSh30minToStock(dbCntInfo, "sz", path)
     if resultexpt is None:
         tdxSh30minToStock(dbCntInfo, "sh", path)
-    dbCntInfo.closeAllDBConnect()
+    # dbCntInfo.closeAllDBConnect()
+
 
 if __name__ == "__main__":
+    stocklog.initLogging()
+    dbCntInfo = dbcnt.createDbConnect(dbpool=False)
+    # import os
+    # getProductBasicInfo()
+    # dailyDataTdxInsertDb()
+    # # # os.sleep(2)
+    # daily30DataTdxInsertDb()
+    # 获取指数产品
+    getIndexBasicInfo()
+    # 获取场内基金ETF
 
-    dailyDataTdxInsertDb()
-    os.sleep(2)
-    daily30DataTdxInsertDb()
+    dbCntInfo.closeAllDBConnect()
 
     # filedata = open(".\stock_basics.txt", 'w+')
     # xmlfile = "E:\\pydevproj\\stockmarket\\finance\\resource\\finance.xml"

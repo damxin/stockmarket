@@ -30,7 +30,9 @@ TABLEDICT = {
              "datadownloadlog":LOGICNAME_TRADE,
              "entdaytradedata":LOGICNAME_TRADE,
              "prod30tradedata":LOGICNAME_TRADE,
-             "entthirmtradedata":LOGICNAME_TRADE
+             "entthirmtradedata":LOGICNAME_TRADE,
+             "deliststock":LOGICNAME_TMPBASE,
+             "indextradedata":LOGICNAME_TMPBASE
             }
 # 表名:单表拆分的表个数
 SPLITTBLDICT = {"entdaytradedata":32, "entthirmtradedata":32}
@@ -59,7 +61,9 @@ PRODUCTBASICINFO_SQL = "SELECT DISTINCT a.code product_code, a.name product_name
 PRODUCTBASICINFO_INSERTSQL = "insert into productbasicinfo(product_code,product_name,product_type, \
 money_type, product_area, product_industry, \
 product_fullname, market_type, exchange_code, \
-ipo_status,listed_date,delisted_date) values ( %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+ipo_status,listed_date,delisted_date, symbol_code) values ( %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+
+PRODUCTBASICINFO_UPDATEDELISTSQL = " update productbasicinfo set ipo_status = 'D', delisted_date = %s where symbol_code = %s "
 
 PRODUCTBASICINFO_GETSQL = "SELECT symbol_code, product_code, product_name, product_type, \
        money_type, product_area, product_industry, \
@@ -574,13 +578,15 @@ CSV30INSERTVAR = "('%s',%d,%d,%f,%f,%f,%f,%f,%f),"
 # 日交易数据获取 begin
 DAYTRADEDATA_GET="select symbol_code, trade_date,0 trade_time, open_price,high_price,close_price,low_price,product_volume,product_amount from \
  producttradedata where symbol_code = '%s' and trade_date > %d order by trade_date "
-DAYTRADEDATA_ONEDATEGET="select symbol_code, trade_date,open_price,high_price,close_price,low_price,product_volume,product_amount from \
+DAYTRADEDATA_ONEDATEGET="select symbol_code, trade_date, 0 trade_time, open_price,high_price,close_price,low_price,product_volume,product_amount from \
  producttradedata where symbol_code = '%s' and trade_date = %d "
 # 日交易数据获取 end
 
 # 30min交易数据获取 begin
 MIN30TRADEDATA_GET = "select symbol_code, trade_date,trade_time, open_price,high_price,close_price,low_price,product_volume,product_amount from \
  prod30tradedata where symbol_code = '%s' and trade_date > %d order by trade_date "
+MIN30TRADEDATA_ONE30MINGET = "select symbol_code, trade_date,trade_time, open_price,high_price,close_price,low_price,product_volume,product_amount from \
+ prod30tradedata where symbol_code = '%s' and trade_date = %d and trade_time = %d "
 # 30min交易数据获取 end
 
 # 日交易包含关系处理后的数据插入 begin
@@ -593,8 +599,8 @@ ENTDAYTRADEDATA_GET="select symbol_code, trade_date, trade_time, open_price,high
 ENTDAYTRADEDATA_UPDATETBL = "update %s "
 ENTDAYTRADEDATA_UPDATEUUPDOWNFLAG = "set updown_flag = %s where symbol_code = %s and trade_date = %s and trade_time = %s"
 ENTDAYTRADEDATA_REALUPDATEUUPDOWNFLAG = "update %s set updown_flag = '%s' where product_code = '%s' and trade_date = %s"
-ENTDAYTRADEDATA_ABTYPINGGET="select product_code, trade_date,open_price,high_price,close_price,low_price,merge_flag,updown_flag,trade_time from %s a \
- where a.product_code = '%s' and a.trade_date >= %d and updown_flag in ('A','B') and a.trade_time >= %d order by a.trade_date,a.trade_time "
+ENTDAYTRADEDATA_ABTYPINGGET="select symbol_code, trade_date,open_price,high_price,close_price,low_price,merge_flag,updown_flag,trade_time from %s a \
+ where a.symbol_code = '%s' and a.trade_date >= %d and updown_flag in ('A','B') and a.trade_time >= %d order by a.trade_date,a.trade_time "
 ENTDAYTRADEDATA_MAXTRADEDATEGET="select ifnull(max(trade_date),0) maxtradedate from %s a where a.symbol_code = '%s' "
 # 最近A或者B交易日获取
 ENTDAYTRADEDATA_LASTAORBDATEGET = "select ifnull(max(trade_date),0) maxtradedate from %s a where a.symbol_code = '%s' and a.updown_flag IN ('A','B')"

@@ -36,6 +36,15 @@ def createDbConnect(dbpool=False):
         gDbCntFlag = True
     return gdbCntInfo
 
+def getInitDbCntInfo():
+    global gDbCntFlag
+    global gdbCntInfo
+
+    if gDbCntFlag is True:
+        return gdbCntInfo
+    else:
+        raise RuntimeError("db connect do not create!")
+
 def getDBCntInfoByTableName(tableName, symbolCode = None,tradeDate = None):
     global gDbCntFlag
     global gdbCntInfo
@@ -188,8 +197,13 @@ class DbCnt:
         关闭所有的数据库连接
         :return:
         '''
+        global gDbCntFlag
+        global gdbCntInfo
         for dbCntinfo in self.dbCntdicts.values():
             dbCntinfo.closeDBConnect()
+        gdbCntInfo = None
+        gDbCntFlag = False
+
 
 # if __name__ == '__main__':
 #     dbCnt = DbCnt("F:\\nfx\\Python\\stockmarket\\finance\\resource\\finance.xml")

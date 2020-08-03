@@ -16,7 +16,8 @@ from finance.util import GlobalCons as gc
 import pandas as pd
 from datetime import date, timedelta
 
-def getMaxTradeTimeFromCurProdCode(dbCntInfo, symbolCode, kType = gc.K_DAY):
+
+def getMaxTradeTimeFromCurProdCode(dbCntInfo, symbolCode, kType=gc.K_DAY):
     '''
     获取已经存储在数据库中的最大值，如果是日以上级别则tradetime返回填写235959
     :param dbCntInfo:
@@ -42,7 +43,7 @@ def getMaxTradeTimeFromCurProdCode(dbCntInfo, symbolCode, kType = gc.K_DAY):
 
     tableRetListTuple = tableDbBase.execSelectSmallSql(execlsql)
 
-    try :
+    try:
         if tableRetListTuple is None:
             tradeDate = 19000101
         else:
@@ -59,6 +60,7 @@ def getMaxTradeTimeFromCurProdCode(dbCntInfo, symbolCode, kType = gc.K_DAY):
         tradeDate = 19000101
 
     return (tradeDate, 235959)
+
 
 def getMaxTradeDateFromCurProductCode(dbCntInfo, symbolCode) -> int:
     '''
@@ -83,7 +85,7 @@ def getMaxTradeDateFromCurProductCode(dbCntInfo, symbolCode) -> int:
     return maxDate
 
 
-def getAllProductBasicInfo(dbCntInfo, ipostatus=None):
+def getAllProductBasicInfo(dbCntInfo, ipostatus=None, producttype='1'):
     '''
     返回所有的产品的基本信息，默认只返回依然上市的产品，退市的不返回
     :param dbCntInfo:
@@ -94,9 +96,9 @@ def getAllProductBasicInfo(dbCntInfo, ipostatus=None):
     tableDbBase = dbCntInfo.getDBCntInfoByTableName("productbasicinfo")
     selectsql = ""
     if ipostatus in "A":
-        selectsql = selectsql + sc.PRODUCTBASICINFO_GETSQL
+        selectsql = selectsql + sc.PRODUCTBASICINFO_GETSQL + "where product_type = '%s' " % producttype
     else:
-        selectsql = selectsql + sc.PRODUCTBASICINFO_GETSQL + " where ipo_status = '%s' " % ipostatus
+        selectsql = selectsql + sc.PRODUCTBASICINFO_GETSQL + " where ipo_status = '%s' " % ipostatus + " and product_type = '%s' " % producttype
     tableRetListDict = tableDbBase.execSelectSmallSql(selectsql)
     if len(tableRetListDict) == 0:
         return
@@ -179,6 +181,7 @@ def getTodayDate():
     todayday = int((date.today()).strftime("%Y%m%d"))
     return todayday
 
+
 def getlastworkday():
     '''
     获取最近的工作日
@@ -191,10 +194,11 @@ def getlastworkday():
     if curHour < 17:
         finanalWorkDate = getYesterday()
     # select max(trade_date) from openday where trade_date < %d
-    selectsql = "select ifnull(max(trade_date),0) maxworkdate from openday where trade_flag = '1' and trade_date <= %d"% finanalWorkDate
+    selectsql = "select ifnull(max(trade_date),0) maxworkdate from openday where trade_flag = '1' and trade_date <= %d" % finanalWorkDate
     dbopenday = dbcnt.getDBCntInfoByTableName("openday")
     retresult = dbopenday.execSelectSmallSql(selectsql)
     return retresult[0]['maxworkdate']
+
 
 def getlastyear():
     '''
@@ -204,6 +208,7 @@ def getlastyear():
     todayday = int((date.today()).strftime("%Y%m%d"))
     lastday = (int(todayday / 10000) - 1) * 10000 + todayday % 10000
     return lastday
+
 
 def gettimediff(srcdate, srctime, destdate, destime, kline='D'):
     '''
@@ -218,17 +223,17 @@ def gettimediff(srcdate, srctime, destdate, destime, kline='D'):
     import time
     import datetime
 
-    dttm1 = datetime.datetime(int(srcdate/10000), (int(srcdate/100))%100, int(srcdate%100), int(srctime/10000), (int(srctime/100))%100, int(srcdate%100))
-    dttm2 = datetime.datetime(int(destdate/10000), (int(destdate/100))%100, int(destdate%100), int(destime/10000), (int(destime/100))%100, int(destime%100))
-
+    dttm1 = datetime.datetime(int(srcdate / 10000), (int(srcdate / 100)) % 100, int(srcdate % 100),
+                              int(srctime / 10000), (int(srctime / 100)) % 100, int(srcdate % 100))
+    dttm2 = datetime.datetime(int(destdate / 10000), (int(destdate / 100)) % 100, int(destdate % 100),
+                              int(destime / 10000), (int(destime / 100)) % 100, int(destime % 100))
 
     tm1 = time.mktime(dttm1.timetuple())
     tm2 = time.mktime(dttm2.timetuple())
     if kline in 'D':
-        return int(tm2 - tm1)/3600
-    else :
+        return int(tm2 - tm1) / 3600
+    else:
         return int(tm2 - tm1)
-
 
 
 def listdictTypeChangeToDataFrame(datalistdict):
@@ -384,6 +389,7 @@ def getRealTableName(tableName, productCode):
 
     return realtablename
 
+
 def code_to_symbol(productcode):
     '''
     返回symbol标志
@@ -395,8 +401,8 @@ def code_to_symbol(productcode):
     if productcode in gc.INDEX_LABELS:
         return gc.INDEX_LIST[productcode]
     else:
-        if len(productcode) != 6 :
+        if len(productcode) != 6:
             return productcode
         else:
-            return 'sh%s'%productcode if productcode[:1] in ['5', '6', '9'] or productcode[:2] in ['11', '13'] else 'sz%s'%productcode
-
+            return 'sh%s' % productcode if productcode[:1] in ['5', '6', '9'] or productcode[:2] in ['11',
+                                                                                                     '13'] else 'sz%s' % productcode

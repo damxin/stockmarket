@@ -37,7 +37,7 @@ SOURCETABLEDICT={K_YEAR:"entyeartradedata",
                  K_WEEK:"entweektradedata",
                  K_DAY:"entdaytradedata",
                  K_60MIN:"ent60mintradedata",
-                 K_30MIN:"ent30mintradedata",
+                 K_30MIN:"entthirmtradedata",
                  K_5MIN:"ent5mintradedata"}
 
 # producttradedata对应的常量

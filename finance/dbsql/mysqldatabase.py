@@ -66,6 +66,7 @@ class MysqlDatabase(DataBase):
             self.connection.commit()
         except Exception as e:
             self.connection.rollback()
+            print(e)
             print(strinsertsql)
             raise RuntimeError("execInsertManySql is error!")
 
